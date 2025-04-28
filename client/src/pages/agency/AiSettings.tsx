@@ -197,6 +197,97 @@ export default function AiSettings() {
     }
   };
 
+  // تمرير رسالة جديدة وتلقي الرد من المساعد الذكي
+  const handleTestChat = async () => {
+    if (!testMessage.trim()) return;
+
+    // إضافة رسالة المستخدم إلى المحادثة
+    const userMessage = { role: 'user', content: testMessage };
+    setTestMessages([...testMessages, userMessage]);
+    setTestMessage('');
+    setIsTestLoading(true);
+
+    // جعل التمرير التلقائي إلى أسفل
+    setTimeout(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    }, 100);
+
+    try {
+      // إرسال طلب إلى API مع البرومبت المخصص
+      const response = await apiRequest('POST', '/api/ai/chat/test', {
+        message: testMessage,
+        systemPrompt: generateFinalPrompt(),
+        temperature
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTestMessages([...testMessages, userMessage, { role: 'assistant', content: data.content }]);
+      } else {
+        throw new Error('فشل في الاتصال بالمساعد الذكي');
+      }
+    } catch (error) {
+      console.error('Error in test chat:', error);
+      setTestMessages([
+        ...testMessages, 
+        userMessage, 
+        { role: 'assistant', content: 'عذراً، حدث خطأ أثناء محاولة الاتصال. يرجى المحاولة مرة أخرى.' }
+      ]);
+    } finally {
+      setIsTestLoading(false);
+      
+      // جعل التمرير التلقائي إلى أسفل بعد تلقي الرد
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  };
+
+  // حفظ الإعدادات وتطبيقها على المنصة بالكامل
+  const saveAndApplySettings = async () => {
+    setLoading(true);
+    
+    try {
+      const finalPrompt = generateFinalPrompt();
+      
+      const settings = {
+        personality: selectedPersonality,
+        customPrompt,
+        agencyContext,
+        thinkingStyle,
+        temperature,
+        speakEgyptian,
+        useTechnicalTerms,
+        finalPrompt,
+        isGlobalApplied: true // علامة لتطبيق الإعدادات على كل المنصة
+      };
+      
+      const response = await apiRequest('POST', '/api/ai/settings/apply', settings);
+      
+      if (response.ok) {
+        toast({
+          title: 'تم التطبيق بنجاح',
+          description: 'تم تطبيق إعدادات المساعد الذكي على المنصة بالكامل',
+        });
+      } else {
+        throw new Error('فشل في تطبيق الإعدادات');
+      }
+    } catch (error) {
+      console.error('Error applying AI settings:', error);
+      toast({
+        title: 'خطأ',
+        description: 'حدث خطأ أثناء تطبيق الإعدادات على المنصة',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <DashboardLayout title="إعدادات المساعد الذكي">
       <div className="container mx-auto py-6">
@@ -369,7 +460,10 @@ export default function AiSettings() {
             <CardDescription>جرب محادثة مع المساعد الذكي باستخدام البرومبت الذي قمت بإنشائه</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="border rounded-md p-4 mb-4 h-80 overflow-y-auto">
+            <div 
+              ref={chatContainerRef} 
+              className="border rounded-md p-4 mb-4 h-80 overflow-y-auto"
+            >
               <div className="space-y-4">
                 {/* عرض المحادثة التجريبية */}
                 {testMessages.map((message, index) => (
