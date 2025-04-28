@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -64,6 +64,14 @@ export default function AiSettings() {
   const [temperature, setTemperature] = useState(0.7);
   const [speakEgyptian, setSpeakEgyptian] = useState(false);
   const [useTechnicalTerms, setUseTechnicalTerms] = useState(true);
+  
+  // متغيرات اختبار البرومبت
+  const [testMessage, setTestMessage] = useState('');
+  const [isTestLoading, setIsTestLoading] = useState(false);
+  const [testMessages, setTestMessages] = useState<{role: string, content: string}[]>([
+    { role: 'assistant', content: 'مرحبًا! أنا المساعد الذكي الخاص بك. كيف يمكنني مساعدتك اليوم؟' }
+  ]);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // تحميل الإعدادات المحفوظة عند تحميل الصفحة
   useEffect(() => {
@@ -335,17 +343,95 @@ export default function AiSettings() {
           </CardFooter>
         </Card>
 
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle>معاينة البرومبت النهائي</CardTitle>
             <CardDescription>هذا هو البرومبت الذي سيتم استخدامه لتوجيه المساعد الذكي</CardDescription>
           </CardHeader>
           <CardContent>
             <Textarea
-              readOnly
-              className="h-64 font-mono text-sm"
+              className="h-64 font-mono text-sm mb-2"
               value={generateFinalPrompt()}
+              onChange={(e) => {
+                // يمكن إضافة منطق للتعديل المباشر للبرومبت هنا في المستقبل
+                // حاليًا نعرض البرومبت المولد من الإعدادات المحددة
+              }}
             />
+            <p className="text-sm text-muted-foreground mt-2">
+              يمكنك تعديل البرومبت مباشرة، ثم اختباره في المحادثة أدناه قبل تطبيقه على المنصة بالكامل.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>اختبار البرومبت</CardTitle>
+            <CardDescription>جرب محادثة مع المساعد الذكي باستخدام البرومبت الذي قمت بإنشائه</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="border rounded-md p-4 mb-4 h-80 overflow-y-auto">
+              <div className="space-y-4">
+                {/* عرض المحادثة التجريبية */}
+                {testMessages.map((message, index) => (
+                  <div key={index} className={`flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
+                    <div className={`rounded-lg p-3 max-w-3/4 ${message.role === 'assistant' ? 'bg-muted' : 'bg-primary text-primary-foreground'}`}>
+                      {message.content}
+                    </div>
+                  </div>
+                ))}
+                {isTestLoading && (
+                  <div className="flex justify-start">
+                    <div className="rounded-lg p-3 bg-muted">
+                      <div className="flex space-x-2 space-x-reverse">
+                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></div>
+                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce delay-75"></div>
+                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce delay-150"></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="اكتب رسالة لاختبار المساعد الذكي..."
+                value={testMessage}
+                onChange={(e) => setTestMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleTestChat();
+                  }
+                }}
+                disabled={isTestLoading}
+              />
+              <Button 
+                size="sm" 
+                onClick={handleTestChat} 
+                disabled={!testMessage.trim() || isTestLoading}
+              >
+                <i className="fas fa-paper-plane ml-1"></i>
+                إرسال
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>تطبيق البرومبت</CardTitle>
+            <CardDescription>بعد الانتهاء من اختبار وتعديل البرومبت، يمكنك تطبيقه على المنصة بالكامل</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">
+              بعد تطبيق البرومبت، سيتم استخدامه في جميع المحادثات المستقبلية مع المساعد الذكي في أنحاء المنصة المختلفة.
+            </p>
+            <div className="flex justify-end">
+              <Button onClick={saveAndApplySettings} disabled={loading}>
+                {loading ? 'جارٍ التطبيق...' : 'تطبيق على المنصة بالكامل'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
