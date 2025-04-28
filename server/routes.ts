@@ -163,18 +163,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Chat endpoint
   app.post("/api/ai/chat", async (req: Request, res: Response) => {
     try {
-      const { message, scenarioKey = "general", model = "gpt-4o" } = req.body;
+      const { message, fullConversation, scenarioKey = "general", model = "gpt-4o" } = req.body;
       
       if (!message) {
         return res.status(400).json({ message: "Message is required" });
       }
       
+      // استخدام المحادثة الكاملة إذا كانت متوفرة، وإلا استخدام الرسالة الحالية فقط
+      const messagesToProcess = fullConversation || [{ role: "user", content: message }];
+      
       // Always use OpenAI
       const result = await openAIService.processChat({
         scenarioKey,
-        messages: [
-          { role: "user", content: message }
-        ]
+        messages: messagesToProcess
       });
       
       res.json({

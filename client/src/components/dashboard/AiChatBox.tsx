@@ -112,9 +112,24 @@ export function AiChatBox({
       // محاكاة تأخير قصير ليكون تحميل الكتابة أكثر واقعية
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      // إرسال الرسالة إلى واجهة API
+      // تجميع المحادثة الكاملة (بدون الرسائل التي تحتوي على isTyping = true)
+      const conversationHistory = messages
+        .filter(msg => !msg.isTyping)
+        .map(msg => ({
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        }));
+      
+      // إضافة الرسالة الحالية
+      conversationHistory.push({
+        role: 'user',
+        content: input
+      });
+      
+      // إرسال المحادثة الكاملة إلى واجهة API
       const response = await apiRequest('POST', '/api/ai/chat', {
         message: input,
+        fullConversation: conversationHistory,
         scenarioKey,
         model,
       });
