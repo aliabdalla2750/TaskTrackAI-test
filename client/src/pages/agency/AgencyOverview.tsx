@@ -188,11 +188,9 @@ export default function AgencyOverview() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">المهام الأخيرة</h2>
-          <Link href="/dashboard/agency/tasks">
-            <a className="text-primary text-sm flex items-center gap-1 hover:underline">
-              <span>عرض الكل</span>
-              <i className="fas fa-arrow-left text-xs"></i>
-            </a>
+          <Link href="/dashboard/agency/tasks" className="text-primary text-sm flex items-center gap-1 hover:underline">
+            <span>عرض الكل</span>
+            <i className="fas fa-arrow-left text-xs"></i>
           </Link>
         </div>
         
@@ -203,11 +201,9 @@ export default function AgencyOverview() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">المساعد الذكي</h2>
-          <Link href="/dashboard/agency/ai-assistant">
-            <a className="text-primary text-sm flex items-center gap-1 hover:underline">
-              <span>فتح المساعد</span>
-              <i className="fas fa-arrow-left text-xs"></i>
-            </a>
+          <Link href="/dashboard/agency/ai-assistant" className="text-primary text-sm flex items-center gap-1 hover:underline">
+            <span>فتح المساعد</span>
+            <i className="fas fa-arrow-left text-xs"></i>
           </Link>
         </div>
         
