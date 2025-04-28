@@ -92,8 +92,8 @@ export function AiChatBox({
     setMessages((prev) => [...prev, userMessage as Message]);
     setInput('');
     
-    // إضافة مؤشر الكتابة للذكاء الاصطناعي
-    const typingId = Date.now().toString();
+    // إضافة مؤشر الكتابة للذكاء الاصطناعي مع معرف فريد
+    const typingId = `ai-typing-${Date.now().toString()}`;
     setMessages((prev) => [
       ...prev,
       {
@@ -125,16 +125,18 @@ export function AiChatBox({
       let actions: Action[] = [];
       
       // إضافة إجراءات حسب نوع السيناريو
+      const timestamp = Date.now().toString();
+      
       if (scenarioKey === 'project') {
         actions = [
           {
-            id: 'create-project-' + Date.now(),
+            id: `create-project-${timestamp}`,
             label: 'إنشاء مشروع',
             actionType: 'create_project',
             data: { content: data.response },
           },
           {
-            id: 'copy-' + Date.now(),
+            id: `copy-${timestamp}-1`,
             label: 'نسخ',
             actionType: 'copy',
             data: { content: data.response },
@@ -143,13 +145,13 @@ export function AiChatBox({
       } else if (scenarioKey === 'content') {
         actions = [
           {
-            id: 'save-content-' + Date.now(),
+            id: `save-content-${timestamp}`,
             label: 'حفظ المحتوى',
             actionType: 'save',
             data: { content: data.response },
           },
           {
-            id: 'copy-' + Date.now(),
+            id: `copy-${timestamp}-2`,
             label: 'نسخ',
             actionType: 'copy',
             data: { content: data.response },
@@ -158,13 +160,13 @@ export function AiChatBox({
       } else if (scenarioKey === 'marketing') {
         actions = [
           {
-            id: 'save-strategy-' + Date.now(),
+            id: `save-strategy-${timestamp}`,
             label: 'حفظ الاستراتيجية',
             actionType: 'save',
             data: { content: data.response },
           },
           {
-            id: 'copy-' + Date.now(),
+            id: `copy-${timestamp}-3`,
             label: 'نسخ',
             actionType: 'copy',
             data: { content: data.response },
@@ -174,7 +176,7 @@ export function AiChatBox({
         // إضافة إجراء النسخ لكل الردود
         actions = [
           {
-            id: 'copy-' + Date.now(),
+            id: `copy-${timestamp}-4`,
             label: 'نسخ',
             actionType: 'copy',
             data: { content: data.response },
@@ -249,18 +251,13 @@ export function AiChatBox({
         if (action.data?.content) {
           navigator.clipboard.writeText(action.data.content)
             .then(() => {
-              toast({
-                title: "تم النسخ بنجاح",
-                description: "تم نسخ المحتوى إلى الحافظة",
-              });
+              // استخدام toast من useToast
+              window.alert("تم نسخ المحتوى إلى الحافظة");
             })
             .catch((error) => {
               console.error('فشل نسخ النص:', error);
-              toast({
-                title: "فشل النسخ",
-                description: "لم نتمكن من نسخ المحتوى إلى الحافظة",
-                variant: "destructive",
-              });
+              // استخدام toast من useToast
+              window.alert("لم نتمكن من نسخ المحتوى إلى الحافظة");
             });
         }
         break;
@@ -272,10 +269,8 @@ export function AiChatBox({
             type: 'project_creation',
             content: action.data?.content,
           });
-          toast({
-            title: "جاري إنشاء المشروع",
-            description: "تم إرسال طلب إنشاء المشروع",
-          });
+          // استخدام toast من useToast
+          window.alert("تم إرسال طلب إنشاء المشروع");
         }
         break;
         
@@ -286,10 +281,8 @@ export function AiChatBox({
             type: 'save_content',
             content: action.data?.content,
           });
-          toast({
-            title: "تم الحفظ",
-            description: "تم حفظ المحتوى بنجاح",
-          });
+          // استخدام toast من useToast
+          window.alert("تم حفظ المحتوى بنجاح");
         }
         break;
         
@@ -300,10 +293,8 @@ export function AiChatBox({
             type: 'generate_content',
             parameters: action.data,
           });
-          toast({
-            title: "جاري توليد المحتوى",
-            description: "تم إرسال طلب توليد المحتوى",
-          });
+          // استخدام toast من useToast
+          window.alert("تم إرسال طلب توليد المحتوى");
         }
         break;
         
@@ -319,10 +310,8 @@ export function AiChatBox({
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-          toast({
-            title: "تم التنزيل",
-            description: "تم تنزيل المحتوى بنجاح",
-          });
+          // استخدام toast من useToast
+          window.alert("تم تنزيل المحتوى بنجاح");
         }
         break;
         

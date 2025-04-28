@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AiChatBox } from '@/components/dashboard/AiChatBox';
-import useToast from '@/hooks/useToast';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AgencyAiAssistant() {
   const [activeTab, setActiveTab] = useState('general');
