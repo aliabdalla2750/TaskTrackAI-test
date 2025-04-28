@@ -818,4 +818,8 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// تحديد نوع التخزين بناءً على البيئة أو متغيرات البيئة
+import { DatabaseStorage } from "./database-storage";
+
+// استخدام التخزين في قاعدة البيانات بدلاً من التخزين في الذاكرة
+export const storage = new DatabaseStorage();

@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // Users table
 export const users = pgTable("users", {
@@ -277,3 +278,147 @@ export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 
 export type AiChatLog = typeof aiChatLogs.$inferSelect;
 export type InsertAiChatLog = z.infer<typeof insertAiChatLogSchema>;
+
+// Relations
+
+// User relations
+export const usersRelations = relations(users, ({ one }) => ({
+  agency: one(agencies, {
+    fields: [users.agencyId],
+    references: [agencies.id],
+  }),
+}));
+
+// Agency relations
+export const agenciesRelations = relations(agencies, ({ many }) => ({
+  users: many(users),
+  clients: many(clients),
+  employees: many(employees),
+  projects: many(projects),
+  payments: many(payments),
+}));
+
+// Client relations
+export const clientsRelations = relations(clients, ({ one, many }) => ({
+  agency: one(agencies, {
+    fields: [clients.agencyId],
+    references: [agencies.id],
+  }),
+  projects: many(projects),
+}));
+
+// Employee relations
+export const employeesRelations = relations(employees, ({ one, many }) => ({
+  agency: one(agencies, {
+    fields: [employees.agencyId],
+    references: [agencies.id],
+  }),
+  assignedTasks: many(tasks, { relationName: "employeeTasks" }),
+  submissions: many(taskSubmissions),
+}));
+
+// Project relations
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  agency: one(agencies, {
+    fields: [projects.agencyId],
+    references: [agencies.id],
+  }),
+  client: one(clients, {
+    fields: [projects.clientId],
+    references: [clients.id],
+    relationName: "projectClient",
+  }),
+  creator: one(users, {
+    fields: [projects.createdBy],
+    references: [users.id],
+  }),
+  subgoals: many(subgoals),
+  tasks: many(tasks),
+}));
+
+// Subgoal relations
+export const subgoalsRelations = relations(subgoals, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [subgoals.projectId],
+    references: [projects.id],
+  }),
+  tasks: many(tasks),
+}));
+
+// Task relations
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [tasks.projectId],
+    references: [projects.id],
+  }),
+  subgoal: one(subgoals, {
+    fields: [tasks.subgoalId],
+    references: [subgoals.id],
+  }),
+  assignedEmployee: one(employees, {
+    fields: [tasks.assignedTo],
+    references: [employees.id],
+    relationName: "employeeTasks",
+  }),
+  submissions: many(taskSubmissions),
+}));
+
+// Task submission relations
+export const taskSubmissionsRelations = relations(taskSubmissions, ({ one }) => ({
+  task: one(tasks, {
+    fields: [taskSubmissions.taskId],
+    references: [tasks.id],
+  }),
+  employee: one(employees, {
+    fields: [taskSubmissions.employeeId],
+    references: [employees.id],
+  }),
+}));
+
+// Notification relations
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
+// File relations
+export const filesRelations = relations(files, ({ one }) => ({
+  uploader: one(users, {
+    fields: [files.uploaderId],
+    references: [users.id],
+  }),
+}));
+
+// AI usage logs relations
+export const aiUsageLogsRelations = relations(aiUsageLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [aiUsageLogs.userId],
+    references: [users.id],
+  }),
+  agency: one(agencies, {
+    fields: [aiUsageLogs.agencyId],
+    references: [agencies.id],
+  }),
+}));
+
+// Payment relations
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  agency: one(agencies, {
+    fields: [payments.agencyId],
+    references: [agencies.id],
+  }),
+}));
+
+// AI chat logs relations
+export const aiChatLogsRelations = relations(aiChatLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [aiChatLogs.userId],
+    references: [users.id],
+  }),
+  agency: one(agencies, {
+    fields: [aiChatLogs.agencyId],
+    references: [agencies.id],
+  }),
+}));

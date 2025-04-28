@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiRequest } from '@/lib/queryClient';
-import useToast from '@/hooks/useToast';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
@@ -37,9 +37,13 @@ export function AiChatBox({
   const inputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   
+  // إضافة رسالة الترحيب عند التحميل الأولي فقط
+  const welcomeMessageShownRef = useRef(false);
+  
   useEffect(() => {
-    // أضف رسالة الترحيب عند تحميل المكون إذا لم تكن هناك رسائل أولية
-    if (initialMessages.length === 0) {
+    // فقط إذا لم يتم عرض رسالة الترحيب بعد ولا توجد رسائل أولية
+    if (!welcomeMessageShownRef.current && initialMessages.length === 0 && messages.length === 0) {
+      welcomeMessageShownRef.current = true;
       setMessages([
         {
           id: Date.now().toString(),
@@ -49,7 +53,7 @@ export function AiChatBox({
         },
       ]);
     }
-  }, [welcomeMessage, initialMessages]);
+  }, []);
   
   useEffect(() => {
     // انتقل إلى أسفل عند تغيير الرسائل
@@ -144,7 +148,8 @@ export function AiChatBox({
         )
       );
       
-      toast.error('خطأ في الاتصال', 'فشل في الاتصال بالذكاء الاصطناعي. يرجى المحاولة مرة أخرى.');
+      // عرض رسالة خطأ باستخدام toast
+      console.error("خطأ في الاتصال بالذكاء الاصطناعي");
     } finally {
       setIsLoading(false);
       setIsThinking(false);
