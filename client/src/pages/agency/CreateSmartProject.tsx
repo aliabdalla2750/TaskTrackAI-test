@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AiChatBox } from '@/components/dashboard/AiChatBox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface ProjectResult {
   title: string;
@@ -18,14 +21,50 @@ interface ProjectResult {
   timeline: { startDate: string; endDate: string; duration: string };
 }
 
+interface AiSetup {
+  aiPersona: string;
+  agencyContext: string;
+  thinkingStyle: string;
+  customPersona: string;
+  industryKnowledge: string;
+  keyObjectives: string;
+}
+
+const DEFAULT_PERSONAS = {
+  strategist: "خبير استراتيجي يركز على تحليل السوق والتخطيط طويل المدى وتحديد الفرص الاستراتيجية",
+  marketer: "خبير تسويق متخصص في حملات التسويق الرقمي والعلامات التجارية واستراتيجيات التواصل الاجتماعي",
+  productDev: "خبير تطوير منتجات يتميز بتحليل احتياجات المستخدمين وتصميم حلول مبتكرة وإدارة دورة حياة المنتج",
+  projectManager: "مدير مشاريع محترف يركز على تحديد المهام وتوزيع الموارد وإدارة المخاطر والجداول الزمنية",
+  businessAnalyst: "محلل أعمال يتخصص في تحليل العمليات وتحديد الاحتياجات وتقديم توصيات لتحسين الأداء",
+  custom: ""
+};
+
+const THINKING_STYLES = {
+  structured: "تفكير منظم ومنهجي: اتباع خطوات محددة ومنطقية وتسلسل واضح",
+  creative: "تفكير إبداعي وابتكاري: استكشاف أفكار جديدة ومقاربات غير تقليدية وحلول مبتكرة",
+  analytical: "تفكير تحليلي ونقدي: تحليل عميق للمعلومات، تقييم الخيارات، وتحديد الأسباب والنتائج",
+  practical: "تفكير عملي وتطبيقي: التركيز على الحلول القابلة للتنفيذ والواقعية والنتائج الملموسة",
+  collaborative: "تفكير تعاوني وتشاركي: بناء الأفكار معًا وتبادل وجهات النظر والوصول لأفضل الحلول"
+};
+
 export default function CreateSmartProject() {
   const [projectName, setProjectName] = useState('');
   const [clientId, setClientId] = useState('');
-  const [step, setStep] = useState<'form' | 'ai-chat' | 'review'>('form');
+  const [step, setStep] = useState<'form' | 'ai-setup' | 'ai-chat' | 'review'>('form');
   const [aiResult, setAiResult] = useState<ProjectResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  
+  // إعدادات الذكاء الاصطناعي
+  const [aiSetup, setAiSetup] = useState<AiSetup>({
+    aiPersona: 'strategist',
+    agencyContext: '',
+    thinkingStyle: 'collaborative',
+    customPersona: '',
+    industryKnowledge: '',
+    keyObjectives: ''
+  });
   
   const handleStartChat = () => {
     if (!projectName.trim()) {
@@ -37,7 +76,38 @@ export default function CreateSmartProject() {
       return;
     }
     
-    setStep('ai-chat');
+    setStep('ai-setup');
+  };
+  
+  // دالة لإنشاء رسالة ترحيب مخصصة بناءً على إعدادات الذكاء الاصطناعي
+  const getWelcomeMessage = () => {
+    let personaDesc = "";
+    if (aiSetup.aiPersona === 'custom') {
+      personaDesc = aiSetup.customPersona;
+    } else {
+      personaDesc = DEFAULT_PERSONAS[aiSetup.aiPersona as keyof typeof DEFAULT_PERSONAS];
+    }
+    
+    const thinkingStyle = THINKING_STYLES[aiSetup.thinkingStyle as keyof typeof THINKING_STYLES];
+    
+    let contextInfo = "";
+    if (aiSetup.agencyContext) {
+      contextInfo += `\n\nمعلومات عن الوكالة:\n${aiSetup.agencyContext}`;
+    }
+    
+    if (aiSetup.industryKnowledge) {
+      contextInfo += `\n\nالمعرفة بالصناعة والمجال:\n${aiSetup.industryKnowledge}`;
+    }
+    
+    if (aiSetup.keyObjectives) {
+      contextInfo += `\n\nالأهداف الرئيسية للمشروع:\n${aiSetup.keyObjectives}`;
+    }
+    
+    return `مرحباً! أنا مساعدك الذكي وسأعمل معك اليوم كـ ${personaDesc}.
+
+سأساعدك في إنشاء مشروع "${projectName}" باستخدام ${thinkingStyle}.${contextInfo}
+
+دعنا نبدأ حوارنا لتطوير خطة مشروع متكاملة تتضمن الأهداف والمهام والجدول الزمني. أخبرني المزيد عن المشروع وأهدافه الرئيسية.`;
   };
   
   const handleAiResult = async (result: any) => {
@@ -49,7 +119,14 @@ export default function CreateSmartProject() {
         // استدعاء واجهة برمجة التطبيقات للحصول على نتيجة منظمة للمشروع
         const response = await apiRequest('POST', '/api/ai/project-creation', {
           projectName: projectName,
-          projectDetails: result.content
+          projectDetails: result.content,
+          aiSettings: {
+            persona: aiSetup.aiPersona === 'custom' ? aiSetup.customPersona : DEFAULT_PERSONAS[aiSetup.aiPersona as keyof typeof DEFAULT_PERSONAS],
+            thinkingStyle: THINKING_STYLES[aiSetup.thinkingStyle as keyof typeof THINKING_STYLES],
+            agencyContext: aiSetup.agencyContext || '',
+            industryKnowledge: aiSetup.industryKnowledge || '',
+            keyObjectives: aiSetup.keyObjectives || ''
+          }
         });
         
         const data = await response.json();
@@ -167,6 +244,208 @@ export default function CreateSmartProject() {
         </Card>
       )}
       
+      {step === 'ai-setup' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>إعداد المساعد الذكي</CardTitle>
+            <CardDescription>قم بتخصيص المساعد الذكي لتحسين التجربة ونتائج المشروع</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="persona" className="w-full">
+              <TabsList className="grid grid-cols-3 mb-8">
+                <TabsTrigger value="persona">شخصية المساعد</TabsTrigger>
+                <TabsTrigger value="context">السياق والمعلومات</TabsTrigger>
+                <TabsTrigger value="thinking">أسلوب التفكير</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="persona" className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-4">اختر شخصية المساعد الذكي</h3>
+                  <p className="text-gray-600 mb-6">
+                    تحديد شخصية المساعد يساعد في توجيه المحادثة بما يناسب نوع مشروعك.
+                  </p>
+                  
+                  <RadioGroup 
+                    value={aiSetup.aiPersona} 
+                    onValueChange={(value) => setAiSetup({...aiSetup, aiPersona: value})}
+                    className="space-y-3"
+                  >
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="strategist" id="strategist" />
+                      <Label htmlFor="strategist" className="cursor-pointer">
+                        <div className="font-medium">خبير استراتيجي</div>
+                        <div className="text-sm text-gray-500">يركز على تحليل السوق والتخطيط طويل المدى وتحديد الفرص الاستراتيجية</div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="marketer" id="marketer" />
+                      <Label htmlFor="marketer" className="cursor-pointer">
+                        <div className="font-medium">خبير تسويق</div>
+                        <div className="text-sm text-gray-500">متخصص في حملات التسويق الرقمي والعلامات التجارية واستراتيجيات التواصل الاجتماعي</div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="productDev" id="productDev" />
+                      <Label htmlFor="productDev" className="cursor-pointer">
+                        <div className="font-medium">خبير تطوير منتجات</div>
+                        <div className="text-sm text-gray-500">يتميز بتحليل احتياجات المستخدمين وتصميم حلول مبتكرة وإدارة دورة حياة المنتج</div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="projectManager" id="projectManager" />
+                      <Label htmlFor="projectManager" className="cursor-pointer">
+                        <div className="font-medium">مدير مشاريع محترف</div>
+                        <div className="text-sm text-gray-500">يركز على تحديد المهام وتوزيع الموارد وإدارة المخاطر والجداول الزمنية</div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="businessAnalyst" id="businessAnalyst" />
+                      <Label htmlFor="businessAnalyst" className="cursor-pointer">
+                        <div className="font-medium">محلل أعمال</div>
+                        <div className="text-sm text-gray-500">يتخصص في تحليل العمليات وتحديد الاحتياجات وتقديم توصيات لتحسين الأداء</div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="custom" id="custom" />
+                      <Label htmlFor="custom" className="cursor-pointer">
+                        <div className="font-medium">تخصيص شخصية مخصصة</div>
+                        <div className="text-sm text-gray-500">قم بتعريف شخصية مخصصة للمساعد الذكي</div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  
+                  {aiSetup.aiPersona === 'custom' && (
+                    <div className="mt-4">
+                      <Label htmlFor="customPersona" className="mb-2 block">وصف الشخصية المخصصة</Label>
+                      <Textarea 
+                        id="customPersona"
+                        value={aiSetup.customPersona}
+                        onChange={(e) => setAiSetup({...aiSetup, customPersona: e.target.value})}
+                        placeholder="صف الشخصية المهنية التي تريد أن يتخذها المساعد الذكي..."
+                        className="min-h-[120px]"
+                      />
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="context" className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-4">السياق والمعلومات</h3>
+                  <p className="text-gray-600 mb-6">
+                    قدم معلومات عن وكالتك ومشاريعك السابقة لمساعدة الذكاء الاصطناعي على فهم احتياجاتك بشكل أفضل.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="agencyContext" className="mb-2 block">معلومات عن الوكالة وخدماتها</Label>
+                      <Textarea 
+                        id="agencyContext"
+                        value={aiSetup.agencyContext}
+                        onChange={(e) => setAiSetup({...aiSetup, agencyContext: e.target.value})}
+                        placeholder="وصف للوكالة، خدماتها الرئيسية، نقاط قوتها، أنواع العملاء المستهدفين..."
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="industryKnowledge" className="mb-2 block">المعرفة الصناعية والمجال</Label>
+                      <Textarea 
+                        id="industryKnowledge"
+                        value={aiSetup.industryKnowledge}
+                        onChange={(e) => setAiSetup({...aiSetup, industryKnowledge: e.target.value})}
+                        placeholder="ما هي المعرفة الصناعية أو المجالات التي تتمتع بها وكالتك؟ على سبيل المثال: التسويق الرقمي، تجارة التجزئة، التكنولوجيا المالية..."
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="keyObjectives" className="mb-2 block">أهداف المشروع الرئيسية</Label>
+                      <Textarea 
+                        id="keyObjectives"
+                        value={aiSetup.keyObjectives}
+                        onChange={(e) => setAiSetup({...aiSetup, keyObjectives: e.target.value})}
+                        placeholder="ما هي الأهداف الرئيسية التي ترغب في تحقيقها من خلال هذا المشروع؟"
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="thinking" className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-4">أسلوب التفكير</h3>
+                  <p className="text-gray-600 mb-6">
+                    حدد نمط التفكير الذي تفضله في محادثتك مع المساعد الذكي، وهذا سيؤثر على طريقة تفاعله معك وتحليله للمشروع.
+                  </p>
+                  
+                  <RadioGroup 
+                    value={aiSetup.thinkingStyle} 
+                    onValueChange={(value) => setAiSetup({...aiSetup, thinkingStyle: value})}
+                    className="space-y-3"
+                  >
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="structured" id="structured" />
+                      <Label htmlFor="structured" className="cursor-pointer">
+                        <div className="font-medium">تفكير منظم ومنهجي</div>
+                        <div className="text-sm text-gray-500">اتباع خطوات محددة ومنطقية وتسلسل واضح</div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="creative" id="creative" />
+                      <Label htmlFor="creative" className="cursor-pointer">
+                        <div className="font-medium">تفكير إبداعي وابتكاري</div>
+                        <div className="text-sm text-gray-500">استكشاف أفكار جديدة ومقاربات غير تقليدية وحلول مبتكرة</div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="analytical" id="analytical" />
+                      <Label htmlFor="analytical" className="cursor-pointer">
+                        <div className="font-medium">تفكير تحليلي ونقدي</div>
+                        <div className="text-sm text-gray-500">تحليل عميق للمعلومات، تقييم الخيارات، وتحديد الأسباب والنتائج</div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="practical" id="practical" />
+                      <Label htmlFor="practical" className="cursor-pointer">
+                        <div className="font-medium">تفكير عملي وتطبيقي</div>
+                        <div className="text-sm text-gray-500">التركيز على الحلول القابلة للتنفيذ والواقعية والنتائج الملموسة</div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="collaborative" id="collaborative" />
+                      <Label htmlFor="collaborative" className="cursor-pointer">
+                        <div className="font-medium">تفكير تعاوني وتشاركي</div>
+                        <div className="text-sm text-gray-500">بناء الأفكار معًا وتبادل وجهات النظر والوصول لأفضل الحلول</div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+          <CardFooter className="justify-between border-t pt-5">
+            <Button variant="outline" onClick={() => setStep('form')}>
+              العودة
+            </Button>
+            <Button onClick={() => setStep('ai-chat')} className="bg-primary hover:bg-opacity-90 text-white">
+              <i className="fas fa-comments ml-2"></i>
+              بدء المحادثة
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
+      
       {step === 'ai-chat' && (
         <Card>
           <CardHeader>
@@ -175,11 +454,16 @@ export default function CreateSmartProject() {
           <CardContent>
             <AiChatBox
               title=""
-              welcomeMessage={`مرحباً! سأساعدك في إنشاء مشروع جديد. اسم المشروع هو: "${projectName}".\n\nدعني أسألك بعض الأسئلة لفهم متطلبات المشروع بشكل أفضل.`}
+              welcomeMessage={getWelcomeMessage()}
               scenarioKey="project-creation"
               onResultGenerated={handleAiResult}
             />
           </CardContent>
+          <CardFooter className="border-t pt-5">
+            <Button variant="outline" onClick={() => setStep('ai-setup')}>
+              العودة للإعدادات
+            </Button>
+          </CardFooter>
         </Card>
       )}
       
