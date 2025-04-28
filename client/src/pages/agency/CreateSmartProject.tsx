@@ -24,12 +24,16 @@ export default function CreateSmartProject() {
   const [step, setStep] = useState<'form' | 'ai-chat' | 'review'>('form');
   const [aiResult, setAiResult] = useState<ProjectResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const toast = useToast();
+  const { toast } = useToast();
   const [, navigate] = useLocation();
   
   const handleStartChat = () => {
     if (!projectName.trim()) {
-      toast.error('خطأ', 'يرجى إدخال اسم المشروع');
+      toast({
+        title: "خطأ",
+        description: "يرجى إدخال اسم المشروع",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -99,13 +103,21 @@ export default function CreateSmartProject() {
       
       const data = await response.json();
       
-      toast.success('تم بنجاح', 'تم إنشاء المشروع بنجاح');
+      toast({
+        title: "تم بنجاح",
+        description: "تم إنشاء المشروع بنجاح",
+        variant: "default",
+      });
       
       // Navigate to projects page
       navigate('/dashboard/agency/projects');
     } catch (error) {
       console.error('Failed to create project:', error);
-      toast.error('خطأ', 'فشل في إنشاء المشروع. يرجى المحاولة مرة أخرى.');
+      toast({
+        title: "خطأ",
+        description: "فشل في إنشاء المشروع. يرجى المحاولة مرة أخرى.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
