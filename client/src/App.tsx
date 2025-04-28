@@ -26,10 +26,6 @@ import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminAiScenarios from "@/pages/admin/AdminAiScenarios";
 
-// Employee Dashboard Pages
-import EmployeeOverview from "@/pages/employee/EmployeeOverview";
-import EmployeeTasks from "@/pages/employee/EmployeeTasks";
-
 function Router() {
   return (
     <Switch>
@@ -54,10 +50,6 @@ function Router() {
       <Route path="/dashboard/admin/overview" component={AdminOverview} />
       <Route path="/dashboard/admin/users" component={AdminUsers} />
       <Route path="/dashboard/admin/ai-scenarios" component={AdminAiScenarios} />
-      
-      {/* Employee Dashboard Routes */}
-      <Route path="/dashboard/employee/overview" component={EmployeeOverview} />
-      <Route path="/dashboard/employee/tasks" component={EmployeeTasks} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { openAIService } from "./services/openai-service";
+import { anthropicService } from "./services/anthropic-service";
 import { insertAiScenarioSchema, insertClientSchema, insertEmployeeSchema, insertProjectSchema, insertSubgoalSchema, insertTaskSchema, insertTaskSubmissionSchema, insertUserSchema } from "@shared/schema";
 import { ZodError } from "zod";
 
@@ -156,24 +157,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Chat endpoint
   app.post("/api/ai/chat", async (req: Request, res: Response) => {
     try {
-      const { message, scenarioKey = "general" } = req.body;
+      const { message, scenarioKey = "general", model = "gpt-4o" } = req.body;
       
       if (!message) {
         return res.status(400).json({ message: "Message is required" });
       }
       
-      const result = await openAIService.processChat({
-        scenarioKey,
-        messages: [
-          { role: "user", content: message }
-        ]
-      });
+      let result;
+      // Use appropriate service based on model
+      if (model.includes("claude")) {
+        result = await anthropicService.processChat({
+          scenarioKey,
+          messages: [
+            { role: "user", content: message }
+          ]
+        });
+      } else {
+        // Default to OpenAI
+        result = await openAIService.processChat({
+          scenarioKey,
+          messages: [
+            { role: "user", content: message }
+          ]
+        });
+      }
       
       res.json({
         response: result.response,
-        tokensUsed: result.tokensUsed
+        tokensUsed: result.tokensUsed,
+        model: model
       });
     } catch (error) {
+      console.error("AI chat error:", error);
       res.status(500).json({ message: "Failed to process AI chat" });
     }
   });
@@ -181,23 +196,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Project creation with AI endpoint
   app.post("/api/ai/project-creation", async (req: Request, res: Response) => {
     try {
-      const { projectName, projectDetails } = req.body;
+      const { projectName, projectDetails, model = "gpt-4o" } = req.body;
       
       if (!projectName || !projectDetails) {
         return res.status(400).json({ message: "Project name and details are required" });
       }
       
-      const result = await openAIService.processProjectCreation(
-        projectName,
-        projectDetails
-      );
+      let result;
+      // Use appropriate service based on model
+      if (model.includes("claude")) {
+        result = await anthropicService.processProjectCreation(
+          projectName,
+          projectDetails
+        );
+      } else {
+        // Default to OpenAI
+        result = await openAIService.processProjectCreation(
+          projectName,
+          projectDetails
+        );
+      }
       
       res.json({
         response: result.response,
         result: result.result,
-        tokensUsed: result.tokensUsed
+        tokensUsed: result.tokensUsed,
+        model: model
       });
     } catch (error) {
+      console.error("AI project creation error:", error);
       res.status(500).json({ message: "Failed to create project with AI" });
     }
   });
