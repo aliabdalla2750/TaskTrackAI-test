@@ -96,8 +96,19 @@ export default function AiSettings() {
     loadSettings();
   }, []);
 
+  // متغير جديد لتخزين البرومبت النهائي المعدل يدويًا
+  const [manualFinalPrompt, setManualFinalPrompt] = useState<string>('');
+  
+  // علامة لتحديد ما إذا كان البرومبت النهائي معدل يدويًا
+  const [isPromptManuallyEdited, setIsPromptManuallyEdited] = useState<boolean>(false);
+  
   // إعداد البرومبت النهائي بناءً على الاختيارات
   const generateFinalPrompt = () => {
+    // إذا كان البرومبت معدلًا يدويًا، نعيد البرومبت المعدل
+    if (isPromptManuallyEdited) {
+      return manualFinalPrompt;
+    }
+    
     let finalPrompt = '';
     
     // إضافة برومبت الشخصية المختارة
@@ -141,13 +152,27 @@ export default function AiSettings() {
 
     return finalPrompt;
   };
+  
+  // التعامل مع تغييرات البرومبت اليدوية
+  const handleManualPromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setManualFinalPrompt(e.target.value);
+    setIsPromptManuallyEdited(true);
+  }
+  
+  // تحديث البرومبت النهائي المعدل عند تغيير الإعدادات
+  useEffect(() => {
+    if (!isPromptManuallyEdited) {
+      setManualFinalPrompt(generateFinalPrompt());
+    }
+  }, [selectedPersonality, customPrompt, agencyContext, thinkingStyle, speakEgyptian, useTechnicalTerms]);
 
   // حفظ الإعدادات
   const saveSettings = async () => {
     setLoading(true);
     
     try {
-      const finalPrompt = generateFinalPrompt();
+      // استخدام البرومبت المحرر يدويًا إذا كان موجودًا
+      const finalPrompt = isPromptManuallyEdited ? manualFinalPrompt : generateFinalPrompt();
       
       const settings = {
         personality: selectedPersonality,
@@ -157,7 +182,8 @@ export default function AiSettings() {
         temperature,
         speakEgyptian,
         useTechnicalTerms,
-        finalPrompt
+        finalPrompt,
+        isManuallyEdited: isPromptManuallyEdited
       };
       
       const response = await apiRequest('POST', '/api/ai/settings', settings);
@@ -215,10 +241,13 @@ export default function AiSettings() {
     }, 100);
 
     try {
+      // استخدام البرومبت المعدل يدويًا إذا كان موجودًا
+      const finalPromptToUse = isPromptManuallyEdited ? manualFinalPrompt : generateFinalPrompt();
+      
       // إرسال طلب إلى API مع البرومبت المخصص
       const response = await apiRequest('POST', '/api/ai/chat/test', {
         message: testMessage,
-        systemPrompt: generateFinalPrompt(),
+        systemPrompt: finalPromptToUse,
         temperature
       });
 
@@ -252,7 +281,8 @@ export default function AiSettings() {
     setLoading(true);
     
     try {
-      const finalPrompt = generateFinalPrompt();
+      // استخدام البرومبت المحرر يدويًا إذا كان موجودًا
+      const finalPrompt = isPromptManuallyEdited ? manualFinalPrompt : generateFinalPrompt();
       
       const settings = {
         personality: selectedPersonality,
@@ -263,6 +293,7 @@ export default function AiSettings() {
         speakEgyptian,
         useTechnicalTerms,
         finalPrompt,
+        isManuallyEdited: isPromptManuallyEdited,
         isGlobalApplied: true // علامة لتطبيق الإعدادات على كل المنصة
       };
       
@@ -440,17 +471,39 @@ export default function AiSettings() {
             <CardDescription>هذا هو البرومبت الذي سيتم استخدامه لتوجيه المساعد الذكي</CardDescription>
           </CardHeader>
           <CardContent>
-            <Textarea
-              className="h-64 font-mono text-sm mb-2"
-              value={generateFinalPrompt()}
-              onChange={(e) => {
-                // يمكن إضافة منطق للتعديل المباشر للبرومبت هنا في المستقبل
-                // حاليًا نعرض البرومبت المولد من الإعدادات المحددة
-              }}
-            />
-            <p className="text-sm text-muted-foreground mt-2">
-              يمكنك تعديل البرومبت مباشرة، ثم اختباره في المحادثة أدناه قبل تطبيقه على المنصة بالكامل.
-            </p>
+            <div className="mb-4">
+              <Textarea
+                className="h-64 font-mono text-sm mb-2 relative"
+                value={isPromptManuallyEdited ? manualFinalPrompt : generateFinalPrompt()}
+                onChange={handleManualPromptChange}
+              />
+              {isPromptManuallyEdited && (
+                <div className="flex justify-end mt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setIsPromptManuallyEdited(false);
+                      setManualFinalPrompt(generateFinalPrompt());
+                      toast({
+                        title: "تم إعادة التعيين",
+                        description: "تم إعادة تعيين البرومبت إلى النسخة المولدة تلقائيًا",
+                      });
+                    }}
+                  >
+                    إعادة التوليد التلقائي
+                  </Button>
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                <strong>ملاحظة:</strong> يمكنك تعديل البرومبت مباشرة حسب احتياجاتك، ثم اختباره في المحادثة أدناه قبل تطبيقه على المنصة بالكامل.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <strong>تلميح:</strong> أضف تعليمات وأمثلة محددة للحصول على أفضل النتائج من المساعد الذكي.
+              </p>
+            </div>
           </CardContent>
         </Card>
 
