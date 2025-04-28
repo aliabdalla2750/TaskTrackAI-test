@@ -5,6 +5,12 @@ import { openAIService } from "./services/openai-service";
 import { aiSettingsService } from "./services/ai-settings-service";
 import { insertAiScenarioSchema, insertClientSchema, insertEmployeeSchema, insertProjectSchema, insertSubgoalSchema, insertTaskSchema, insertTaskSubmissionSchema, insertUserSchema } from "@shared/schema";
 import { ZodError } from "zod";
+import OpenAI from "openai";
+
+// تهيئة عميل OpenAI للاختبار المباشر
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || "dummy-key-for-development",
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API Endpoints
@@ -555,6 +561,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error saving AI settings:", error);
       res.status(500).json({ message: "Failed to save AI settings" });
+    }
+  });
+  
+  // نقطة نهاية لاختبار برومبت الذكاء الاصطناعي
+  app.post("/api/ai/chat/test", async (req: Request, res: Response) => {
+    try {
+      const { message, systemPrompt, temperature = 0.7 } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+      
+      if (!systemPrompt) {
+        return res.status(400).json({ message: "System prompt is required" });
+      }
+      
+      // إعداد رسالة النظام والمستخدم
+      const messages = [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message }
+      ];
+      
+      // استدعاء واجهة برمجة التطبيقات OpenAI مباشرة
+      const result = await openai.chat.completions.create({
+        model: "gpt-4o", // استخدام أحدث نموذج
+        messages,
+        temperature: parseFloat(temperature.toString()),
+        max_tokens: 800,
+      });
+      
+      // استخراج الرد
+      const response = result.choices[0].message.content || "";
+      
+      // لا يتم تسجيل استخدام الذكاء الاصطناعي أو المحادثة في اختبار البرومبت
+      
+      res.json({ content: response });
+    } catch (error) {
+      console.error("Error testing AI prompt:", error);
+      res.status(500).json({ message: "Failed to test AI prompt" });
+    }
+  });
+  
+  // نقطة نهاية لتطبيق الإعدادات على المنصة بالكامل
+  app.post("/api/ai/settings/apply", async (req: Request, res: Response) => {
+    try {
+      // في التطبيق الحقيقي، سيتم استخراج معرف الوكالة من جلسة المستخدم
+      const agencyId = parseInt(req.body.agencyId as string) || 1;
+      
+      // حفظ الإعدادات
+      const settings = await aiSettingsService.saveSettings(agencyId, req.body);
+      
+      // هنا يمكن إضافة منطق لتطبيق الإعدادات على جميع أجزاء المنصة
+      // مثل تحديث التخزين المؤقت للبرومبت في جميع الخدمات، إلخ.
+      
+      res.json({ success: true, settings });
+    } catch (error) {
+      console.error("Error applying AI settings:", error);
+      res.status(500).json({ message: "Failed to apply AI settings" });
     }
   });
 
