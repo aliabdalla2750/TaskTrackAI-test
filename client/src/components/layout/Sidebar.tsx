@@ -40,6 +40,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const employeeLinks = [
     { path: '/dashboard/employee/overview', icon: 'fa-tachometer-alt', label: 'نظرة عامة' },
     { path: '/dashboard/employee/tasks', icon: 'fa-tasks', label: 'المهام' },
+    { path: '/dashboard/employee/submissions', icon: 'fa-clipboard-check', label: 'التسليمات' },
+    { path: '/dashboard/employee/performance', icon: 'fa-chart-line', label: 'الأداء' },
+    { path: '/dashboard/employee/files', icon: 'fa-file-alt', label: 'الملفات' },
   ];
   
   let links;
@@ -96,17 +99,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <ul>
             {links.map((link) => (
               <li key={link.path} className="mb-1">
-                <Link href={link.path}>
-                  <a
-                    className={`flex items-center gap-2 p-2 rounded-md font-medium ${
-                      isActive(link.path)
-                        ? 'text-primary bg-blue-50'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <i className={`fas ${link.icon}`}></i>
-                    <span>{link.label}</span>
-                  </a>
+                <Link 
+                  href={link.path}
+                  className={`flex items-center gap-2 p-2 rounded-md font-medium ${
+                    isActive(link.path)
+                      ? 'text-primary bg-blue-50'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <i className={`fas ${link.icon}`}></i>
+                  <span>{link.label}</span>
                 </Link>
               </li>
             ))}
@@ -130,35 +132,39 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <h2 className="text-sm font-semibold text-gray-500 mb-2">تبديل لوحة التحكم</h2>
             <ul>
               <li className="mb-1">
-                <Link href="/dashboard/agency/overview">
-                  <a className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md">
-                    <i className="fas fa-building"></i>
-                    <span>لوحة الوكالة</span>
-                  </a>
+                <Link 
+                  href="/dashboard/agency/overview"
+                  className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                >
+                  <i className="fas fa-building"></i>
+                  <span>لوحة الوكالة</span>
                 </Link>
               </li>
               <li className="mb-1">
-                <Link href="/dashboard/client/overview">
-                  <a className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md">
-                    <i className="fas fa-user-tie"></i>
-                    <span>لوحة العميل</span>
-                  </a>
+                <Link 
+                  href="/dashboard/client/overview"
+                  className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                >
+                  <i className="fas fa-user-tie"></i>
+                  <span>لوحة العميل</span>
                 </Link>
               </li>
               <li className="mb-1">
-                <Link href="/dashboard/admin/overview">
-                  <a className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md">
-                    <i className="fas fa-user-shield"></i>
-                    <span>لوحة المدير</span>
-                  </a>
+                <Link 
+                  href="/dashboard/admin/overview"
+                  className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                >
+                  <i className="fas fa-user-shield"></i>
+                  <span>لوحة المدير</span>
                 </Link>
               </li>
               <li className="mb-1">
-                <Link href="/dashboard/employee/overview">
-                  <a className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md">
-                    <i className="fas fa-user"></i>
-                    <span>لوحة الموظف</span>
-                  </a>
+                <Link 
+                  href="/dashboard/employee/overview"
+                  className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                >
+                  <i className="fas fa-user"></i>
+                  <span>لوحة الموظف</span>
                 </Link>
               </li>
             </ul>
