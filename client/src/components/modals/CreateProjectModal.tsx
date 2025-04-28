@@ -166,9 +166,9 @@ export function CreateProjectModal() {
                   الأهداف الفرعية:
                 </h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
-                  {aiResult.subgoals.map((subgoal, index) => (
+                  {aiResult?.subgoals?.map((subgoal, index) => (
                     <li key={index}>{subgoal.title}</li>
-                  ))}
+                  )) || <li>لا توجد أهداف فرعية محددة</li>}
                 </ul>
               </div>
               
@@ -177,9 +177,9 @@ export function CreateProjectModal() {
                   المهام المقترحة:
                 </h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
-                  {aiResult.tasks.map((task, index) => (
+                  {aiResult?.tasks?.map((task, index) => (
                     <li key={index}>{task.title}</li>
-                  ))}
+                  )) || <li>لا توجد مهام محددة</li>}
                 </ul>
               </div>
               
@@ -188,9 +188,15 @@ export function CreateProjectModal() {
                   الجدول الزمني المقترح:
                 </h4>
                 <div className="text-sm text-gray-600">
-                  <p>تاريخ البدء: {aiResult.timeline.startDate}</p>
-                  <p>تاريخ التسليم المتوقع: {aiResult.timeline.endDate}</p>
-                  <p>مدة المشروع: {aiResult.timeline.duration}</p>
+                  {aiResult?.timeline ? (
+                    <>
+                      <p>تاريخ البدء: {aiResult.timeline.startDate}</p>
+                      <p>تاريخ التسليم المتوقع: {aiResult.timeline.endDate}</p>
+                      <p>مدة المشروع: {aiResult.timeline.duration}</p>
+                    </>
+                  ) : (
+                    <p>لا يوجد جدول زمني محدد</p>
+                  )}
                 </div>
               </div>
               

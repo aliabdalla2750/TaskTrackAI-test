@@ -163,11 +163,9 @@ export default function AgencyOverview() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">المشاريع الأخيرة</h2>
-          <Link href="/dashboard/agency/projects">
-            <a className="text-primary text-sm flex items-center gap-1 hover:underline">
-              <span>عرض الكل</span>
-              <i className="fas fa-arrow-left text-xs"></i>
-            </a>
+          <Link href="/dashboard/agency/projects" className="text-primary text-sm flex items-center gap-1 hover:underline">
+            <span>عرض الكل</span>
+            <i className="fas fa-arrow-left text-xs"></i>
           </Link>
         </div>
         
