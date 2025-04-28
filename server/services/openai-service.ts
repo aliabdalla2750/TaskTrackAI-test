@@ -88,32 +88,73 @@ export class OpenAIService {
   async processProjectCreation(
     projectName: string,
     projectDetails: string,
+    aiSettings?: {
+      persona: string;
+      thinkingStyle: string;
+      agencyContext: string;
+      industryKnowledge: string;
+      keyObjectives: string;
+    },
     userId?: number,
     agencyId?: number
   ): Promise<{ response: string; result: ProjectAnalysisResult; tokensUsed: number }> {
     // Get the scenario
     const scenario = await this.getScenario("project-creation");
     
-    // Prepare messages
+    // إعداد محتوى رسالة النظام بناءً على إعدادات الذكاء الاصطناعي
+    let systemContent = scenario.systemPrompt;
+    
+    // إذا تم توفير إعدادات الذكاء الاصطناعي، نقوم بتضمينها في رسالة النظام
+    if (aiSettings) {
+      // إضافة معلومات شخصية الذكاء الاصطناعي
+      if (aiSettings.persona) {
+        systemContent += `\n\nأنت تعمل كـ ${aiSettings.persona}`;
+      }
+      
+      // إضافة معلومات أسلوب التفكير
+      if (aiSettings.thinkingStyle) {
+        systemContent += `\n\nيجب عليك استخدام ${aiSettings.thinkingStyle} في تحليلك وإنشاء خطة المشروع.`;
+      }
+      
+      // إضافة معلومات سياق الوكالة
+      if (aiSettings.agencyContext) {
+        systemContent += `\n\nمعلومات عن الوكالة:\n${aiSettings.agencyContext}`;
+      }
+      
+      // إضافة معلومات الصناعة والمجال
+      if (aiSettings.industryKnowledge) {
+        systemContent += `\n\nمعلومات عن الصناعة والمجال:\n${aiSettings.industryKnowledge}`;
+      }
+      
+      // إضافة معلومات الأهداف الرئيسية
+      if (aiSettings.keyObjectives) {
+        systemContent += `\n\nالأهداف الرئيسية للمشروع:\n${aiSettings.keyObjectives}`;
+      }
+    }
+    
+    // إضافة تعليمات بنية JSON في نهاية رسالة النظام
+    systemContent += `\n\nقم بتحليل المعلومات المقدمة وإنشاء خطة مشروع كاملة. قم بتحليل المشروع وتقسيمه إلى أهداف فرعية ومهام وجدول زمني. في النهاية، قدم النتيجة بتنسيق JSON بالهيكل التالي:
+    {
+      "title": "عنوان المشروع",
+      "description": "وصف المشروع",
+      "subgoals": [
+        { "title": "عنوان الهدف الفرعي", "description": "وصف الهدف الفرعي" }
+      ],
+      "tasks": [
+        { "title": "عنوان المهمة", "description": "وصف المهمة", "deadline": "تاريخ الانتهاء" }
+      ],
+      "timeline": {
+        "startDate": "تاريخ البدء",
+        "endDate": "تاريخ الانتهاء",
+        "duration": "المدة"
+      }
+    }`;
+    
+    // إعداد الرسائل
     const messages: Message[] = [
       {
         role: "system",
-        content: `${scenario.systemPrompt}\n\nقم بتحليل المعلومات المقدمة وإنشاء خطة مشروع كاملة. قم بتحليل المشروع وتقسيمه إلى أهداف فرعية ومهام وجدول زمني. في النهاية، قدم النتيجة بتنسيق JSON بالهيكل التالي:
-        {
-          "title": "عنوان المشروع",
-          "description": "وصف المشروع",
-          "subgoals": [
-            { "title": "عنوان الهدف الفرعي", "description": "وصف الهدف الفرعي" }
-          ],
-          "tasks": [
-            { "title": "عنوان المهمة", "description": "وصف المهمة", "deadline": "تاريخ الانتهاء" }
-          ],
-          "timeline": {
-            "startDate": "تاريخ البدء",
-            "endDate": "تاريخ الانتهاء",
-            "duration": "المدة"
-          }
-        }`
+        content: systemContent
       },
       {
         role: "user",
