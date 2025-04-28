@@ -17,6 +17,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const agencyLinks = [
     { path: '/dashboard/agency/overview', icon: 'fa-tachometer-alt', label: 'نظرة عامة' },
     { path: '/dashboard/agency/projects', icon: 'fa-folder-open', label: 'المشاريع' },
+    { path: '/dashboard/agency/create-smart-project', icon: 'fa-magic', label: 'إنشاء مشروع ذكي' },
     { path: '/dashboard/agency/tasks', icon: 'fa-tasks', label: 'المهام' },
     { path: '/dashboard/agency/team', icon: 'fa-users', label: 'فريق العمل' },
     { path: '/dashboard/agency/clients', icon: 'fa-user-tie', label: 'العملاء' },

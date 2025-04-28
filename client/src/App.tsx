@@ -41,7 +41,7 @@ function Router() {
       <Route path="/" component={AgencyOverview} />
       <Route path="/dashboard/agency/overview" component={AgencyOverview} />
       <Route path="/dashboard/agency/projects" component={AgencyProjects} />
-      <Route path="/dashboard/agency/create-project-smart" component={CreateSmartProject} />
+      <Route path="/dashboard/agency/create-smart-project" component={CreateSmartProject} />
       <Route path="/dashboard/agency/tasks" component={AgencyTasks} />
       <Route path="/dashboard/agency/team" component={AgencyTeam} />
       <Route path="/dashboard/agency/clients" component={AgencyClients} />
