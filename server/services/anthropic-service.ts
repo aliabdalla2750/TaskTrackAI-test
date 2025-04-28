@@ -36,49 +36,64 @@ export class AnthropicService {
     // Get the scenario
     const scenario = await this.getScenario(request.scenarioKey);
     
-    // Map messages to Anthropic format
-    const anthropicMessages = [];
-    
-    // Add system prompt if exists
-    if (scenario.systemPrompt) {
-      anthropicMessages.push({
-        role: "system",
-        content: scenario.systemPrompt
-      });
-    }
-    
-    // Add user messages
-    request.messages.forEach(message => {
-      if (message.role === "user" || message.role === "assistant") {
-        anthropicMessages.push({
-          role: message.role,
-          content: message.content
+    try {
+      // Extract system messages and user/assistant messages
+      const systemMessages: Message[] = [];
+      const chatMessages: { role: 'user' | 'assistant', content: string }[] = [];
+      
+      // Add scenario system prompt if it exists
+      if (scenario.systemPrompt) {
+        systemMessages.push({
+          role: "system",
+          content: scenario.systemPrompt
         });
       }
-    });
-    
-    try {
-      // Map messages to Anthropic format ensuring only valid roles
-      const validMessages = anthropicMessages.map(msg => ({
-        role: msg.role === 'system' ? 'user' : msg.role as 'user' | 'assistant',
-        content: msg.role === 'system' ? `<system>${msg.content}</system>` : msg.content
-      }));
-
+      
+      // Process messages
+      request.messages.forEach(message => {
+        if (message.role === "system") {
+          systemMessages.push(message);
+        } else if (message.role === "user" || message.role === "assistant") {
+          chatMessages.push({
+            role: message.role,
+            content: message.content
+          });
+        }
+      });
+      
+      // Combine all system messages
+      const systemPrompt = systemMessages.length > 0 
+        ? systemMessages.map(msg => msg.content).join("\n\n") 
+        : undefined;
+      
       // Call Anthropic API
       const result = await anthropic.messages.create({
         model: scenario.model || DEFAULT_MODEL,
-        messages: validMessages,
+        messages: chatMessages,
+        system: systemPrompt,
         max_tokens: scenario.maxTokens || 1000,
         temperature: scenario.temperature / 100, // Convert from 0-100 to 0-1
       });
       
-      // Extract response safely
-      const response = result.content[0].type === 'text' ? result.content[0].text : '';
+      // Get response text
+      let response = '';
+      
+      // Extract response safely, handling the different content types
+      if (result.content && result.content.length > 0) {
+        const content = result.content[0];
+        if (content.type === 'text') {
+          response = content.text;
+        } else {
+          console.warn('Received non-text content from Anthropic API');
+          response = 'Content format not supported';
+        }
+      }
       
       // Approximate token count for usage logging
-      // Anthropic doesn't provide exact token counts like OpenAI
       const tokensUsed = this.estimateTokens(
-        JSON.stringify(anthropicMessages) + response
+        (systemPrompt || '') + 
+        chatMessages.map(m => m.content).join('') + 
+        response
       );
       
       // Log AI usage
@@ -142,21 +157,27 @@ export class AnthropicService {
     const userMessage = `أريد إنشاء مشروع جديد باسم "${projectName}".\n\nتفاصيل المشروع:\n${projectDetails}\n\nقم بتحليل هذه المعلومات وإنشاء خطة مشروع متكاملة.`;
     
     try {
-      // Call Anthropic API with valid format
+      // Call Anthropic API with system prompt
       const result = await anthropic.messages.create({
         model: scenario.model || DEFAULT_MODEL,
-        messages: [
-          { 
-            role: "user", 
-            content: `<system>${systemPrompt}</system>\n\n${userMessage}`
-          }
-        ],
+        messages: [{ role: "user", content: userMessage }],
+        system: systemPrompt,
         max_tokens: scenario.maxTokens || 2000,
         temperature: scenario.temperature / 100, // Convert from 0-100 to 0-1
       });
       
+      // Get response text
+      let response = '';
+      
       // Extract response safely
-      const response = result.content[0].type === 'text' ? result.content[0].text : '';
+      if (result.content && result.content.length > 0) {
+        const content = result.content[0];
+        if (content.type === 'text') {
+          response = content.text;
+        } else {
+          throw new Error('Received non-text content from Anthropic API');
+        }
+      }
       
       // Parse JSON
       let parsedResult: ProjectAnalysisResult;
