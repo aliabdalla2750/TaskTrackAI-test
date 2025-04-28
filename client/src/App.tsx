@@ -21,6 +21,13 @@ import ClientProjects from "@/pages/client/ClientProjects";
 import ClientTasks from "@/pages/client/ClientTasks";
 import ClientFiles from "@/pages/client/ClientFiles";
 
+// Employee Dashboard Pages
+import EmployeeOverview from "@/pages/employee/EmployeeOverview";
+import EmployeeTasks from "@/pages/employee/EmployeeTasks";
+import EmployeeSubmissions from "@/pages/employee/EmployeeSubmissions";
+import EmployeePerformance from "@/pages/employee/EmployeePerformance";
+import EmployeeFiles from "@/pages/employee/EmployeeFiles";
+
 // Admin Dashboard Pages
 import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminUsers from "@/pages/admin/AdminUsers";
@@ -45,6 +52,13 @@ function Router() {
       <Route path="/dashboard/client/projects" component={ClientProjects} />
       <Route path="/dashboard/client/tasks" component={ClientTasks} />
       <Route path="/dashboard/client/files" component={ClientFiles} />
+      
+      {/* Employee Dashboard Routes */}
+      <Route path="/dashboard/employee/overview" component={EmployeeOverview} />
+      <Route path="/dashboard/employee/tasks" component={EmployeeTasks} />
+      <Route path="/dashboard/employee/submissions" component={EmployeeSubmissions} />
+      <Route path="/dashboard/employee/performance" component={EmployeePerformance} />
+      <Route path="/dashboard/employee/files" component={EmployeeFiles} />
       
       {/* Admin Dashboard Routes */}
       <Route path="/dashboard/admin/overview" component={AdminOverview} />
