@@ -10,8 +10,9 @@ import useToast from '@/hooks/useToast';
 
 export default function AgencyAiAssistant() {
   const [activeTab, setActiveTab] = useState('general');
-  const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const toast = useToast();
+  // نستخدم OpenAI GPT-4o فقط
+  const aiModel = 'gpt-4o';
   
   // AI assistant scenarios
   const scenarios = [
@@ -55,13 +56,12 @@ export default function AgencyAiAssistant() {
           
           <div className="flex gap-2 items-center">
             <span className="text-sm text-gray-500">نموذج الذكاء:</span>
-            <Select value={selectedModel} onValueChange={setSelectedModel}>
+            <Select value={"gpt-4o"} disabled>
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="اختر النموذج" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="gpt-4o">OpenAI GPT-4o</SelectItem>
-                <SelectItem value="claude-3-7-sonnet-20250219">Claude Sonnet 3.7</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -89,7 +89,7 @@ export default function AgencyAiAssistant() {
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center gap-1">
               <i className="fas fa-robot text-primary"></i>
-              <span>النموذج: {selectedModel}</span>
+              <span>النموذج: {aiModel}</span>
             </div>
             <div className="flex items-center gap-1">
               <i className="fas fa-temperature-low text-secondary"></i>
@@ -109,7 +109,7 @@ export default function AgencyAiAssistant() {
           title=""
           welcomeMessage={currentScenario.welcomeMessage}
           scenarioKey={currentScenario.id}
-          model={selectedModel}
+          model={aiModel}
         />
       </div>
       
