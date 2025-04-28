@@ -8,6 +8,14 @@ interface Message {
   content: string;
   isTyping?: boolean;
   timestamp?: Date;
+  actions?: Action[];
+}
+
+interface Action {
+  id: string;
+  label: string;
+  actionType: 'create_project' | 'generate_content' | 'copy' | 'save' | 'download';
+  data?: any;
 }
 
 interface AiChatBoxProps {
@@ -35,7 +43,7 @@ export function AiChatBox({
   const [isThinking, setIsThinking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const toast = useToast();
+  const { toast } = useToast();
   
   // إضافة رسالة الترحيب عند التحميل الأولي فقط
   const welcomeMessageShownRef = useRef(false);
@@ -46,7 +54,7 @@ export function AiChatBox({
       welcomeMessageShownRef.current = true;
       setMessages([
         {
-          id: Date.now().toString(),
+          id: `welcome-${Date.now().toString()}`,
           sender: 'ai' as const,
           content: welcomeMessage,
           timestamp: new Date(),
@@ -74,7 +82,7 @@ export function AiChatBox({
     if (!input.trim() || isLoading) return;
     
     const userMessage = {
-      id: Date.now().toString(),
+      id: `user-${Date.now().toString()}`,
       sender: 'user' as const,
       content: input,
       timestamp: new Date(),
@@ -113,7 +121,67 @@ export function AiChatBox({
       
       const data = await response.json();
       
-      // استبدال مؤشر الكتابة بالاستجابة الفعلية
+      // استبدال مؤشر الكتابة بالاستجابة الفعلية مع إضافة الإجراءات حسب السيناريو
+      let actions: Action[] = [];
+      
+      // إضافة إجراءات حسب نوع السيناريو
+      if (scenarioKey === 'project') {
+        actions = [
+          {
+            id: 'create-project-' + Date.now(),
+            label: 'إنشاء مشروع',
+            actionType: 'create_project',
+            data: { content: data.response },
+          },
+          {
+            id: 'copy-' + Date.now(),
+            label: 'نسخ',
+            actionType: 'copy',
+            data: { content: data.response },
+          },
+        ];
+      } else if (scenarioKey === 'content') {
+        actions = [
+          {
+            id: 'save-content-' + Date.now(),
+            label: 'حفظ المحتوى',
+            actionType: 'save',
+            data: { content: data.response },
+          },
+          {
+            id: 'copy-' + Date.now(),
+            label: 'نسخ',
+            actionType: 'copy',
+            data: { content: data.response },
+          },
+        ];
+      } else if (scenarioKey === 'marketing') {
+        actions = [
+          {
+            id: 'save-strategy-' + Date.now(),
+            label: 'حفظ الاستراتيجية',
+            actionType: 'save',
+            data: { content: data.response },
+          },
+          {
+            id: 'copy-' + Date.now(),
+            label: 'نسخ',
+            actionType: 'copy',
+            data: { content: data.response },
+          },
+        ];
+      } else {
+        // إضافة إجراء النسخ لكل الردود
+        actions = [
+          {
+            id: 'copy-' + Date.now(),
+            label: 'نسخ',
+            actionType: 'copy',
+            data: { content: data.response },
+          },
+        ];
+      }
+      
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === typingId
@@ -122,6 +190,7 @@ export function AiChatBox({
                 sender: 'ai' as const,
                 content: data.response,
                 timestamp: new Date(),
+                actions: actions,
               }
             : msg
         )
@@ -172,6 +241,96 @@ export function AiChatBox({
     }).format(timestamp);
   };
   
+  // معالجة النقر على الإجراءات
+  const handleActionClick = (action: Action) => {
+    switch (action.actionType) {
+      case 'copy':
+        // نسخ المحتوى إلى الحافظة
+        if (action.data?.content) {
+          navigator.clipboard.writeText(action.data.content)
+            .then(() => {
+              toast({
+                title: "تم النسخ بنجاح",
+                description: "تم نسخ المحتوى إلى الحافظة",
+              });
+            })
+            .catch((error) => {
+              console.error('فشل نسخ النص:', error);
+              toast({
+                title: "فشل النسخ",
+                description: "لم نتمكن من نسخ المحتوى إلى الحافظة",
+                variant: "destructive",
+              });
+            });
+        }
+        break;
+        
+      case 'create_project':
+        // استدعاء الدالة إذا تم توفيرها من المكون الأب
+        if (onResultGenerated) {
+          onResultGenerated({
+            type: 'project_creation',
+            content: action.data?.content,
+          });
+          toast({
+            title: "جاري إنشاء المشروع",
+            description: "تم إرسال طلب إنشاء المشروع",
+          });
+        }
+        break;
+        
+      case 'save':
+        // حفظ المحتوى
+        if (onResultGenerated) {
+          onResultGenerated({
+            type: 'save_content',
+            content: action.data?.content,
+          });
+          toast({
+            title: "تم الحفظ",
+            description: "تم حفظ المحتوى بنجاح",
+          });
+        }
+        break;
+        
+      case 'generate_content':
+        // توليد محتوى جديد
+        if (onResultGenerated) {
+          onResultGenerated({
+            type: 'generate_content',
+            parameters: action.data,
+          });
+          toast({
+            title: "جاري توليد المحتوى",
+            description: "تم إرسال طلب توليد المحتوى",
+          });
+        }
+        break;
+        
+      case 'download':
+        // تنزيل المحتوى كملف نصي
+        if (action.data?.content) {
+          const blob = new Blob([action.data.content], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `taskaaya-content-${new Date().toISOString().slice(0, 10)}.txt`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          toast({
+            title: "تم التنزيل",
+            description: "تم تنزيل المحتوى بنجاح",
+          });
+        }
+        break;
+        
+      default:
+        console.warn('نوع الإجراء غير معروف:', action.actionType);
+    }
+  };
+  
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col">
       {title && (
@@ -210,6 +369,27 @@ export function AiChatBox({
               ) : (
                 <>
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  
+                  {/* عرض الإجراءات إذا كانت متاحة */}
+                  {message.actions && message.actions.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {message.actions.map(action => (
+                        <button
+                          key={action.id}
+                          onClick={() => handleActionClick(action)}
+                          className="text-xs py-1 px-3 bg-gray-200 hover:bg-gray-300 rounded-full transition-colors"
+                        >
+                          {action.actionType === 'copy' && <i className="fas fa-copy ml-1"></i>}
+                          {action.actionType === 'create_project' && <i className="fas fa-project-diagram ml-1"></i>}
+                          {action.actionType === 'generate_content' && <i className="fas fa-file-alt ml-1"></i>}
+                          {action.actionType === 'save' && <i className="fas fa-save ml-1"></i>}
+                          {action.actionType === 'download' && <i className="fas fa-download ml-1"></i>}
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
                   {message.timestamp && (
                     <div className="text-[10px] text-gray-400 mt-1 text-right">
                       {formatTimestamp(message.timestamp)}
