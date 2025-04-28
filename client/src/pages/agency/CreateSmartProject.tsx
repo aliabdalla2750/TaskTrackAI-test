@@ -120,6 +120,7 @@ export default function CreateSmartProject() {
         const response = await apiRequest('POST', '/api/ai/project-creation', {
           projectName: projectName,
           projectDetails: result.content,
+          fullConversation: result.fullConversation, // إضافة المحادثة الكاملة إلى الطلب
           aiSettings: {
             persona: aiSetup.aiPersona === 'custom' ? aiSetup.customPersona : DEFAULT_PERSONAS[aiSetup.aiPersona as keyof typeof DEFAULT_PERSONAS],
             thinkingStyle: THINKING_STYLES[aiSetup.thinkingStyle as keyof typeof THINKING_STYLES],

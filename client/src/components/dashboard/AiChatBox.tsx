@@ -234,6 +234,13 @@ export function AiChatBox({
     }
   };
   
+  // تأثير لضمان تمرير المحادثات عند تحميل المكون مع الرسائل الأولية
+  useEffect(() => {
+    if (initialMessages && initialMessages.length > 0) {
+      setMessages(initialMessages);
+    }
+  }, []);
+  
   // تنسيق الوقت
   const formatTimestamp = (timestamp?: Date) => {
     if (!timestamp) return '';
@@ -252,12 +259,19 @@ export function AiChatBox({
           navigator.clipboard.writeText(action.data.content)
             .then(() => {
               // استخدام toast من useToast
-              window.alert("تم نسخ المحتوى إلى الحافظة");
+              toast({
+                title: "تم النسخ",
+                description: "تم نسخ المحتوى إلى الحافظة",
+              });
             })
             .catch((error) => {
               console.error('فشل نسخ النص:', error);
               // استخدام toast من useToast
-              window.alert("لم نتمكن من نسخ المحتوى إلى الحافظة");
+              toast({
+                title: "خطأ في النسخ",
+                description: "لم نتمكن من نسخ المحتوى إلى الحافظة",
+                variant: "destructive",
+              });
             });
         }
         break;
@@ -265,15 +279,26 @@ export function AiChatBox({
       case 'create_project':
         // استدعاء الدالة إذا تم توفيرها من المكون الأب
         if (onResultGenerated) {
-          // إرسال الرد بالكامل للمعالجة وتحويله إلى مشروع منظم
+          // تحويل جميع الرسائل إلى سلسلة نصية منسقة وإرسالها مع سياق المحادثة الكاملة
+          const fullConversation = messages
+            .filter(msg => !msg.isTyping) // استبعاد رسائل الكتابة
+            .map(msg => `${msg.sender === 'ai' ? 'المساعد: ' : 'المستخدم: '}${msg.content}`)
+            .join('\n\n');
+          
+          // إرسال الرد بالكامل للمعالجة وتحويله إلى مشروع منظم مع سياق المحادثة
           // سيتم استلامه في handleAiResult في CreateSmartProject.tsx
           onResultGenerated({
             type: 'project_creation',
             content: action.data?.content,
-            rawContent: action.data?.content
+            rawContent: action.data?.content,
+            fullConversation: fullConversation // إضافة المحادثة الكاملة
           });
+          
           // استخدام toast من useToast
-          window.alert("تم إرسال طلب إنشاء المشروع، جاري التحليل وإعداد المشروع");
+          toast({
+            title: "جاري تحليل المشروع",
+            description: "تم إرسال طلب إنشاء المشروع، جاري التحليل وإعداد المشروع",
+          });
         }
         break;
         
@@ -285,7 +310,10 @@ export function AiChatBox({
             content: action.data?.content,
           });
           // استخدام toast من useToast
-          window.alert("تم حفظ المحتوى بنجاح");
+          toast({
+            title: "تم الحفظ",
+            description: "تم حفظ المحتوى بنجاح",
+          });
         }
         break;
         
@@ -297,7 +325,10 @@ export function AiChatBox({
             parameters: action.data,
           });
           // استخدام toast من useToast
-          window.alert("تم إرسال طلب توليد المحتوى");
+          toast({
+            title: "جاري توليد المحتوى",
+            description: "تم إرسال طلب توليد المحتوى",
+          });
         }
         break;
         
@@ -314,7 +345,10 @@ export function AiChatBox({
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
           // استخدام toast من useToast
-          window.alert("تم تنزيل المحتوى بنجاح");
+          toast({
+            title: "تم التنزيل",
+            description: "تم تنزيل المحتوى بنجاح",
+          });
         }
         break;
         
