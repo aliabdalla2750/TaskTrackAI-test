@@ -127,7 +127,7 @@ export function AiChatBox({
       // إضافة إجراءات حسب نوع السيناريو
       const timestamp = Date.now().toString();
       
-      if (scenarioKey === 'project') {
+      if (scenarioKey === 'project' || scenarioKey === 'project-creation') {
         actions = [
           {
             id: `create-project-${timestamp}`,
