@@ -2,7 +2,6 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { openAIService } from "./services/openai-service";
-import { anthropicService } from "./services/anthropic-service";
 import { insertAiScenarioSchema, insertClientSchema, insertEmployeeSchema, insertProjectSchema, insertSubgoalSchema, insertTaskSchema, insertTaskSubmissionSchema, insertUserSchema } from "@shared/schema";
 import { ZodError } from "zod";
 
@@ -163,29 +162,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Message is required" });
       }
       
-      let result;
-      // Use appropriate service based on model
-      if (model.includes("claude")) {
-        result = await anthropicService.processChat({
-          scenarioKey,
-          messages: [
-            { role: "user", content: message }
-          ]
-        });
-      } else {
-        // Default to OpenAI
-        result = await openAIService.processChat({
-          scenarioKey,
-          messages: [
-            { role: "user", content: message }
-          ]
-        });
-      }
+      // Always use OpenAI
+      const result = await openAIService.processChat({
+        scenarioKey,
+        messages: [
+          { role: "user", content: message }
+        ]
+      });
       
       res.json({
         response: result.response,
         tokensUsed: result.tokensUsed,
-        model: model
+        model: "gpt-4o" // Always use gpt-4o
       });
     } catch (error) {
       console.error("AI chat error:", error);
@@ -202,26 +190,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Project name and details are required" });
       }
       
-      let result;
-      // Use appropriate service based on model
-      if (model.includes("claude")) {
-        result = await anthropicService.processProjectCreation(
-          projectName,
-          projectDetails
-        );
-      } else {
-        // Default to OpenAI
-        result = await openAIService.processProjectCreation(
-          projectName,
-          projectDetails
-        );
-      }
+      // Always use OpenAI
+      const result = await openAIService.processProjectCreation(
+        projectName,
+        projectDetails
+      );
       
       res.json({
         response: result.response,
         result: result.result,
         tokensUsed: result.tokensUsed,
-        model: model
+        model: "gpt-4o" // Always use gpt-4o
       });
     } catch (error) {
       console.error("AI project creation error:", error);
