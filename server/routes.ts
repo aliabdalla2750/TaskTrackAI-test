@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { openAIService } from "./services/openai-service";
+import { aiSettingsService } from "./services/ai-settings-service";
 import { insertAiScenarioSchema, insertClientSchema, insertEmployeeSchema, insertProjectSchema, insertSubgoalSchema, insertTaskSchema, insertTaskSubmissionSchema, insertUserSchema } from "@shared/schema";
 import { ZodError } from "zod";
 
@@ -531,6 +532,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // AI Settings endpoints
+  app.get("/api/ai/settings", async (req: Request, res: Response) => {
+    try {
+      // في التطبيق الحقيقي، سيتم استخراج معرف الوكالة من جلسة المستخدم
+      const agencyId = parseInt(req.query.agencyId as string) || 1;
+      const settings = await aiSettingsService.getSettings(agencyId);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching AI settings:", error);
+      res.status(500).json({ message: "Failed to fetch AI settings" });
+    }
+  });
+  
+  app.post("/api/ai/settings", async (req: Request, res: Response) => {
+    try {
+      // في التطبيق الحقيقي، سيتم استخراج معرف الوكالة من جلسة المستخدم
+      const agencyId = parseInt(req.body.agencyId as string) || 1;
+      
+      const settings = await aiSettingsService.saveSettings(agencyId, req.body);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error saving AI settings:", error);
+      res.status(500).json({ message: "Failed to save AI settings" });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
   
