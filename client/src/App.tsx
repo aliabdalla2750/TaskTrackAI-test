@@ -14,6 +14,7 @@ import AgencyTeam from "@/pages/agency/AgencyTeam";
 import AgencyClients from "@/pages/agency/AgencyClients";
 import AgencyFiles from "@/pages/agency/AgencyFiles";
 import AgencyAiAssistant from "@/pages/agency/AgencyAiAssistant";
+import AiSettings from "@/pages/agency/AiSettings";
 
 // Client Dashboard Pages
 import ClientOverview from "@/pages/client/ClientOverview";
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/dashboard/agency/clients" component={AgencyClients} />
       <Route path="/dashboard/agency/files" component={AgencyFiles} />
       <Route path="/dashboard/agency/ai-assistant" component={AgencyAiAssistant} />
+      <Route path="/dashboard/agency/ai-settings" component={AiSettings} />
       
       {/* Client Dashboard Routes */}
       <Route path="/dashboard/client/overview" component={ClientOverview} />

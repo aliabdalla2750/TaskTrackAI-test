@@ -125,6 +125,19 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 <span>الإعدادات العامة</span>
               </a>
             </li>
+            <li className="mb-1">
+              <Link
+                href="/dashboard/agency/ai-settings"
+                className={`flex items-center gap-2 p-2 rounded-md font-medium ${
+                  isActive('/dashboard/agency/ai-settings')
+                    ? 'text-primary bg-blue-50'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <i className="fas fa-brain"></i>
+                <span>إعدادات الذكاء الاصطناعي</span>
+              </Link>
+            </li>
           </ul>
           
           {/* Dashboard Type Switcher (for development purposes) */}
