@@ -58,16 +58,22 @@ export class AnthropicService {
     });
     
     try {
+      // Map messages to Anthropic format ensuring only valid roles
+      const validMessages = anthropicMessages.map(msg => ({
+        role: msg.role === 'system' ? 'user' : msg.role as 'user' | 'assistant',
+        content: msg.role === 'system' ? `<system>${msg.content}</system>` : msg.content
+      }));
+
       // Call Anthropic API
       const result = await anthropic.messages.create({
         model: scenario.model || DEFAULT_MODEL,
-        messages: anthropicMessages,
+        messages: validMessages,
         max_tokens: scenario.maxTokens || 1000,
         temperature: scenario.temperature / 100, // Convert from 0-100 to 0-1
       });
       
-      // Extract response
-      const response = result.content[0].text;
+      // Extract response safely
+      const response = result.content[0].type === 'text' ? result.content[0].text : '';
       
       // Approximate token count for usage logging
       // Anthropic doesn't provide exact token counts like OpenAI
@@ -136,19 +142,21 @@ export class AnthropicService {
     const userMessage = `أريد إنشاء مشروع جديد باسم "${projectName}".\n\nتفاصيل المشروع:\n${projectDetails}\n\nقم بتحليل هذه المعلومات وإنشاء خطة مشروع متكاملة.`;
     
     try {
-      // Call Anthropic API
+      // Call Anthropic API with valid format
       const result = await anthropic.messages.create({
         model: scenario.model || DEFAULT_MODEL,
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage }
+          { 
+            role: "user", 
+            content: `<system>${systemPrompt}</system>\n\n${userMessage}`
+          }
         ],
         max_tokens: scenario.maxTokens || 2000,
         temperature: scenario.temperature / 100, // Convert from 0-100 to 0-1
       });
       
-      // Extract response
-      const response = result.content[0].text;
+      // Extract response safely
+      const response = result.content[0].type === 'text' ? result.content[0].text : '';
       
       // Parse JSON
       let parsedResult: ProjectAnalysisResult;
@@ -179,7 +187,6 @@ export class AnthropicService {
         userId,
         agencyId,
         messages: [
-          { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
           { role: "assistant", content: response }
         ]

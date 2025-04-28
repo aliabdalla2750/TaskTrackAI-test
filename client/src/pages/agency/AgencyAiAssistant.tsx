@@ -109,6 +109,7 @@ export default function AgencyAiAssistant() {
           title=""
           welcomeMessage={currentScenario.welcomeMessage}
           scenarioKey={currentScenario.id}
+          model={selectedModel}
         />
       </div>
       

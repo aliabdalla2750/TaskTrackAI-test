@@ -104,6 +104,7 @@ export function AiChatBox({
       const response = await apiRequest('POST', '/api/ai/chat', {
         message: input,
         scenarioKey,
+        model,
       });
       
       const data = await response.json();
