@@ -17,6 +17,7 @@ interface AiChatBoxProps {
   onResultGenerated?: (result: any) => void;
   initialMessages?: Message[];
   height?: string;
+  model?: string;
 }
 
 export function AiChatBox({
@@ -26,6 +27,7 @@ export function AiChatBox({
   onResultGenerated,
   initialMessages = [],
   height = 'max-h-80',
+  model = 'gpt-4o',
 }: AiChatBoxProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState('');
@@ -41,7 +43,7 @@ export function AiChatBox({
       setMessages([
         {
           id: Date.now().toString(),
-          sender: 'ai',
+          sender: 'ai' as const,
           content: welcomeMessage,
           timestamp: new Date(),
         },
@@ -69,13 +71,13 @@ export function AiChatBox({
     
     const userMessage = {
       id: Date.now().toString(),
-      sender: 'user',
+      sender: 'user' as const,
       content: input,
       timestamp: new Date(),
     };
     
     // إضافة رسالة المستخدم إلى المحادثة
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage as Message]);
     setInput('');
     
     // إضافة مؤشر الكتابة للذكاء الاصطناعي
@@ -84,7 +86,7 @@ export function AiChatBox({
       ...prev,
       {
         id: typingId,
-        sender: 'ai',
+        sender: 'ai' as const,
         content: '',
         isTyping: true,
         timestamp: new Date(),
@@ -112,7 +114,7 @@ export function AiChatBox({
           msg.id === typingId
             ? {
                 id: typingId,
-                sender: 'ai',
+                sender: 'ai' as const,
                 content: data.response,
                 timestamp: new Date(),
               }
@@ -133,7 +135,7 @@ export function AiChatBox({
           msg.id === typingId
             ? {
                 id: typingId,
-                sender: 'ai',
+                sender: 'ai' as const,
                 content: 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.',
                 timestamp: new Date(),
               }

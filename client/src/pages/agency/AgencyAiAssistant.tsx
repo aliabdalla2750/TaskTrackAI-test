@@ -60,9 +60,8 @@ export default function AgencyAiAssistant() {
                 <SelectValue placeholder="اختر النموذج" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                <SelectItem value="claude">Claude</SelectItem>
-                <SelectItem value="deepseek">DeepSeek</SelectItem>
+                <SelectItem value="gpt-4o">OpenAI GPT-4o</SelectItem>
+                <SelectItem value="claude-3-7-sonnet-20250219">Claude Sonnet 3.7</SelectItem>
               </SelectContent>
             </Select>
           </div>
