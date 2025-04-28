@@ -1,0 +1,253 @@
+Taskaaya هي منصة Web App هدفها إنشاء وإدارة المشاريع بطريقة ذكية معتمدة على الذكاء الاصطناعي (AI Account Manager).
+
+المنصة تحول الكلام مع العميل أو نص العقد إلى:
+
+مشروع حقيقي.
+
+أهداف فرعية Subgoals.
+
+مهام Tasks.
+
+مؤشرات أداء KPIs.
+
+Timeline زمني.
+
+2. 🧩 الهيكل الكامل للمنصة:
+A. لوحات التحكم (Dashboards)
+اللوحة	الجمهور المستهدف	الرابط	الوظيفة الأساسية
+Admin Dashboard	مدير النظام الأساسي	/dashboard/admin/overview	إدارة النظام ككل.
+Agency Dashboard	وكالات الأعمال	/dashboard/agency/overview	إنشاء وإدارة المشاريع والمهام.
+Client Dashboard	العملاء	/dashboard/client/overview	متابعة مشاريعهم ودفع الفواتير.
+Employee Dashboard	موظفي الوكالات	/dashboard/employee/overview	تنفيذ وتسليم المهام المخصصة لهم.
+B. كل صفحة بالتفصيل:
+1. Admin Dashboard:
+/dashboard/admin/overview
+
+عرض مؤشرات عامة:
+
+عدد الوكالات.
+
+عدد المشاريع النشطة.
+
+معدل استهلاك AI عبر المنصة.
+
+/dashboard/admin/users
+
+إدارة جميع المستخدمين (وكالات - عملاء - موظفين).
+
+التفعيل / الإلغاء / التعديل.
+
+/dashboard/admin/ai-scenarios
+
+إدارة سيناريوهات الذكاء الاصطناعي:
+
+إنشاء سيناريو جديد.
+
+تحديد الموديل (GPT-4o, Claude, DeepSeek...).
+
+إدخال System Prompt.
+
+اختبار السيناريو.
+
+تفعيل أو تعطيل السيناريو.
+
+/dashboard/admin/ai-usage-reports
+
+تتبع استهلاك AI:
+
+عدد الطلبات.
+
+عدد التوكنز.
+
+التكلفة التقديرية.
+
+/dashboard/admin/billing
+
+إدارة اشتراكات الوكالات والفواتير المدفوعة أو المعلقة.
+
+2. Agency Dashboard:
+/dashboard/agency/overview
+
+عرض ملخص المشاريع.
+
+الأهداف الفرعية المتأخرة والمكتملة.
+
+رابط سريع لإنشاء مشروع ذكي جديد.
+
+/dashboard/agency/projects
+
+عرض وإدارة كل المشاريع.
+
+زر لإنشاء مشروع يدوي أو ذكي (/dashboard/agency/create-project-smart).
+
+/dashboard/agency/create-project-smart
+
+محادثة تفاعلية مع AI:
+
+الذكاء الاصطناعي يسأل عن أهداف المشروع.
+
+يحلل الإجابات ويقسمها إلى:
+
+أهداف فرعية.
+
+مهام.
+
+Timeline.
+
+KPIs.
+
+في النهاية يتم إنشاء مشروع حقيقي.
+
+/dashboard/agency/tasks
+
+عرض كل المهام.
+
+تعيين موظف لكل مهمة.
+
+متابعة تقدم التنفيذ.
+
+رفع ملفات التسليمات.
+
+مراجعة وقبول أو رفض التسليم.
+
+/dashboard/agency/team
+
+إضافة أعضاء فريق جدد.
+
+تتبع أداء كل موظف.
+
+/dashboard/agency/clients
+
+إضافة عملاء جدد وربطهم بالمشاريع.
+
+/dashboard/agency/notifications
+
+استقبال التنبيهات المرتبطة بالمهام والمشاريع.
+
+/dashboard/agency/files
+
+رفع ملفات مرتبطة بالمشاريع أو المهام.
+
+عرض وتحميل الملفات.
+
+/dashboard/agency/ai-assistant
+
+دردشة عامة مع AI:
+
+توليد أفكار.
+
+اقتراح خطط عمل.
+
+تحليل مشاكل العملاء.
+
+3. Client Dashboard:
+/dashboard/client/overview
+
+عرض حالة مشاريعه.
+
+التنبيهات الجديدة.
+
+/dashboard/client/projects
+
+متابعة حالة كل مشروع بالتفصيل.
+
+/dashboard/client/tasks
+
+عرض المهام المرتبطة بمشاريعه.
+
+طلب تعديلات على المهام.
+
+/dashboard/client/billing
+
+مراجعة الفواتير والدفع أونلاين.
+
+/dashboard/client/files
+
+تحميل الملفات المسلّمة له.
+
+/dashboard/client/chat
+
+دردشة مع مدير المشروع مباشرة.
+
+4. Employee Dashboard:
+/dashboard/employee/overview
+
+ملخص بالمهام المسندة إليه.
+
+/dashboard/employee/tasks
+
+عرض وإنجاز المهام.
+
+إرسال الملفات النهائية.
+
+/dashboard/employee/submissions
+
+حالة كل تسليم قام به.
+
+/dashboard/employee/performance
+
+KPIs وأداء الموظف شهريًا.
+
+/dashboard/employee/files
+
+مراجعة وتحميل ملفات المهام الخاصة به.
+
+3. 🛠️ الترابط الكامل بين العمليات:
+منين	إلى فين	التفاصيل
+إنشاء مشروع جديد (AI أو يدوي)	Projects + Subgoals + Tasks	يتم حفظها تلقائيًا.
+رفع ملف مهمة	Files مرتبط بـ Task ID	يتم الربط تلقائيًا.
+إنهاء مهمة	Update في Task Status + Submissions	يتم تسجيل تسليم.
+استخدام AI	AI Usage Logs + Cost Estimation	يسجل الاستهلاك والتكلفة.
+محادثة AI	Chat Logs	يتم حفظ كل المحادثات.
+4. 🎨 تعليمات التصميم (UI/UX):
+الاتجاه: RTL (عربي بالكامل).
+
+الخط: Hacen Maghreb BD.
+
+الألوان:
+
+خلفية: #F9FAFB.
+
+لون رئيسي: #5A47FF.
+
+لون النصوص الداكنة: #1A202C.
+
+لون الحركة والأزرار البارزة: #00BFA6.
+
+الأنميشن:
+
+Fade عند الانتقال بين الصفحات.
+
+Typing effect في الشات مع AI.
+
+أزرار فيها animation عند الضغط.
+
+5. 🧠 الذكاء الاصطناعي المستخدم:
+لكل سيناريو:
+
+اسم واضح (مثلاً Project Creation).
+
+System Prompt خاص.
+
+اختيار الموديل (DeepSeek, Claude, GPT-4o).
+
+تحديد درجة الحرارة (Temperature) وعدد التوكنز.
+
+صفحة إدارة السيناريوهات:
+
+يتم اختبار كل سيناريو.
+
+حفظ نتائج التجربة.
+
+السماح بتبديل الموديل بين السيناريوهات بسهولة.
+
+6. 📋 ملاحظات تنفيذ إضافية:
+❌ لا بناء لنظام تسجيل الدخول الآن (Login/Signup مؤجل).
+
+✅ التركيز على بناء الـ Core Functionality بشكل كامل.
+
+✅ كل صفحة يجب أن تحتوي على حالة Loading واضحة.
+
+✅ كل طلب API يجب أن يكون مصحوب بإشعار نجاح أو فشل.
+
+✅ حفظ كل المحادثات مع AI لأغراض التتبع.

@@ -1,0 +1,126 @@
+1. تفاصيل قاعدة البيانات (Database Tables)
+A. جداول أساسية:
+اسم الجدول	وصفه	أهم الأعمدة
+users	المستخدمين (وكالات - عملاء - موظفين)	id, name, email, role, agencyId (nullable), status
+agencies	الوكالات	id, name, description, subscription_plan, status
+clients	العملاء	id, name, email, phone, agencyId
+employees	الموظفين	id, name, email, phone, agencyId, position
+projects	المشاريع	id, name, description, clientId, agencyId, createdBy (userId), status (open/completed)
+subgoals	الأهداف الفرعية	id, title, projectId, description, kpi, due_date
+tasks	المهام	id, title, projectId, subgoalId, description, assignedTo (employeeId), due_date, status (open/closed)
+task_submissions	تسليمات المهام	id, taskId, employeeId, file_url, status (approved/needs_revision/rejected)
+notifications	الإشعارات	id, userId, type, message, is_read
+files	الملفات	id, file_name, file_url, linked_to (taskId/projectId), uploaderId
+ai_scenarios	سيناريوهات الذكاء الاصطناعي	id, scenario_key, title, description, system_prompt, model, temperature, max_tokens, is_active
+ai_usage_logs	سجل استخدام AI	id, userId, agencyId, scenarioKey, model_used, tokens_used, cost_estimate, created_at
+payments	المدفوعات	id, agencyId, amount, status (paid/pending), payment_date
+B. أهم العلاقات بين الجداول:
+كل employee مرتبط بـ agencyId.
+
+كل client مرتبط بـ agencyId.
+
+كل project مرتبط بـ clientId + agencyId.
+
+كل task مرتبط بـ projectId + subgoalId.
+
+كل task_submission مرتبط بـ taskId + employeeId.
+
+كل file مرتبط إما بـ taskId أو projectId.
+
+✨ 2. تفاصيل كل API Endpoint
+A. إدارة المستخدمين:
+Method	Endpoint	وظيفة
+GET	/api/admin/users	عرض جميع المستخدمين
+POST	/api/admin/users	إنشاء مستخدم جديد
+PUT	/api/admin/users/:id	تعديل مستخدم
+DELETE	/api/admin/users/:id	حذف مستخدم
+B. المشاريع:
+Method	Endpoint	وظيفة
+GET	/api/projects	عرض جميع المشاريع
+POST	/api/projects	إنشاء مشروع
+POST	/api/projects/create-from-ai	إنشاء مشروع ذكي من AI
+GET	/api/projects/:id	عرض تفاصيل مشروع
+PUT	/api/projects/:id	تعديل مشروع
+DELETE	/api/projects/:id	حذف مشروع
+C. المهام:
+Method	Endpoint	وظيفة
+GET	/api/tasks	عرض المهام
+POST	/api/tasks	إنشاء تاسك
+PUT	/api/tasks/:id	تعديل تاسك
+DELETE	/api/tasks/:id	حذف تاسك
+D. تسليمات المهام:
+Method	Endpoint	وظيفة
+POST	/api/task-submissions	رفع تسليم مهمة
+GET	/api/task-submissions	عرض التسليمات
+PUT	/api/task-submissions/:id	قبول/رفض تسليم
+E. مكتبة الملفات:
+Method	Endpoint	وظيفة
+GET	/api/files	عرض الملفات
+POST	/api/files	رفع ملف
+F. الذكاء الاصطناعي:
+Method	Endpoint	وظيفة
+POST	/api/ai/chat	محادثة عامة مع AI
+POST	/api/ai/project-creation	إنشاء مشروع عبر محادثة ذكية
+POST	/api/ai/scenario-test	اختبار سيناريو AI
+✨ 3. سيناريو عملي لرحلة المستخدم:
+رحلة مدير وكالة لإنشاء مشروع جديد ذكي:
+يدخل /dashboard/agency/overview.
+
+يضغط "إنشاء مشروع ذكي".
+
+ينتقل إلى /dashboard/agency/create-project-smart.
+
+يبدأ محادثة مع AI (موديل DeepSeek أو Claude).
+
+AI يسأله عن:
+
+هدف المشروع؟
+
+السوق المستهدف؟
+
+الميزانية؟
+
+الوقت المتوقع؟
+
+النتيجة النهائية المرجوة؟
+
+الذكاء الاصطناعي يحلل الإجابات ويقوم تلقائياً بـ:
+
+إنشاء مشروع جديد.
+
+تقسيم الأهداف إلى Subgoals.
+
+توليد مهام Tasks.
+
+تحديد KPIs.
+
+وضع Timeline للتنفيذ.
+
+يظهر للمستخدم المشروع الناتج:
+
+يمكنه التعديل عليه قبل الحفظ النهائي.
+
+بعد الحفظ:
+
+يتم توزيع المهام على فريقه من /dashboard/agency/tasks.
+
+متابعة التقدم من /dashboard/agency/overview.
+
+رفع الملفات من /dashboard/agency/files.
+
+عند إنتهاء الموظفين من المهام:
+
+يراجع التسليمات.
+
+يرسل إشعارات للعملاء بالتقدم أو التسليم.
+
+في النهاية:
+
+يتم إنهاء المشروع وتوليد تقرير آلي بالتقدم والإنجازات عبر /dashboard/agency/reports.
+
+🔥 ملاحظة ختامية مهمة:
+المنصة بالكامل تعمل من غير تسجيل دخول حاليًا.
+
+كل التعاملات موثقة في الـ logs.
+
+كل خطوة لازم يكون فيها تأكيد أو إشعار للمستخدم.
