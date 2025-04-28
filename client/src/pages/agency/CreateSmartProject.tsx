@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
-import useToast from '@/hooks/useToast';
+import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 
 interface ProjectResult {
@@ -36,9 +36,50 @@ export default function CreateSmartProject() {
     setStep('ai-chat');
   };
   
-  const handleAiResult = (result: ProjectResult) => {
-    setAiResult(result);
-    setStep('review');
+  const handleAiResult = async (result: any) => {
+    // التأكد من أن النتيجة تحتوي على محتوى من النوع الصحيح
+    if (result.type === 'project_creation') {
+      setIsSubmitting(true);
+      
+      try {
+        // استدعاء واجهة برمجة التطبيقات للحصول على نتيجة منظمة للمشروع
+        const response = await apiRequest('POST', '/api/ai/project-creation', {
+          projectName: projectName,
+          projectDetails: result.content
+        });
+        
+        const data = await response.json();
+        
+        // تحديث حالة المكون بنتيجة المشروع المنظم
+        if (data.result) {
+          setAiResult(data.result);
+          setStep('review');
+          toast({
+            title: "تم التحليل بنجاح",
+            description: "تم تحليل المشروع وإنشاء خطة متكاملة. يرجى مراجعة التفاصيل.",
+            variant: "default",
+          });
+        } else {
+          throw new Error('لم يتم العثور على بيانات المشروع');
+        }
+      } catch (error) {
+        console.error('Failed to process project creation:', error);
+        toast({
+          title: "خطأ في معالجة المشروع",
+          description: "حدث خطأ أثناء تحليل المشروع. يرجى المحاولة مرة أخرى.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      // إذا لم تكن النتيجة من نوع إنشاء المشروع، نعرض خطأ
+      toast({
+        title: "نوع النتيجة غير مدعوم",
+        description: "الرجاء استخدام زر 'إنشاء مشروع' من المحادثة مع المساعد الذكي.",
+        variant: "destructive",
+      });
+    }
   };
   
   const createProject = async () => {

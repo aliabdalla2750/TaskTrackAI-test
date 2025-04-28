@@ -265,12 +265,15 @@ export function AiChatBox({
       case 'create_project':
         // استدعاء الدالة إذا تم توفيرها من المكون الأب
         if (onResultGenerated) {
+          // إرسال الرد بالكامل للمعالجة وتحويله إلى مشروع منظم
+          // سيتم استلامه في handleAiResult في CreateSmartProject.tsx
           onResultGenerated({
             type: 'project_creation',
             content: action.data?.content,
+            rawContent: action.data?.content
           });
           // استخدام toast من useToast
-          window.alert("تم إرسال طلب إنشاء المشروع");
+          window.alert("تم إرسال طلب إنشاء المشروع، جاري التحليل وإعداد المشروع");
         }
         break;
         
