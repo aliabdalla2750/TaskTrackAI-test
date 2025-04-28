@@ -120,11 +120,18 @@ export function AiChatBox({
           content: msg.content
         }));
       
+      // للتصحيح: طباعة سجل المحادثة الحالية
+      console.log('Current conversation history:', messages);
+      console.log('Formatted conversation history:', conversationHistory);
+      
       // إضافة الرسالة الحالية
       conversationHistory.push({
         role: 'user',
         content: input
       });
+      
+      // للتصحيح: طباعة المحادثة كاملة بعد إضافة الرسالة الجديدة
+      console.log('Final conversation being sent:', conversationHistory);
       
       // إرسال المحادثة الكاملة إلى واجهة API
       const response = await apiRequest('POST', '/api/ai/chat', {
