@@ -191,16 +191,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Project creation with AI endpoint
   app.post("/api/ai/project-creation", async (req: Request, res: Response) => {
     try {
-      const { projectName, projectDetails, aiSettings, model = "gpt-4o" } = req.body;
+      const { projectName, projectDetails, fullConversation, aiSettings, model = "gpt-4o" } = req.body;
       
       if (!projectName || !projectDetails) {
         return res.status(400).json({ message: "Project name and details are required" });
       }
       
+      // استخدام المحادثة الكاملة إذا كانت متوفرة، وإلا استخدام آخر رد
+      const conversationContext = fullConversation || projectDetails;
+      
       // Always use OpenAI
       const result = await openAIService.processProjectCreation(
         projectName,
-        projectDetails,
+        conversationContext,
         aiSettings
       );
       
