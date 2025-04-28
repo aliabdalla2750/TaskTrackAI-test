@@ -170,10 +170,17 @@ export default function CreateSmartProject() {
     setIsSubmitting(true);
     
     try {
+      // الحصول على معرف المستخدم والوكالة (في بيئة حقيقية، ستحصل عليها من الجلسة)
+      const agencyId = 1; // استخدام القيمة الافتراضية للعرض التجريبي
+      const createdBy = 1; // استخدام القيمة الافتراضية للعرض التجريبي
+      
       const response = await apiRequest('POST', '/api/projects', {
         name: projectName,
         description: aiResult.description,
         clientId: clientId || null,
+        agencyId: agencyId, // إضافة معرف الوكالة (مطلوب)
+        createdBy: createdBy, // إضافة معرف المستخدم المنشئ (مطلوب)
+        status: 'open', // إضافة الحالة الافتراضية
         subgoals: aiResult.subgoals,
         tasks: aiResult.tasks,
         timeline: aiResult.timeline,
