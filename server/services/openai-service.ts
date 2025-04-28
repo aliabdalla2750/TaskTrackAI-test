@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { storage } from "../storage";
 import type { AiScenario } from "@shared/schema";
+import { aiSettingsService } from "./ai-settings-service";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const DEFAULT_MODEL = "gpt-4o";
@@ -32,25 +33,33 @@ export interface ProjectAnalysisResult {
 
 export class OpenAIService {
   // Process chat request
-  async processChat(request: ChatRequest): Promise<{ response: string; tokensUsed: number }> {
+  async processChat(request: ChatRequest): Promise<{ response: string; tokensUsed: number; result?: any }> {
     // Get the scenario
     const scenario = await this.getScenario(request.scenarioKey);
+    
+    // الحصول على إعدادات الذكاء الاصطناعي المخصصة للوكالة
+    const agencyId = request.agencyId || 1;
+    const customPrompt = await aiSettingsService.getFinalPromptForScenario(agencyId, request.scenarioKey);
     
     // Add system message if not already included
     const messages = [...request.messages];
     if (!messages.some(m => m.role === "system")) {
       messages.unshift({
         role: "system",
-        content: scenario.systemPrompt
+        // استخدام البرومبت المخصص إذا كان متوفرًا، وإلا استخدام البرومبت الافتراضي من السيناريو
+        content: customPrompt || scenario.systemPrompt
       });
     }
     
     try {
+      // الحصول على إعدادات الذكاء الاصطناعي
+      const aiSettings = await aiSettingsService.getSettings(agencyId);
+      
       // Call OpenAI API
       const result = await openai.chat.completions.create({
         model: scenario.model || DEFAULT_MODEL,
         messages: messages,
-        temperature: scenario.temperature / 100, // Convert from 0-100 to 0-1
+        temperature: aiSettings.temperature || scenario.temperature / 100, // استخدام درجة الحرارة المخصصة
         max_tokens: scenario.maxTokens,
       });
       
@@ -101,10 +110,18 @@ export class OpenAIService {
     // Get the scenario
     const scenario = await this.getScenario("project-creation");
     
-    // إعداد محتوى رسالة النظام بناءً على إعدادات الذكاء الاصطناعي
-    let systemContent = scenario.systemPrompt;
+    // استخدام معرف الوكالة المقدم أو الافتراضي
+    const agency = agencyId || 1;
     
-    // إذا تم توفير إعدادات الذكاء الاصطناعي، نقوم بتضمينها في رسالة النظام
+    // الحصول على برومبت مخصص من إعدادات الذكاء الاصطناعي إذا كانت متوفرة
+    let systemContent = await aiSettingsService.getFinalPromptForScenario(agency, "project-creation");
+    
+    // إذا لم يكن البرومبت المخصص متوفرًا، نستخدم البرومبت الافتراضي من السيناريو
+    if (!systemContent) {
+      systemContent = scenario.systemPrompt;
+    }
+    
+    // إذا تم توفير إعدادات الذكاء الاصطناعي المخصصة للطلب الحالي، نقوم بتضمينها في رسالة النظام
     if (aiSettings) {
       // إضافة معلومات شخصية الذكاء الاصطناعي
       if (aiSettings.persona) {

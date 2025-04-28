@@ -190,7 +190,7 @@ export default function AiSettings() {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="إعدادات المساعد الذكي">
       <div className="container mx-auto py-6">
         <h1 className="text-2xl font-bold mb-6">إعدادات المساعد الذكي</h1>
 
