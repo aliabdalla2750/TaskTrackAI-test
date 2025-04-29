@@ -218,25 +218,41 @@ const AdminAiProviders = () => {
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">اسم المزود (للنظام)</Label>
-                      <Input
-                        id="name"
-                        placeholder="مثال: openai"
-                        value={newProvider.name}
-                        onChange={(e) => setNewProvider({ ...newProvider, name: e.target.value })}
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground">استخدم أحرف صغيرة بدون مسافات</p>
+                      <Label htmlFor="name">اختر المزود</Label>
+                      <Select 
+                        value={newProvider.name} 
+                        onValueChange={(value) => {
+                          const displayNames = {
+                            "openai": "OpenAI",
+                            "deepseek": "DeepSeek",
+                            "openrouter": "OpenRouter"
+                          };
+                          setNewProvider({ 
+                            ...newProvider, 
+                            name: value,
+                            displayName: displayNames[value as keyof typeof displayNames]
+                          });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر مزود الذكاء الاصطناعي" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="openai">OpenAI</SelectItem>
+                          <SelectItem value="deepseek">DeepSeek</SelectItem>
+                          <SelectItem value="openrouter">OpenRouter</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">اختر مزود الذكاء الاصطناعي</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="displayName">اسم العرض</Label>
                       <Input
                         id="displayName"
-                        placeholder="مثال: OpenAI"
                         value={newProvider.displayName}
-                        onChange={(e) => setNewProvider({ ...newProvider, displayName: e.target.value })}
-                        required
+                        readOnly
                       />
+                      <p className="text-xs text-muted-foreground">سيتم تعبئته تلقائيًا بناءً على اختيار المزود</p>
                     </div>
                   </div>
                   <div className="space-y-2">
