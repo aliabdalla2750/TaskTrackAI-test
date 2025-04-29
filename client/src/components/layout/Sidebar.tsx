@@ -105,6 +105,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const employeeLinks = [
     { path: '/dashboard/employee/overview', icon: <RiDashboardLine />, label: 'نظرة عامة' },
     { path: '/dashboard/employee/tasks', icon: <RiTaskLine />, label: 'المهام' },
+    { path: '/dashboard/employee/daily-tasks', icon: <RiClipboardLine />, label: 'المهام اليومية' },
     { path: '/dashboard/employee/submissions', icon: <RiClipboardLine />, label: 'التسليمات' },
     { path: '/dashboard/employee/performance', icon: <RiLineChartLine />, label: 'الأداء' },
     { path: '/dashboard/employee/files', icon: <RiFileTextLine />, label: 'الملفات' },

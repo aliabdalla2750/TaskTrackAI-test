@@ -28,6 +28,7 @@ import ClientFiles from "@/pages/client/ClientFiles";
 // Employee Dashboard Pages
 import EmployeeOverview from "@/pages/employee/EmployeeOverview";
 import EmployeeTasks from "@/pages/employee/EmployeeTasks";
+import EmployeeDailyTasks from "@/pages/employee/EmployeeDailyTasks";
 import EmployeeSubmissions from "@/pages/employee/EmployeeSubmissions";
 import EmployeePerformance from "@/pages/employee/EmployeePerformance";
 import EmployeeFiles from "@/pages/employee/EmployeeFiles";
@@ -66,6 +67,7 @@ function Router() {
       {/* Employee Dashboard Routes */}
       <Route path="/dashboard/employee/overview" component={EmployeeOverview} />
       <Route path="/dashboard/employee/tasks" component={EmployeeTasks} />
+      <Route path="/dashboard/employee/daily-tasks" component={EmployeeDailyTasks} />
       <Route path="/dashboard/employee/submissions" component={EmployeeSubmissions} />
       <Route path="/dashboard/employee/performance" component={EmployeePerformance} />
       <Route path="/dashboard/employee/files" component={EmployeeFiles} />
