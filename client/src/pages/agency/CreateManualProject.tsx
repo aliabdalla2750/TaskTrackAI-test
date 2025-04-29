@@ -110,7 +110,13 @@ export default function CreateManualProject() {
       try {
         const response = await apiRequest('GET', '/api/clients');
         const data = await response.json();
-        setClients(data);
+        if (data && Array.isArray(data.clients)) {
+          setClients(data.clients);
+        } else {
+          // إذا لم تكن البيانات قائمة، نستخدم مصفوفة فارغة
+          setClients([]);
+          console.warn("تم استلام بيانات العملاء بتنسيق غير متوقع:", data);
+        }
       } catch (error) {
         console.error('Failed to fetch clients:', error);
         toast({
@@ -515,7 +521,7 @@ export default function CreateManualProject() {
                     <Label htmlFor="startDate">تاريخ البدء</Label>
                     <DatePicker
                       date={formData.startDate || undefined}
-                      setDate={(date) => handleChange('startDate', date)}
+                      setDate={(date: Date | undefined) => handleChange('startDate', date)}
                       placeholder="اختر تاريخ البدء"
                     />
                   </div>
@@ -525,7 +531,7 @@ export default function CreateManualProject() {
                     <Label htmlFor="endDate">تاريخ الانتهاء المتوقع</Label>
                     <DatePicker
                       date={formData.endDate || undefined}
-                      setDate={(date) => handleChange('endDate', date)}
+                      setDate={(date: Date | undefined) => handleChange('endDate', date)}
                       placeholder="اختر تاريخ الانتهاء"
                     />
                   </div>
@@ -733,7 +739,7 @@ export default function CreateManualProject() {
                               <CardHeader className="bg-gray-50 py-3">
                                 <CardTitle className="text-base flex items-center gap-2">
                                   <div className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                                    <RiBulletChartLine size={14} />
+                                    <RiLineChartLine size={14} />
                                   </div>
                                   {kpi.title}
                                 </CardTitle>
