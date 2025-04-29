@@ -698,73 +698,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // اختبار المزود باستخدام الـ API الخاص به
-      // هنا سنستخدم استدعاء بسيط للتأكد من أن المفتاح يعمل
       let testResult = false;
       let testMessage = '';
       
       try {
-        if (provider.name === 'openai') {
-          const response = await axios.post(
-            provider.baseUrl || 'https://api.openai.com/v1/chat/completions',
-            {
+        let apiUrl;
+        let requestBody;
+        let headers = {
+          'Authorization': `Bearer ${provider.apiKey}`,
+          'Content-Type': 'application/json'
+        };
+        
+        switch (provider.name) {
+          case 'openai':
+            apiUrl = provider.baseUrl || 'https://api.openai.com/v1/chat/completions';
+            requestBody = {
               model: "gpt-4o",
               messages: [{ role: "user", content: "Hello" }],
               max_tokens: 5
-            },
-            {
-              headers: {
-                'Authorization': `Bearer ${provider.apiKey}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          
-          testResult = !!response.data;
-          testMessage = 'OpenAI connection successful';
-        } else if (provider.name === 'deepseek') {
-          // اختبار DeepSeek API
-          const response = await axios.post(
-            provider.baseUrl || 'https://api.deepseek.com/v1/chat/completions',
-            {
+            };
+            break;
+            
+          case 'deepseek':
+            apiUrl = provider.baseUrl || 'https://api.deepseek.com/v1/chat/completions';
+            requestBody = {
               model: "deepseek-chat",
               messages: [{ role: "user", content: "Hello" }],
               max_tokens: 5
-            },
-            {
-              headers: {
-                'Authorization': `Bearer ${provider.apiKey}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          
-          testResult = !!response.data;
-          testMessage = 'DeepSeek connection successful';
-        } else if (provider.name === 'openrouter') {
-          // اختبار OpenRouter API
-          const response = await axios.post(
-            provider.baseUrl || 'https://openrouter.ai/api/v1/chat/completions',
-            {
+            };
+            break;
+            
+          case 'openrouter':
+            apiUrl = provider.baseUrl || 'https://openrouter.ai/api/v1/chat/completions';
+            requestBody = {
               model: "openai/gpt-4",
               messages: [{ role: "user", content: "Hello" }],
               max_tokens: 5
-            },
-            {
-              headers: {
-                'Authorization': `Bearer ${provider.apiKey}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          
-          testResult = !!response.data;
-          testMessage = 'OpenRouter connection successful';
-        } else {
-          testMessage = 'Unknown provider type';
+            };
+            break;
+            
+          default:
+            testMessage = 'Unknown provider type';
+            return res.json({ success: false, message: testMessage });
         }
-      } catch (testError) {
-        console.error("Provider test error:", testError);
-        testMessage = `Test failed: ${testError.message}`;
+        
+        const response = await axios.post(apiUrl, requestBody, { headers });
+        testResult = !!response.data;
+        testMessage = `${provider.displayName} connection successful`;
+        
+      } catch (error: any) {
+        console.error("Provider test error:", error);
+        testMessage = `Test failed: ${error.message}`;
       }
       
       res.json({ 
