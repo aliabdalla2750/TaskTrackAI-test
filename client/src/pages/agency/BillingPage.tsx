@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Calendar, CreditCard, DollarSign, FileText, Filter, Printer, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { queryClient } from '@/lib/queryClient';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,97 +69,19 @@ const BillingPage: React.FC = () => {
   // Fetch billing data
   const { data: billingData, isLoading: isBillingLoading } = useQuery({
     queryKey: [`/api/agency/${agencyId}/billings`],
-    queryFn: async () => {
-      // For development, we'll use mock data until backend is ready
-      const demoData = {
-        billings: [
-          {
-            id: 1,
-            clientId: 1,
-            clientName: 'شركة السعادة للتجارة',
-            projectId: 101,
-            projectName: 'تطوير الموقع الإلكتروني',
-            description: 'دفعة شهرية - يناير 2025',
-            amount: 5000,
-            dueDate: '2025-05-15',
-            status: 'pending',
-            createdAt: '2025-04-20',
-            invoiceNumber: 'INV-2025-001'
-          },
-          {
-            id: 2,
-            clientId: 2,
-            clientName: 'مؤسسة النجاح',
-            projectId: 102,
-            projectName: 'حملة تسويقية على وسائل التواصل',
-            description: 'دفعة نهائية',
-            amount: 7500,
-            dueDate: '2025-05-01',
-            status: 'paid',
-            createdAt: '2025-04-10',
-            paymentDate: '2025-04-15',
-            invoiceNumber: 'INV-2025-002'
-          },
-          {
-            id: 3,
-            clientId: 1,
-            clientName: 'شركة السعادة للتجارة',
-            projectId: 103,
-            projectName: 'تصميم هوية بصرية',
-            description: 'دفعة أولى',
-            amount: 3000,
-            dueDate: '2025-04-10',
-            status: 'overdue',
-            createdAt: '2025-03-25',
-            invoiceNumber: 'INV-2025-003'
-          }
-        ]
-      };
-  
-      return demoData;
-    }
+    // API response will include billings array
   });
 
   // Fetch payments data
   const { data: paymentsData, isLoading: isPaymentsLoading } = useQuery({
     queryKey: [`/api/agency/${agencyId}/payments`],
-    queryFn: async () => {
-      // For development, we'll use mock data until backend is ready
-      const demoData = {
-        payments: [
-          {
-            id: 1,
-            billingId: 2,
-            clientId: 2,
-            clientName: 'مؤسسة النجاح',
-            amount: 7500,
-            paymentDate: '2025-04-15',
-            paymentMethod: 'تحويل بنكي',
-            reference: 'REF12345',
-            notes: 'دفعة نهائية للمشروع'
-          }
-        ]
-      };
-  
-      return demoData;
-    }
+    // API response will include payments array
   });
 
   // Fetch wallet data
   const { data: walletData, isLoading: isWalletLoading } = useQuery({
     queryKey: [`/api/agency/${agencyId}/wallet`],
-    queryFn: async () => {
-      // For development, we'll use mock data until backend is ready
-      const demoData = {
-        id: 1,
-        agencyId: 1,
-        currentBalance: 12500,
-        totalRevenue: 25000,
-        lastUpdated: '2025-04-20'
-      };
-  
-      return demoData;
-    }
+    // API response will include wallet info
   });
 
   // Handle invoice filtering
@@ -193,25 +116,79 @@ const BillingPage: React.FC = () => {
       description: 'يتم الآن إنشاء ملف PDF للفاتورة...',
     });
     
-    // In a real implementation, we would call the API endpoint
-    setTimeout(() => {
-      toast({
-        title: 'تم إنشاء الفاتورة بنجاح',
-        description: 'يمكنك الآن تنزيل أو مشاركة الفاتورة',
+    // Call the API to generate PDF
+    fetch(`/api/billings/${invoiceId}/pdf`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('فشل في إنشاء ملف PDF');
+        }
+        return response.json();
+      })
+      .then(() => {
+        toast({
+          title: 'تم إنشاء الفاتورة بنجاح',
+          description: 'يمكنك الآن تنزيل أو مشاركة الفاتورة',
+        });
+      })
+      .catch(error => {
+        toast({
+          title: 'خطأ',
+          description: error.message,
+          variant: 'destructive',
+        });
       });
-    }, 1500);
   };
 
   // Handle paying an invoice
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    toast({
-      title: 'تم تسجيل الدفعة بنجاح',
-      description: `تم تسجيل دفعة بقيمة ${formatCurrency(selectedInvoice?.amount)} للفاتورة ${selectedInvoice?.invoiceNumber}`,
-    });
+    if (!selectedInvoice) return;
     
-    setPaymentDialogOpen(false);
+    const formData = new FormData(e.target as HTMLFormElement);
+    const paymentMethod = formData.get('paymentMethod');
+    const reference = formData.get('reference');
+    const notes = formData.get('notes');
+    
+    // Call the API to process payment
+    fetch(`/api/billings/${selectedInvoice.id}/pay`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        paymentMethod: paymentMethod || 'bank',
+        reference: reference || '',
+        notes: notes || '',
+        paymentDate: new Date().toISOString(),
+      }),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('فشل في تسجيل الدفعة');
+        }
+        return response.json();
+      })
+      .then(() => {
+        toast({
+          title: 'تم تسجيل الدفعة بنجاح',
+          description: `تم تسجيل دفعة بقيمة ${formatCurrency(selectedInvoice.amount)} للفاتورة ${selectedInvoice.invoiceNumber}`,
+        });
+        
+        // Invalidate and refetch the queries to update the data
+        queryClient.invalidateQueries({ queryKey: [`/api/agency/${agencyId}/billings`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/agency/${agencyId}/payments`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/agency/${agencyId}/wallet`] });
+        
+        setPaymentDialogOpen(false);
+      })
+      .catch(error => {
+        toast({
+          title: 'خطأ',
+          description: error.message,
+          variant: 'destructive',
+        });
+      });
   };
 
   // Handle invoice row click
