@@ -11,6 +11,32 @@ import { checkRole } from "../middleware/roles";
 export const reportsRouter = Router();
 
 /**
+ * @route GET /api/reports/weekly
+ * @desc الحصول على التقارير الأسبوعية للوكالة
+ * @access خاص (وكالة)
+ */
+reportsRouter.get(
+  "/weekly",
+  isAuthenticated,
+  checkRole(["agency", "admin"]),
+  async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.agencyId) {
+        return res.status(400).json({ message: "معرف الوكالة مطلوب" });
+      }
+      
+      // الحصول على التقارير الأسبوعية للوكالة
+      const reports = await reportsService.getAllWeeklyReports(req.user.agencyId);
+      
+      return res.status(200).json(reports);
+    } catch (error: any) {
+      console.error("Error getting weekly reports:", error);
+      return res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+/**
  * @route POST /api/reports/weekly/generate
  * @desc توليد تقرير أسبوعي لعميل
  * @access خاص (وكالة)

@@ -8,6 +8,7 @@ import { ZodError } from "zod";
 import OpenAI from "openai";
 import axios from "axios";
 import { upload, handleUploadErrors, extractTextFromFile, cleanExtractedText } from "./services/file-service";
+import { reportsRouter } from "./routes/reports.routes";
 
 // تهيئة عميل OpenAI للاختبار المباشر
 const openai = new OpenAI({
@@ -15,6 +16,9 @@ const openai = new OpenAI({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // تسجيل مسارات التقارير
+  app.use('/api/reports', reportsRouter);
+  
   // API Endpoints
   
   // Users endpoints

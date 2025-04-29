@@ -173,6 +173,17 @@ export class ReportsService {
   }
   
   /**
+   * الحصول على جميع التقارير الأسبوعية للوكالة
+   */
+  async getAllWeeklyReports(agencyId: number): Promise<WeeklyReport[]> {
+    const reports = await db.select().from(weeklyReportsSent).where(
+      eq(weeklyReportsSent.agencyId, agencyId)
+    ).orderBy(desc(weeklyReportsSent.createdAt));
+    
+    return reports;
+  }
+  
+  /**
    * توليد وحفظ تقرير شهري للوكالة
    */
   async generateMonthlyReport(agencyId: number): Promise<MonthlyReport> {
