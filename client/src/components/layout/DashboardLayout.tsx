@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ToastNotification } from '@/components/ui/toast-notification';
@@ -12,18 +12,28 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, title }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pageLoaded, setPageLoaded] = useState(false);
   const { toasts, removeToast } = useToastContext();
   
   // Set dashboard type based on current route
   useDashboardType();
 
+  useEffect(() => {
+    // تطبيق تأثير ظهور المحتوى بعد التحميل
+    const timer = setTimeout(() => {
+      setPageLoaded(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="flex h-screen overflow-hidden bg-lightBg">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       {/* Main Content */}
-      <main className="flex-1 overflow-auto lg:mr-64">
+      <main className="flex-1 flex flex-col overflow-hidden lg:mr-64 transition-all duration-300">
         {/* Header */}
         <Header 
           title={title} 
@@ -31,12 +41,18 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
         />
         
         {/* Page Content */}
-        <div className="p-4 sm:p-6">
-          {children}
+        <div 
+          className={`flex-1 overflow-y-auto p-6 transition-opacity duration-500 ${
+            pageLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <div className="container max-w-7xl mx-auto">
+            {children}
+          </div>
         </div>
         
         {/* Toast Notifications */}
-        <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-2">
+        <div className="fixed bottom-6 left-6 z-50 flex flex-col gap-3">
           {toasts.map((toast) => (
             <ToastNotification
               key={toast.id}
