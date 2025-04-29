@@ -21,6 +21,9 @@ import AgencyClients from "@/pages/agency/AgencyClients";
 import AgencyFiles from "@/pages/agency/AgencyFiles";
 import AgencyAiAssistant from "@/pages/agency/AgencyAiAssistant";
 import AiSettings from "@/pages/agency/AiSettings";
+import WeeklyReportsPage from "@/pages/agency/WeeklyReportsPage";
+import WeeklyReportView from "@/pages/agency/WeeklyReportView";
+import MonthlyReportPage from "@/pages/agency/MonthlyReportPage";
 
 // Client Dashboard Pages
 import ClientOverview from "@/pages/client/ClientOverview";
