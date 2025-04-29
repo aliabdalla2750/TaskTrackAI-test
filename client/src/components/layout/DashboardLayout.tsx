@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
+import { FixedSidebar } from './FixedSidebar';
 import { Header } from './HeaderNew';
 import { ToastNotification } from '@/components/ui/toast-notification';
 import { useToastContext } from '@/context/ToastContext';
@@ -20,11 +21,18 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar - Always show on desktop (lg screens) */}
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {/* Fixed Sidebar for larger screens */}
+      <div className="hidden lg:block"> 
+        <FixedSidebar />
+      </div>
       
-      {/* Main Content - adjust margin based on sidebar visibility */}
-      <main className="flex-1 overflow-auto transition-all duration-300">
+      {/* Mobile Sidebar */}
+      <div className="lg:hidden">
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      </div>
+      
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
         {/* Header */}
         <Header 
           title={title} 
