@@ -626,6 +626,221 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ------------ مسارات إدارة مزودي الذكاء الاصطناعي ------------
+
+  // الحصول على قائمة مزودي الذكاء الاصطناعي
+  app.get("/api/admin/ai-providers", async (req: Request, res: Response) => {
+    try {
+      const providers = await storage.listAiProviders();
+      res.json(providers);
+    } catch (error) {
+      console.error("Error fetching AI providers:", error);
+      res.status(500).json({ message: "Failed to fetch AI providers" });
+    }
+  });
+
+  // إنشاء مزود ذكاء اصطناعي جديد
+  app.post("/api/admin/ai-providers", async (req: Request, res: Response) => {
+    try {
+      const providerData = req.body;
+      const provider = await storage.createAiProvider(providerData);
+      res.status(201).json(provider);
+    } catch (error) {
+      console.error("Error creating AI provider:", error);
+      res.status(500).json({ message: "Failed to create AI provider" });
+    }
+  });
+
+  // تحديث مزود ذكاء اصطناعي
+  app.put("/api/admin/ai-providers/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const providerData = req.body;
+      const provider = await storage.updateAiProvider(id, providerData);
+      
+      if (!provider) {
+        return res.status(404).json({ message: "AI provider not found" });
+      }
+      
+      res.json(provider);
+    } catch (error) {
+      console.error("Error updating AI provider:", error);
+      res.status(500).json({ message: "Failed to update AI provider" });
+    }
+  });
+
+  // حذف مزود ذكاء اصطناعي
+  app.delete("/api/admin/ai-providers/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteAiProvider(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "AI provider not found" });
+      }
+      
+      res.json({ message: "AI provider deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting AI provider:", error);
+      res.status(500).json({ message: "Failed to delete AI provider" });
+    }
+  });
+
+  // اختبار مزود ذكاء اصطناعي
+  app.post("/api/admin/ai-providers/:id/test", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const provider = await storage.getAiProvider(id);
+      
+      if (!provider) {
+        return res.status(404).json({ message: "AI provider not found" });
+      }
+      
+      // اختبار المزود باستخدام الـ API الخاص به
+      // هنا سنستخدم استدعاء بسيط للتأكد من أن المفتاح يعمل
+      let testResult = false;
+      let testMessage = '';
+      
+      try {
+        if (provider.name === 'openai') {
+          const axios = require('axios');
+          const response = await axios.post(
+            provider.baseUrl || 'https://api.openai.com/v1/chat/completions',
+            {
+              model: "gpt-4o",
+              messages: [{ role: "user", content: "Hello" }],
+              max_tokens: 5
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${provider.apiKey}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          testResult = !!response.data;
+          testMessage = 'OpenAI connection successful';
+        } else if (provider.name === 'deepseek') {
+          // اختبار DeepSeek API
+          const axios = require('axios');
+          const response = await axios.post(
+            provider.baseUrl || 'https://api.deepseek.com/v1/chat/completions',
+            {
+              model: "deepseek-chat",
+              messages: [{ role: "user", content: "Hello" }],
+              max_tokens: 5
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${provider.apiKey}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          testResult = !!response.data;
+          testMessage = 'DeepSeek connection successful';
+        } else if (provider.name === 'openrouter') {
+          // اختبار OpenRouter API
+          const axios = require('axios');
+          const response = await axios.post(
+            provider.baseUrl || 'https://openrouter.ai/api/v1/chat/completions',
+            {
+              model: "openai/gpt-4",
+              messages: [{ role: "user", content: "Hello" }],
+              max_tokens: 5
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${provider.apiKey}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          testResult = !!response.data;
+          testMessage = 'OpenRouter connection successful';
+        } else {
+          testMessage = 'Unknown provider type';
+        }
+      } catch (testError) {
+        console.error("Provider test error:", testError);
+        testMessage = `Test failed: ${testError.message}`;
+      }
+      
+      res.json({ 
+        success: testResult, 
+        message: testMessage 
+      });
+      
+    } catch (error) {
+      console.error("Error testing AI provider:", error);
+      res.status(500).json({ message: "Failed to test AI provider" });
+    }
+  });
+
+  // ------------ مسارات إدارة نماذج الذكاء الاصطناعي ------------
+
+  // الحصول على قائمة نماذج الذكاء الاصطناعي لمزود معين
+  app.get("/api/admin/ai-providers/:providerId/models", async (req: Request, res: Response) => {
+    try {
+      const providerId = parseInt(req.params.providerId);
+      const models = await storage.getAiModelsByProvider(providerId);
+      res.json(models);
+    } catch (error) {
+      console.error("Error fetching AI models:", error);
+      res.status(500).json({ message: "Failed to fetch AI models" });
+    }
+  });
+
+  // إنشاء نموذج ذكاء اصطناعي جديد
+  app.post("/api/admin/ai-models", async (req: Request, res: Response) => {
+    try {
+      const modelData = req.body;
+      const model = await storage.createAiModel(modelData);
+      res.status(201).json(model);
+    } catch (error) {
+      console.error("Error creating AI model:", error);
+      res.status(500).json({ message: "Failed to create AI model" });
+    }
+  });
+
+  // تحديث نموذج ذكاء اصطناعي
+  app.put("/api/admin/ai-models/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const modelData = req.body;
+      const model = await storage.updateAiModel(id, modelData);
+      
+      if (!model) {
+        return res.status(404).json({ message: "AI model not found" });
+      }
+      
+      res.json(model);
+    } catch (error) {
+      console.error("Error updating AI model:", error);
+      res.status(500).json({ message: "Failed to update AI model" });
+    }
+  });
+
+  // حذف نموذج ذكاء اصطناعي
+  app.delete("/api/admin/ai-models/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteAiModel(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "AI model not found" });
+      }
+      
+      res.json({ message: "AI model deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting AI model:", error);
+      res.status(500).json({ message: "Failed to delete AI model" });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
   
