@@ -1,0 +1,103 @@
+[
+  {
+    "id": 1,
+    "clientId": 1,
+    "agencyId": 1,
+    "weekStart": "2023-04-03T00:00:00.000Z",
+    "weekEnd": "2023-04-09T00:00:00.000Z",
+    "status": "sent",
+    "sentAt": "2023-04-10T00:00:00.000Z",
+    "createdAt": "2023-04-10T00:00:00.000Z",
+    "reportData": {
+      "projectUpdates": [
+        {
+          "projectId": 1,
+          "name": "تصميم وتطوير موقع إلكتروني",
+          "progressPercentage": 45,
+          "status": "in-progress",
+          "achievements": "تم الانتهاء من تصميم الصفحة الرئيسية وصفحات المنتجات",
+          "challenges": "تأخر في الحصول على المحتوى من العميل",
+          "nextSteps": "تطوير لوحة التحكم الإدارية"
+        },
+        {
+          "projectId": 2,
+          "name": "حملة إعلانية على وسائل التواصل الاجتماعي",
+          "progressPercentage": 80,
+          "status": "in-progress",
+          "achievements": "إطلاق 3 إعلانات جديدة مع معدل تفاعل عالي",
+          "challenges": "لا يوجد",
+          "nextSteps": "تحليل أداء الإعلانات وتعديل الاستراتيجية"
+        }
+      ],
+      "taskSummary": {
+        "completed": 12,
+        "inProgress": 8,
+        "planned": 5,
+        "delayed": 2
+      },
+      "clientFeedback": "العميل راضٍ عن التقدم في المشاريع",
+      "notes": "يجب التركيز على تسريع تنفيذ المهام المتأخرة"
+    }
+  },
+  {
+    "id": 2,
+    "clientId": 2,
+    "agencyId": 1,
+    "weekStart": "2023-04-03T00:00:00.000Z",
+    "weekEnd": "2023-04-09T00:00:00.000Z",
+    "status": "sent",
+    "sentAt": "2023-04-10T00:00:00.000Z",
+    "createdAt": "2023-04-10T00:00:00.000Z",
+    "reportData": {
+      "projectUpdates": [
+        {
+          "projectId": 3,
+          "name": "تطوير هوية بصرية للشركة",
+          "progressPercentage": 30,
+          "status": "in-progress",
+          "achievements": "تم الانتهاء من المرحلة الأولى من تصميم الشعار",
+          "challenges": "العميل طلب تعديلات كثيرة على التصاميم الأولية",
+          "nextSteps": "تقديم مقترحات جديدة للشعار"
+        }
+      ],
+      "taskSummary": {
+        "completed": 5,
+        "inProgress": 10,
+        "planned": 6,
+        "delayed": 1
+      },
+      "clientFeedback": "العميل يرغب في المزيد من الخيارات",
+      "notes": "يجب عقد اجتماع مع العميل لتوضيح التوقعات"
+    }
+  },
+  {
+    "id": 3,
+    "clientId": 3,
+    "agencyId": 1,
+    "weekStart": "2023-04-03T00:00:00.000Z",
+    "weekEnd": "2023-04-09T00:00:00.000Z",
+    "status": "draft",
+    "createdAt": "2023-04-10T00:00:00.000Z",
+    "reportData": {
+      "projectUpdates": [
+        {
+          "projectId": 4,
+          "name": "خطة تسويقية سنوية",
+          "progressPercentage": 25,
+          "status": "delayed",
+          "achievements": "تم جمع وتحليل البيانات السوقية الأولية",
+          "challenges": "صعوبة الحصول على بيانات منافسين دقيقة",
+          "nextSteps": "إعداد مسودة الخطة التسويقية الأولية"
+        }
+      ],
+      "taskSummary": {
+        "completed": 3,
+        "inProgress": 5,
+        "planned": 4,
+        "delayed": 3
+      },
+      "clientFeedback": "العميل قلق بشأن التأخير في الجدول الزمني",
+      "notes": "يجب إعادة جدولة بعض المهام لتعويض التأخير"
+    }
+  }
+]

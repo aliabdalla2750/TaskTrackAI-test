@@ -1,0 +1,203 @@
+[
+  {
+    "id": 1,
+    "clientId": 1,
+    "agencyId": 1,
+    "monthStart": "2023-04-01T00:00:00.000Z",
+    "monthEnd": "2023-04-30T00:00:00.000Z",
+    "status": "sent",
+    "sentAt": "2023-05-02T00:00:00.000Z",
+    "createdAt": "2023-05-01T00:00:00.000Z",
+    "reportData": {
+      "projectsSummary": [
+        {
+          "projectId": 1,
+          "name": "تصميم وتطوير موقع إلكتروني",
+          "status": "in-progress",
+          "progress": 55,
+          "achievements": "اكتمال تصميم وتطوير 80% من صفحات الموقع",
+          "challenges": "تأخر في الحصول على المحتوى",
+          "nextMonthPlan": "الانتهاء من تطوير لوحة التحكم"
+        },
+        {
+          "projectId": 2,
+          "name": "حملة إعلانية على وسائل التواصل الاجتماعي",
+          "status": "completed",
+          "progress": 100,
+          "achievements": "تحقيق أهداف الحملة بنسبة 120%",
+          "challenges": "لا يوجد",
+          "nextMonthPlan": "إطلاق حملة جديدة"
+        }
+      ],
+      "taskMetrics": {
+        "completed": 45,
+        "inProgress": 12,
+        "planned": 18,
+        "delayed": 5
+      },
+      "kpiSummary": [
+        {
+          "name": "معدل التحويل",
+          "value": "2.8%",
+          "change": "+0.5%",
+          "status": "improved"
+        },
+        {
+          "name": "متوسط وقت البقاء على الموقع",
+          "value": "3:45 دقيقة",
+          "change": "+1:20 دقيقة",
+          "status": "improved"
+        },
+        {
+          "name": "عدد المتابعين الجدد",
+          "value": "1,250",
+          "change": "+350",
+          "status": "improved"
+        }
+      ],
+      "clientInteractions": [
+        {
+          "date": "2023-04-05T00:00:00.000Z",
+          "type": "meeting",
+          "summary": "اجتماع مراجعة التقدم الأسبوعي"
+        },
+        {
+          "date": "2023-04-15T00:00:00.000Z",
+          "type": "email",
+          "summary": "مناقشة التعديلات المطلوبة على التصاميم"
+        },
+        {
+          "date": "2023-04-25T00:00:00.000Z",
+          "type": "meeting",
+          "summary": "عرض النتائج الأولية للحملة الإعلانية"
+        }
+      ],
+      "budgetSummary": {
+        "allocated": 50000,
+        "spent": 42500,
+        "remaining": 7500,
+        "additionalCosts": [
+          {
+            "description": "إضافة خدمة تحسين تجربة المستخدم",
+            "amount": 5000
+          }
+        ]
+      },
+      "completionRate": 0.85,
+      "satisfactionScore": 4.5,
+      "notes": "العميل راضٍ جدًا عن التقدم العام في المشاريع. يجب الاستمرار في التركيز على تحسين معدلات التحويل والتفاعل مع المحتوى."
+    }
+  },
+  {
+    "id": 2,
+    "clientId": 2,
+    "agencyId": 1,
+    "monthStart": "2023-04-01T00:00:00.000Z",
+    "monthEnd": "2023-04-30T00:00:00.000Z",
+    "status": "draft",
+    "createdAt": "2023-05-01T00:00:00.000Z",
+    "reportData": {
+      "projectsSummary": [
+        {
+          "projectId": 3,
+          "name": "تطوير هوية بصرية للشركة",
+          "status": "in-progress",
+          "progress": 40,
+          "achievements": "الانتهاء من تصميم الشعار وبدء العمل على باقي عناصر الهوية",
+          "challenges": "تعديلات متكررة من العميل",
+          "nextMonthPlan": "الانتهاء من تصميم جميع عناصر الهوية البصرية"
+        }
+      ],
+      "taskMetrics": {
+        "completed": 18,
+        "inProgress": 15,
+        "planned": 10,
+        "delayed": 3
+      },
+      "kpiSummary": [
+        {
+          "name": "رضا العميل",
+          "value": "3.8/5",
+          "change": "+0.2",
+          "status": "improved"
+        }
+      ],
+      "clientInteractions": [
+        {
+          "date": "2023-04-10T00:00:00.000Z",
+          "type": "meeting",
+          "summary": "عرض مقترحات الشعار"
+        },
+        {
+          "date": "2023-04-20T00:00:00.000Z",
+          "type": "call",
+          "summary": "مناقشة التعديلات على الشعار"
+        }
+      ],
+      "budgetSummary": {
+        "allocated": 30000,
+        "spent": 15000,
+        "remaining": 15000
+      },
+      "completionRate": 0.4,
+      "satisfactionScore": 3.8,
+      "notes": "العميل يحتاج إلى توضيح أكثر للتوقعات والجدول الزمني للمشروع. يجب عقد اجتماع لمناقشة خطة العمل للشهر القادم."
+    }
+  },
+  {
+    "id": 3,
+    "clientId": 3,
+    "agencyId": 1,
+    "monthStart": "2023-04-01T00:00:00.000Z",
+    "monthEnd": "2023-04-30T00:00:00.000Z",
+    "status": "draft",
+    "createdAt": "2023-05-01T00:00:00.000Z",
+    "reportData": {
+      "projectsSummary": [
+        {
+          "projectId": 4,
+          "name": "خطة تسويقية سنوية",
+          "status": "delayed",
+          "progress": 35,
+          "achievements": "تم إكمال تحليل المنافسين والسوق",
+          "challenges": "تأخر في جمع بعض البيانات الضرورية",
+          "nextMonthPlan": "إعداد استراتيجية التسويق الرقمي"
+        }
+      ],
+      "taskMetrics": {
+        "completed": 12,
+        "inProgress": 8,
+        "planned": 14,
+        "delayed": 6
+      },
+      "kpiSummary": [
+        {
+          "name": "نسبة إكمال خطة التسويق",
+          "value": "35%",
+          "change": "+15%",
+          "status": "improved"
+        }
+      ],
+      "clientInteractions": [
+        {
+          "date": "2023-04-08T00:00:00.000Z",
+          "type": "meeting",
+          "summary": "اجتماع مناقشة التحليل السوقي"
+        },
+        {
+          "date": "2023-04-22T00:00:00.000Z",
+          "type": "email",
+          "summary": "إرسال تقرير منتصف الشهر"
+        }
+      ],
+      "budgetSummary": {
+        "allocated": 40000,
+        "spent": 18000,
+        "remaining": 22000
+      },
+      "completionRate": 0.35,
+      "satisfactionScore": 3.5,
+      "notes": "يجب العمل على تعويض التأخير في المشروع من خلال إضافة موارد إضافية. العميل يحتاج إلى تقارير أكثر تفصيلًا عن سير العمل."
+    }
+  }
+]

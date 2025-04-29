@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "name": "تصميم وتطوير موقع إلكتروني",
+    "clientId": 1,
+    "agencyId": 1,
+    "status": "in-progress",
+    "description": "تصميم وبرمجة موقع متجاوب مع جميع الأجهزة مع لوحة تحكم إدارية",
+    "startDate": "2023-04-01T00:00:00.000Z",
+    "endDate": "2023-07-30T00:00:00.000Z",
+    "createdBy": 1,
+    "createdAt": "2023-04-29T12:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "حملة إعلانية على وسائل التواصل الاجتماعي",
+    "clientId": 1,
+    "agencyId": 1,
+    "status": "completed",
+    "description": "إدارة حملة إعلانية على فيسبوك وانستغرام لمدة شهرين",
+    "startDate": "2023-03-15T00:00:00.000Z",
+    "endDate": "2023-05-15T00:00:00.000Z",
+    "createdBy": 1,
+    "createdAt": "2023-04-29T12:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "name": "تطوير هوية بصرية للشركة",
+    "clientId": 2,
+    "agencyId": 1,
+    "status": "in-progress",
+    "description": "تصميم شعار وهوية بصرية كاملة للشركة",
+    "startDate": "2023-04-10T00:00:00.000Z",
+    "endDate": "2023-06-15T00:00:00.000Z",
+    "createdBy": 1,
+    "createdAt": "2023-04-29T12:00:00.000Z"
+  },
+  {
+    "id": 4,
+    "name": "خطة تسويقية سنوية",
+    "clientId": 3,
+    "agencyId": 1,
+    "status": "delayed",
+    "description": "إعداد خطة تسويقية شاملة للعام القادم",
+    "startDate": "2023-03-01T00:00:00.000Z",
+    "endDate": "2023-05-01T00:00:00.000Z",
+    "createdBy": 1,
+    "createdAt": "2023-04-29T12:00:00.000Z"
+  }
+]

@@ -17,6 +17,117 @@ const openai = new OpenAI({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Demo API endpoints for client data
+  app.get('/api/clients', async (req: Request, res: Response) => {
+    try {
+      const clientsData = require('./demo-data/clients.json');
+      res.json({ clients: clientsData });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to load clients data' });
+    }
+  });
+
+  // Demo API endpoint for projects data
+  app.get('/api/projects', async (req: Request, res: Response) => {
+    try {
+      const projectsData = require('./demo-data/projects.json');
+      res.json({ projects: projectsData });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to load projects data' });
+    }
+  });
+
+  // Demo API endpoint for weekly reports
+  app.get('/api/reports/weekly', async (req: Request, res: Response) => {
+    try {
+      const reportsData = require('./demo-data/weekly-reports.json');
+      res.json(reportsData);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to load weekly reports data' });
+    }
+  });
+
+  // Demo API endpoint for generating a weekly report
+  app.post('/api/reports/weekly/generate', async (req: Request, res: Response) => {
+    try {
+      const { clientId } = req.body;
+      // In a real app, we would generate a new report here
+      // For demo, we'll just return an existing one
+      const reportsData = require('./demo-data/weekly-reports.json');
+      const clientReport = reportsData.find((r: any) => r.clientId === parseInt(clientId));
+      
+      if (clientReport) {
+        res.json(clientReport);
+      } else {
+        res.status(404).json({ error: 'No report found for this client' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to generate weekly report' });
+    }
+  });
+
+  // Demo API endpoint for generating all weekly reports
+  app.post('/api/reports/weekly/generate-all', async (req: Request, res: Response) => {
+    try {
+      const reportsData = require('./demo-data/weekly-reports.json');
+      res.json({ message: 'All weekly reports generated', count: reportsData.length });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to generate weekly reports' });
+    }
+  });
+
+  // Demo API endpoint for monthly reports
+  app.get('/api/reports/monthly', async (req: Request, res: Response) => {
+    try {
+      const reportsData = require('./demo-data/monthly-reports.json');
+      const { clientId, month } = req.query;
+      
+      if (clientId) {
+        const clientReports = reportsData.filter((r: any) => r.clientId === parseInt(clientId as string));
+        res.json(clientReports[0] || null); // Return first report or null
+      } else {
+        res.json(reportsData);
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to load monthly reports data' });
+    }
+  });
+
+  // Demo API endpoint for generating a monthly report
+  app.post('/api/reports/monthly/generate', async (req: Request, res: Response) => {
+    try {
+      const { clientId, month } = req.body;
+      // In a real app, we would generate a new report here
+      // For demo, we'll just return an existing one
+      const reportsData = require('./demo-data/monthly-reports.json');
+      const clientReport = reportsData.find((r: any) => r.clientId === parseInt(clientId));
+      
+      if (clientReport) {
+        res.json(clientReport);
+      } else {
+        res.status(404).json({ error: 'No report found for this client' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to generate monthly report' });
+    }
+  });
+
+  // Demo API endpoint for sending a monthly report
+  app.post('/api/reports/monthly/:id/send', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { method } = req.body;
+      
+      // In a real app, we would send the report here
+      res.json({ 
+        message: `Monthly report sent via ${method}`,
+        reportId: id,
+        sentAt: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to send monthly report' });
+    }
+  });
   // تسجيل مسارات التقارير
   app.use('/api/reports', reportsRouter);
   

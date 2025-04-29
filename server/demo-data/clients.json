@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "name": "أحمد محمود",
+    "email": "ahmed@example.com",
+    "company": "الشركة المتحدة للتجارة",
+    "phone": "+201234567890",
+    "agencyId": 1,
+    "createdAt": "2023-04-29T12:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "سارة محمد",
+    "email": "sara@example.com",
+    "company": "مجموعة الخليج للتكنولوجيا",
+    "phone": "+201098765432",
+    "agencyId": 1,
+    "createdAt": "2023-04-29T12:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "name": "محمد علي",
+    "email": "mohamed@example.com",
+    "company": "شركة الأمل للتسويق الرقمي",
+    "phone": "+201122334455",
+    "agencyId": 1,
+    "createdAt": "2023-04-29T12:00:00.000Z"
+  }
+]
