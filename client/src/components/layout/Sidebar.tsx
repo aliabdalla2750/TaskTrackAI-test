@@ -75,10 +75,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   };
   
   const agencyLinks = [
+    { path: '/', icon: <RiDashboardLine />, label: 'لوحة التحكم المحسنة' },
     { path: '/dashboard/agency/overview', icon: <RiDashboardLine />, label: 'نظرة عامة' },
     { path: '/dashboard/agency/projects', icon: <RiFolderOpenLine />, label: 'المشاريع' },
     { path: '/dashboard/agency/create-smart-project', icon: <RiMagicLine />, label: 'إنشاء مشروع ذكي' },
     { path: '/dashboard/agency/tasks', icon: <RiTaskLine />, label: 'المهام' },
+    { path: '/dashboard/agency/daily-standup', icon: <RiClipboardLine />, label: 'التقرير اليومي' },
     { path: '/dashboard/agency/team', icon: <RiTeamLine />, label: 'فريق العمل' },
     { path: '/dashboard/agency/clients', icon: <RiUser3Line />, label: 'العملاء' },
     { path: '/dashboard/agency/files', icon: <RiFileTextLine />, label: 'الملفات' },
