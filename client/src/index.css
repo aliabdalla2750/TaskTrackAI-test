@@ -1,11 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap');
+/* English Font: Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+/* Arabic Font: Hacen Maghreb BD */
+@font-face {
+  font-family: 'Hacen Maghreb BD';
+  src: url('/fonts/hacen-maghreb-bd.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Custom colors based on the provided design */
+  /* New Custom colors based on the requested design */
   --background: 220 14% 98%;
   --foreground: 222 47% 11%;
   
@@ -21,40 +31,40 @@
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
   
-  /* Primary color: #5A47FF */
-  --primary: 249 100% 64%;
-  --primary-foreground: 210 40% 98%;
+  /* Primary color: #430d58 (بنفسجي) */
+  --primary: 280 74% 20%;
+  --primary-foreground: 0 0% 100%;
   
-  /* Secondary color: #00BFA6 */
-  --secondary: 169 100% 37%;
-  --secondary-foreground: 210 40% 98%;
+  /* Secondary color: #ed5609 (برتقالي) */
+  --secondary: 20 93% 48%;
+  --secondary-foreground: 0 0% 100%;
   
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+  --accent: 280 74% 95%;
+  --accent-foreground: 280 74% 20%;
   
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
   
-  --ring: 215 20.2% 65.1%;
+  --ring: 280 74% 20%;
   
-  --radius: 0.5rem;
+  --radius: 0.75rem;
   
-  /* Chart colors */
-  --chart-1: 249 100% 64%;
-  --chart-2: 169 100% 37%;
-  --chart-3: 43 96% 56%;
-  --chart-4: 358 75% 59%;
-  --chart-5: 262 83% 58%;
+  /* Chart colors - updated to match the new palette */
+  --chart-1: 280 74% 20%;  /* Primary */
+  --chart-2: 20 93% 48%;   /* Secondary */
+  --chart-3: 280 50% 40%;  /* Primary variation */
+  --chart-4: 20 70% 60%;   /* Secondary variation */
+  --chart-5: 260 60% 60%;  /* Complementary */
   
-  /* Sidebar colors */
+  /* Sidebar colors - updated */
   --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 222 47% 11%;
-  --sidebar-primary: 249 100% 64%;
-  --sidebar-primary-foreground: 210 40% 98%;
-  --sidebar-accent: 210 40% 96.1%;
-  --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+  --sidebar-foreground: 280 74% 20%;
+  --sidebar-primary: 280 74% 20%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 280 74% 95%;
+  --sidebar-accent-foreground: 280 74% 20%;
   --sidebar-border: 214.3 31.8% 91.4%;
-  --sidebar-ring: 215 20.2% 65.1%;
+  --sidebar-ring: 280 74% 20%;
 }
 
 /* Custom dark theme - leaving as reference but keeping only light theme active */
@@ -86,22 +96,86 @@
   }
   
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Hacen Maghreb BD', 'Poppins', sans-serif;
     direction: rtl;
   }
   
   /* Define typography */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold;
+    @apply font-bold tracking-tight;
+    font-family: 'Hacen Maghreb BD', 'Poppins', sans-serif;
   }
   
-  /* Button animation */
-  .btn-animate {
-    @apply transition-transform duration-100 ease-in-out;
+  /* English text specific styling */
+  .en {
+    font-family: 'Poppins', sans-serif;
+    direction: ltr;
   }
   
-  .btn-animate:active {
-    @apply transform scale-95;
+  /* Button animations and styling */
+  .btn {
+    @apply rounded-lg px-4 py-2 font-medium transition-all duration-200 shadow-sm;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 active:scale-95;
+  }
+  
+  .btn-outline {
+    @apply border border-input bg-background hover:bg-accent hover:text-accent-foreground active:scale-95;
+  }
+  
+  /* Card styling */
+  .card {
+    @apply bg-card text-card-foreground rounded-2xl border shadow-sm;
+  }
+  
+  /* Input styling */
+  .input {
+    @apply rounded-md border border-input px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+  
+  /* Animations for page elements */
+  /* Fade in animation for page load */
+  .fade-in {
+    @apply opacity-0;
+    animation: fadeIn 0.6s ease-in-out forwards;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Staggered fade in for lists */
+  .stagger-fade-in > * {
+    @apply opacity-0;
+    animation: fadeIn 0.5s ease-in-out forwards;
+  }
+  
+  .stagger-fade-in > *:nth-child(1) { animation-delay: 0.1s; }
+  .stagger-fade-in > *:nth-child(2) { animation-delay: 0.2s; }
+  .stagger-fade-in > *:nth-child(3) { animation-delay: 0.3s; }
+  .stagger-fade-in > *:nth-child(4) { animation-delay: 0.4s; }
+  .stagger-fade-in > *:nth-child(5) { animation-delay: 0.5s; }
+  .stagger-fade-in > *:nth-child(6) { animation-delay: 0.6s; }
+  .stagger-fade-in > *:nth-child(7) { animation-delay: 0.7s; }
+  .stagger-fade-in > *:nth-child(8) { animation-delay: 0.8s; }
+  
+  /* Button pulse effect */
+  .btn-pulse:hover {
+    animation: pulse 1s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
   }
   
   /* Typing effect for AI chat */
@@ -110,22 +184,33 @@
     @apply animate-pulse;
   }
   
-  /* Fade transition */
-  .fade-enter {
-    opacity: 0;
+  /* Animated underline for links */
+  .animated-underline {
+    position: relative;
   }
   
-  .fade-enter-active {
-    opacity: 1;
-    transition: opacity 200ms;
+  .animated-underline::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background-color: hsl(var(--primary));
+    transition: width 0.3s ease-in-out;
   }
   
-  .fade-exit {
-    opacity: 1;
+  .animated-underline:hover::after {
+    width: 100%;
   }
   
-  .fade-exit-active {
-    opacity: 0;
-    transition: opacity 200ms;
+  /* Framer Motion transitions */
+  .page-transition {
+    @apply min-h-screen;
+  }
+  
+  /* Skeleton loader for loading states */
+  .skeleton {
+    @apply animate-pulse rounded bg-muted;
   }
 }
