@@ -6,23 +6,25 @@ import {
 } from 'react-icons/ri';
 
 export interface ProjectCardProps {
-  id: number;
+  id: number | string;
   title: string;
   description: string;
-  client: string;
+  client?: string;
   progress: number;
-  startDate: string;
-  endDate: string;
-  status: 'completed' | 'in-progress' | 'delayed' | 'upcoming';
+  startDate?: string;
+  endDate?: string;
+  dueDate?: string;
+  status: 'completed' | 'in-progress' | 'delayed' | 'upcoming' | 'active' | 'overdue' | string;
   subgoals?: number;
   completedSubgoals?: number;
   tasks?: number;
   completedTasks?: number;
+  team?: Array<{ name: string; avatarColor?: string; avatar?: string }>;
   onClick?: () => void;
   className?: string;
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
   completed: {
     color: 'bg-green-100 text-green-800',
     icon: <RiCheckboxCircleLine className="text-green-500" />,
@@ -42,6 +44,16 @@ const statusConfig = {
     color: 'bg-amber-100 text-amber-800',
     icon: <RiTimeLine className="text-amber-500" />,
     label: 'قادم'
+  },
+  active: {
+    color: 'bg-blue-100 text-blue-800',
+    icon: <RiInformationLine className="text-blue-500" />,
+    label: 'نشط'
+  },
+  overdue: {
+    color: 'bg-red-100 text-red-800',
+    icon: <RiErrorWarningLine className="text-red-500" />,
+    label: 'متأخر'
   }
 };
 
@@ -52,15 +64,25 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   progress,
   startDate,
   endDate,
+  dueDate,
   status,
   subgoals,
   completedSubgoals,
   tasks,
   completedTasks,
+  team,
   onClick,
   className
 }) => {
-  const statusInfo = statusConfig[status];
+  // Default status info if status not found in config
+  const defaultStatusInfo = {
+    color: 'bg-gray-100 text-gray-800',
+    icon: <RiInformationLine className="text-gray-500" />,
+    label: status || 'غير محدد'
+  };
+  
+  // Get status info from config or use default
+  const statusInfo = statusConfig[status] || defaultStatusInfo;
   
   return (
     <motion.div 
