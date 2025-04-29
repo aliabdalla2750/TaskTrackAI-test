@@ -34,6 +34,7 @@ import { ar } from "date-fns/locale";
 import { Client, WeeklyReport } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 
 const WeeklyReportsPage: React.FC = () => {
@@ -139,29 +140,33 @@ const WeeklyReportsPage: React.FC = () => {
 
   if (isLoadingClients || isLoadingReports) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-      </div>
+      <DashboardLayout title="التقارير الأسبوعية">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   if (clientsError || reportsError) {
     return (
-      <div className="p-6">
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">حدث خطأ</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>فشل تحميل البيانات. يرجى تحديث الصفحة أو المحاولة لاحقًا.</p>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardLayout title="التقارير الأسبوعية">
+        <div className="p-6">
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">حدث خطأ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>فشل تحميل البيانات. يرجى تحديث الصفحة أو المحاولة لاحقًا.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
     );
   }
 
-    return (
-    <div className="container mx-auto p-6 rtl">
+  return (
+    <DashboardLayout title="التقارير الأسبوعية">
       <div className="flex flex-col space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">التقارير الأسبوعية للعملاء</h1>
@@ -363,7 +368,7 @@ const WeeklyReportsPage: React.FC = () => {
           </CardFooter>
         </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
