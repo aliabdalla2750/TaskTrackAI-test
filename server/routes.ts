@@ -9,6 +9,7 @@ import OpenAI from "openai";
 import axios from "axios";
 import { upload, handleUploadErrors, extractTextFromFile, cleanExtractedText } from "./services/file-service";
 import { reportsRouter } from "./routes/reports.routes";
+import billingRoutes from "./routes/billing.routes";
 import { clientService } from "./services/client.service";
 import fs from 'fs';
 import path from 'path';
@@ -151,6 +152,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   // تسجيل مسارات التقارير
   app.use('/api/reports', reportsRouter);
+  
+  // تسجيل مسارات الفواتير
+  app.use('/api', billingRoutes);
   
   // API Endpoints
   
