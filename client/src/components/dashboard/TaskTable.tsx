@@ -1,4 +1,6 @@
 import React from 'react';
+import { useLocation } from 'wouter';
+import { motion } from 'framer-motion';
 
 type TaskStatus = 'completed' | 'in-progress' | 'overdue';
 
@@ -19,6 +21,12 @@ interface TaskTableProps {
 }
 
 export function TaskTable({ tasks }: TaskTableProps) {
+  const [, navigate] = useLocation();
+  
+  const handleTaskClick = (taskId: string) => {
+    navigate(`/dashboard/agency/tasks/${taskId}`);
+  };
+  
   const getStatusBadge = (status: TaskStatus) => {
     switch (status) {
       case 'completed':
@@ -67,7 +75,13 @@ export function TaskTable({ tasks }: TaskTableProps) {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {tasks.map((task) => (
-              <tr key={task.id}>
+              <motion.tr 
+                key={task.id}
+                onClick={() => handleTaskClick(task.id)}
+                className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
+                whileHover={{ scale: 1.01 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">{task.title}</div>
                 </td>
@@ -92,7 +106,7 @@ export function TaskTable({ tasks }: TaskTableProps) {
                 <td className="px-6 py-4 whitespace-nowrap">
                   {getStatusBadge(task.status)}
                 </td>
-              </tr>
+              </motion.tr>
             ))}
           </tbody>
         </table>
