@@ -5,6 +5,22 @@ import { storage } from "../storage";
 import { isAuthenticated } from "../middleware/auth";
 import { checkRole } from "../middleware/roles";
 
+// إضافة تعريف لواجهة العميل إلى الـ Request
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: number;
+        agencyId: number;
+        role: string;
+        name: string;
+        email: string;
+        [key: string]: any;
+      };
+    }
+  }
+}
+
 /**
  * مسارات API للتقارير
  */

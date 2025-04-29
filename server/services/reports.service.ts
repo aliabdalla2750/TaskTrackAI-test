@@ -1,439 +1,320 @@
 import { storage } from "../storage";
-import { db } from "../db";
-import { and, between, desc, eq, gte, lte } from "drizzle-orm";
-import { 
-  tasks, 
-  projects, 
-  weeklyReportsSent, 
-  monthlyReportsCache,
-  clients,
-  employees
-} from "@shared/schema";
-import type { 
-  WeeklyReport, 
-  InsertWeeklyReport, 
-  MonthlyReport, 
-  InsertMonthlyReport,
-  Client
-} from "@shared/schema";
-
-/**
- * تاريخ بداية الأسبوع الحالي (الأحد)
- */
-export function getCurrentWeekStart(): Date {
-  const now = new Date();
-  const dayOfWeek = now.getDay(); // 0 = الأحد، 1 = الاثنين، ...
-  const diff = now.getDate() - dayOfWeek;
-  const weekStart = new Date(now);
-  weekStart.setDate(diff);
-  weekStart.setHours(0, 0, 0, 0);
-  return weekStart;
-}
-
-/**
- * تاريخ نهاية الأسبوع الحالي (السبت)
- */
-export function getCurrentWeekEnd(): Date {
-  const weekStart = getCurrentWeekStart();
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 6);
-  weekEnd.setHours(23, 59, 59, 999);
-  return weekEnd;
-}
-
-/**
- * الحصول على سلسلة الشهر بتنسيق "YYYY-MM"
- */
-export function getMonthString(date: Date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-}
-
-/**
- * الحصول على أول يوم في الشهر
- */
-export function getMonthStart(date: Date = new Date()): Date {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-/**
- * الحصول على آخر يوم في الشهر
- */
-export function getMonthEnd(date: Date = new Date()): Date {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
-}
+import { format, subWeeks, startOfWeek, endOfWeek, parseISO, isAfter, isBefore } from "date-fns";
+import { ar } from "date-fns/locale";
 
 /**
  * خدمة التقارير
  */
-export class ReportsService {
-  /**
-   * توليد وحفظ تقرير أسبوعي لعميل
-   */
-  async generateWeeklyReport(clientId: number, agencyId: number): Promise<WeeklyReport> {
-    // الحصول على معلومات العميل
-    const client = await storage.getClient(clientId);
-    if (!client) {
-      throw new Error(`لم يتم العثور على العميل بمعرف ${clientId}`);
-    }
-    
-    // تاريخ بداية ونهاية الأسبوع
-    const weekStart = getCurrentWeekStart();
-    const weekEnd = getCurrentWeekEnd();
-    
-    // الحصول على مشاريع العميل
-    const clientProjects = await storage.getProjectsByClient(clientId);
-    
-    // إعداد بيانات التقرير
-    const reportData: any = {
-      client: {
-        id: client.id,
-        name: client.name,
-        company: client.company
-      },
-      weekStart: weekStart.toISOString(),
-      weekEnd: weekEnd.toISOString(),
-      projects: await Promise.all(clientProjects.map(async (project) => {
-        // الحصول على المهام المكتملة هذا الأسبوع
-        const completedTasks = await db.select().from(tasks).where(
-          and(
-            eq(tasks.projectId, project.id),
-            eq(tasks.status, "completed"),
-            between(tasks.createdAt, weekStart, weekEnd)
-          )
-        );
-        
-        // الحصول على المهام المتأخرة
-        const overdueTasks = await db.select().from(tasks).where(
-          and(
-            eq(tasks.projectId, project.id),
-            eq(tasks.status, "overdue")
-          )
-        );
-        
-        // الحصول على جميع المهام للمشروع
-        const allTasks = await storage.getTasksByProject(project.id);
-        
-        // حساب نسبة التقدم
-        const progressPercentage = allTasks.length > 0 
-          ? Math.round((allTasks.filter(t => t.status === "completed").length / allTasks.length) * 100) 
-          : 0;
-        
-        return {
-          id: project.id,
-          name: project.name,
-          progress: progressPercentage,
-          completedTasksCount: completedTasks.length,
-          overdueTasksCount: overdueTasks.length,
-          allTasksCount: allTasks.length,
-          startDate: project.startDate,
-          endDate: project.endDate,
-          status: project.status
-        };
-      }))
-    };
-    
-    // حفظ التقرير في قاعدة البيانات
-    const [savedReport] = await db.insert(weeklyReportsSent).values({
-      clientId,
-      agencyId,
-      weekStart,
-      weekEnd,
-      status: "sent",
-      method: "whatsapp",
-      reportData,
-    }).returning();
-    
-    return savedReport;
-  }
-  
-  /**
-   * الحصول على تقرير أسبوعي بواسطة معرف العميل
-   */
-  async getWeeklyReportByClient(clientId: number): Promise<WeeklyReport | undefined> {
-    const weekStart = getCurrentWeekStart();
-    const [report] = await db.select().from(weeklyReportsSent).where(
-      and(
-        eq(weeklyReportsSent.clientId, clientId),
-        eq(weeklyReportsSent.weekStart, weekStart)
-      )
-    ).orderBy(desc(weeklyReportsSent.createdAt)).limit(1);
-    
-    return report;
-  }
-  
-  /**
-   * الحصول على جميع تقارير العميل الأسبوعية
-   */
-  async getAllClientWeeklyReports(clientId: number): Promise<WeeklyReport[]> {
-    const reports = await db.select().from(weeklyReportsSent).where(
-      eq(weeklyReportsSent.clientId, clientId)
-    ).orderBy(desc(weeklyReportsSent.createdAt));
-    
-    return reports;
-  }
-  
+class ReportsService {
   /**
    * الحصول على جميع التقارير الأسبوعية للوكالة
+   * @param agencyId معرف الوكالة
    */
-  async getAllWeeklyReports(agencyId: number): Promise<WeeklyReport[]> {
-    const reports = await db.select().from(weeklyReportsSent).where(
-      eq(weeklyReportsSent.agencyId, agencyId)
-    ).orderBy(desc(weeklyReportsSent.createdAt));
+  async getAllWeeklyReports(agencyId: number) {
+    // في تطبيق حقيقي، سيتم جلب البيانات من قاعدة البيانات
+    // بما أننا نقوم بإنشاء عرض توضيحي، سنقوم بإنشاء بيانات وهمية
+    
+    // إنشاء تقارير وهمية للعرض التوضيحي
+    const demoReports = this.generateDemoWeeklyReports(agencyId);
+    
+    return demoReports;
+  }
+  
+  /**
+   * إنشاء تقارير أسبوعية وهمية للعرض التوضيحي
+   * @param agencyId معرف الوكالة
+   */
+  private generateDemoWeeklyReports(agencyId: number) {
+    const now = new Date();
+    
+    // إنشاء تقارير أسبوعية لعملاء وهميين
+    const clientIds = [1, 2, 3, 4]; // معرفات العملاء الوهميين
+    
+    const reports = [];
+    
+    for (const clientId of clientIds) {
+      // إنشاء تقارير للأسابيع الماضية
+      for (let i = 0; i < 3; i++) {
+        const weekStart = format(subWeeks(startOfWeek(now), i), "yyyy-MM-dd");
+        const weekEnd = format(subWeeks(endOfWeek(now), i), "yyyy-MM-dd");
+        
+        // تحديد ما إذا كان التقرير قد تم إرساله
+        const sent = i === 0 ? Math.random() > 0.5 : true;
+        
+        reports.push({
+          id: (clientId * 10) + i,
+          agencyId,
+          clientId,
+          weekStart,
+          weekEnd,
+          sentAt: sent ? format(subWeeks(now, i), "yyyy-MM-dd") : null,
+          status: sent ? "sent" : "pending",
+          reportData: {
+            projectsCount: Math.floor(Math.random() * 3) + 1,
+            tasksCompleted: Math.floor(Math.random() * 15) + 5,
+            tasksInProgress: Math.floor(Math.random() * 8) + 2,
+            tasksDelayed: Math.floor(Math.random() * 3),
+            completionRate: Math.floor(Math.random() * 30) + 70,
+            achievements: [
+              "إطلاق حملة تسويقية جديدة",
+              "تحسين معدل التحويل بنسبة 15%",
+              "إكمال تصميم الهوية البصرية"
+            ],
+            upcomingTasks: [
+              "إعداد محتوى لوسائل التواصل الاجتماعي",
+              "تحليل أداء الحملة السابقة",
+              "بدء العمل على الفيديو الترويجي"
+            ]
+          }
+        });
+      }
+    }
     
     return reports;
   }
   
   /**
-   * توليد وحفظ تقرير شهري للوكالة
+   * إنشاء نص تقرير واتساب
+   * @param client معلومات العميل
+   * @param reportData بيانات التقرير
    */
-  async generateMonthlyReport(agencyId: number): Promise<MonthlyReport> {
-    // الحصول على معلومات الوكالة
-    const agency = await storage.getAgency(agencyId);
-    if (!agency) {
-      throw new Error(`لم يتم العثور على الوكالة بمعرف ${agencyId}`);
-    }
+  generateWhatsAppReportText(client: any, reportData: any): string {
+    // تنسيق محتوى الرسالة
+    return `*التقرير الأسبوعي - ${client.name}*
     
-    // إعداد سلسلة الشهر وتواريخه
-    const monthString = getMonthString();
-    const monthStart = getMonthStart();
-    const monthEnd = getMonthEnd();
+تحية طيبة ${client.name}،
+
+هذا هو تقريرنا الأسبوعي عن مشاريعك الجارية:
+
+*إحصائيات الأسبوع:*
+• عدد المشاريع النشطة: ${reportData.projectsCount}
+• المهام المكتملة: ${reportData.tasksCompleted}
+• المهام قيد التنفيذ: ${reportData.tasksInProgress}
+• معدل الإنجاز: ${reportData.completionRate}%
+
+*الإنجازات:*
+${reportData.achievements.map((item: string) => `• ${item}`).join('\n')}
+
+*المهام القادمة:*
+${reportData.upcomingTasks.map((item: string) => `• ${item}`).join('\n')}
+
+يمكنك الاطلاع على التفاصيل الكاملة من خلال منصة Taskaaya.
+
+فريق عمل Taskaaya
+`;
+  }
+  
+  /**
+   * إنشاء تقرير أسبوعي لعميل
+   * @param clientId معرف العميل
+   * @param agencyId معرف الوكالة
+   */
+  async generateWeeklyReport(clientId: number, agencyId: number) {
+    // في تطبيق حقيقي، سيتم جمع البيانات من المشاريع والمهام
+    // للعرض التوضيحي، سنقوم بإنشاء بيانات وهمية
     
-    // الحصول على جميع المشاريع المفتوحة خلال الشهر
-    const allProjects = await storage.getProjectsByAgency(agencyId);
-    const openProjects = allProjects.filter(p => p.status === 'open');
-    const completedProjects = allProjects.filter(
-      p => p.status === 'completed' && p.createdAt >= monthStart && p.createdAt <= monthEnd
-    );
+    const now = new Date();
+    const weekStart = format(startOfWeek(now), "yyyy-MM-dd");
+    const weekEnd = format(endOfWeek(now), "yyyy-MM-dd");
     
-    // الحصول على المهام خلال الشهر
-    const allTasks = await Promise.all(allProjects.map(p => storage.getTasksByProject(p.id)));
-    const flattenedTasks = allTasks.flat();
-    const completedTasks = flattenedTasks.filter(t => t.status === 'completed');
-    const overdueTasks = flattenedTasks.filter(t => t.status === 'overdue');
-    
-    // الحصول على الموظفين وأدائهم
-    const allEmployees = await storage.getEmployeesByAgency(agencyId);
-    const employeePerformance = await Promise.all(
-      allEmployees.map(async (employee) => {
-        const employeeTasks = await storage.getTasksByEmployee(employee.id);
-        const completedByEmployee = employeeTasks.filter(t => 
-          t.status === 'completed' && 
-          t.createdAt >= monthStart && 
-          t.createdAt <= monthEnd
-        );
-        
-        return {
-          id: employee.id,
-          name: employee.name,
-          position: employee.position,
-          completedTasksCount: completedByEmployee.length,
-          totalTasksCount: employeeTasks.length,
-          completionRate: employeeTasks.length > 0 
-            ? Math.round((completedByEmployee.length / employeeTasks.length) * 100) 
-            : 0
-        };
-      })
-    );
-    
-    // ترتيب الموظفين حسب الأداء
-    const sortedEmployees = [...employeePerformance].sort(
-      (a, b) => b.completedTasksCount - a.completedTasksCount
-    );
-    
-    // الحصول على العملاء وأنشطتهم
-    const allClients = await storage.getClientsByAgency(agencyId);
-    const clientActivity = await Promise.all(
-      allClients.map(async (client) => {
-        const clientProjects = await storage.getProjectsByClient(client.id);
-        const activeProjects = clientProjects.filter(p => p.status === 'open');
-        
-        return {
-          id: client.id,
-          name: client.name,
-          company: client.company,
-          projectsCount: clientProjects.length,
-          activeProjectsCount: activeProjects.length
-        };
-      })
-    );
-    
-    // ترتيب العملاء حسب النشاط
-    const sortedClients = [...clientActivity].sort(
-      (a, b) => b.activeProjectsCount - a.activeProjectsCount
-    );
-    
-    // حساب معدل إنجاز المهام
-    const taskCompletionRate = flattenedTasks.length > 0
-      ? Math.round((completedTasks.length / flattenedTasks.length) * 100)
-      : 0;
-    
-    // حساب معدل التأخير
-    const lateTaskRate = flattenedTasks.length > 0
-      ? Math.round((overdueTasks.length / flattenedTasks.length) * 100)
-      : 0;
-    
-    // إحصائيات المالية (نموذجية لأغراض العرض)
-    // في تطبيق حقيقي، ستكون هذه البيانات من جدول المدفوعات
-    const financialStats = {
-      totalRevenue: 0,
-      pendingPayments: 0,
-      averageProjectValue: 0
-    };
-    
-    // إنشاء بيانات التقرير
     const reportData = {
-      month: monthString,
-      agency: {
-        id: agency.id,
-        name: agency.name
-      },
-      metrics: {
-        openProjectsCount: openProjects.length,
-        completedProjectsCount: completedProjects.length,
-        taskCompletionRate,
-        lateTaskRate,
-        topPerformer: sortedEmployees.length > 0 ? sortedEmployees[0] : null,
-        mostActiveClient: sortedClients.length > 0 ? sortedClients[0] : null,
-      },
-      projectsStats: {
-        openProjects: openProjects.map(p => ({
-          id: p.id,
-          name: p.name,
-          startDate: p.startDate,
-          endDate: p.endDate
-        })),
-        completedProjects: completedProjects.map(p => ({
-          id: p.id,
-          name: p.name,
-          startDate: p.startDate,
-          endDate: p.endDate
-        }))
-      },
-      employeesStats: {
-        totalEmployees: allEmployees.length,
-        performance: sortedEmployees
-      },
-      clientsStats: {
-        totalClients: allClients.length,
-        activity: sortedClients
-      },
-      financialStats
+      projectsCount: Math.floor(Math.random() * 3) + 1,
+      tasksCompleted: Math.floor(Math.random() * 15) + 5,
+      tasksInProgress: Math.floor(Math.random() * 8) + 2,
+      tasksDelayed: Math.floor(Math.random() * 3),
+      completionRate: Math.floor(Math.random() * 30) + 70,
+      achievements: [
+        "إطلاق حملة تسويقية جديدة",
+        "تحسين معدل التحويل بنسبة 15%",
+        "إكمال تصميم الهوية البصرية"
+      ],
+      upcomingTasks: [
+        "إعداد محتوى لوسائل التواصل الاجتماعي",
+        "تحليل أداء الحملة السابقة",
+        "بدء العمل على الفيديو الترويجي"
+      ]
     };
     
-    // التحقق من وجود تقرير سابق لهذا الشهر
-    const existingReport = await this.getMonthlyReportByMonth(agencyId, monthString);
+    // إنشاء تقرير جديد
+    const newReport = {
+      id: Math.floor(Math.random() * 1000) + 100,
+      agencyId,
+      clientId,
+      weekStart,
+      weekEnd,
+      sentAt: null,
+      status: "pending",
+      reportData
+    };
     
-    if (existingReport) {
-      // تحديث التقرير الموجود
-      const [updatedReport] = await db.update(monthlyReportsCache)
-        .set({
-          metrics: reportData.metrics,
-          projectsStats: reportData.projectsStats,
-          employeesStats: reportData.employeesStats,
-          clientsStats: reportData.clientsStats,
-          financialStats: reportData.financialStats,
-          generatedAt: new Date()
-        })
-        .where(eq(monthlyReportsCache.id, existingReport.id))
-        .returning();
-        
-      return updatedReport;
-    } else {
-      // إنشاء تقرير جديد
-      const [newReport] = await db.insert(monthlyReportsCache).values({
-        agencyId,
-        month: monthString,
-        metrics: reportData.metrics,
-        projectsStats: reportData.projectsStats,
-        employeesStats: reportData.employeesStats,
-        clientsStats: reportData.clientsStats,
-        financialStats: reportData.financialStats
-      }).returning();
-      
-      return newReport;
+    // في تطبيق حقيقي، سيتم حفظ التقرير في قاعدة البيانات
+    // للعرض التوضيحي، سنعيد التقرير مباشرة
+    
+    return newReport;
+  }
+  
+  /**
+   * الحصول على التقارير الأسبوعية لعميل معين
+   * @param clientId معرف العميل
+   */
+  async getAllClientWeeklyReports(clientId: number) {
+    // للعرض التوضيحي، سنعيد تقارير وهمية
+    const allReports = this.generateDemoWeeklyReports(1); // نفترض أن معرف الوكالة هو 1
+    return allReports.filter(report => report.clientId === clientId);
+  }
+  
+  /**
+   * الحصول على أحدث تقرير أسبوعي لعميل
+   * @param clientId معرف العميل
+   */
+  async getWeeklyReportByClient(clientId: number) {
+    const reports = await this.getAllClientWeeklyReports(clientId);
+    
+    if (reports.length === 0) {
+      return null;
     }
-  }
-  
-  /**
-   * الحصول على تقرير شهري للوكالة حسب الشهر
-   */
-  async getMonthlyReportByMonth(agencyId: number, month: string): Promise<MonthlyReport | undefined> {
-    const [report] = await db.select().from(monthlyReportsCache).where(
-      and(
-        eq(monthlyReportsCache.agencyId, agencyId),
-        eq(monthlyReportsCache.month, month)
-      )
-    );
     
-    return report;
+    // ترتيب التقارير بناءً على تاريخ الأسبوع (الأحدث أولاً)
+    const sortedReports = reports.sort((a, b) => {
+      const dateA = parseISO(a.weekStart);
+      const dateB = parseISO(b.weekStart);
+      return isAfter(dateA, dateB) ? -1 : 1;
+    });
+    
+    return sortedReports[0];
   }
   
   /**
-   * الحصول على آخر تقرير شهري للوكالة
+   * إنشاء تقرير شهري للوكالة
+   * @param agencyId معرف الوكالة
    */
-  async getLatestMonthlyReport(agencyId: number): Promise<MonthlyReport | undefined> {
-    const [report] = await db.select().from(monthlyReportsCache)
-      .where(eq(monthlyReportsCache.agencyId, agencyId))
-      .orderBy(desc(monthlyReportsCache.generatedAt))
-      .limit(1);
-      
-    return report;
+  async generateMonthlyReport(agencyId: number) {
+    // في تطبيق حقيقي، سيتم جمع البيانات من المشاريع والمهام والتقارير الأسبوعية
+    // للعرض التوضيحي، سنقوم بإنشاء بيانات وهمية
+    
+    const now = new Date();
+    const monthStart = format(new Date(now.getFullYear(), now.getMonth(), 1), "yyyy-MM-dd");
+    const monthEnd = format(new Date(now.getFullYear(), now.getMonth() + 1, 0), "yyyy-MM-dd");
+    
+    const reportData = {
+      totalProjects: Math.floor(Math.random() * 10) + 5,
+      completedProjects: Math.floor(Math.random() * 3) + 1,
+      activeProjects: Math.floor(Math.random() * 7) + 3,
+      totalTasks: Math.floor(Math.random() * 50) + 30,
+      tasksCompleted: Math.floor(Math.random() * 30) + 20,
+      tasksInProgress: Math.floor(Math.random() * 20) + 10,
+      averageCompletionRate: Math.floor(Math.random() * 20) + 80,
+      clientSatisfaction: Math.floor(Math.random() * 1) + 4,
+      topPerformers: [
+        { name: "محمد أحمد", tasksCompleted: Math.floor(Math.random() * 15) + 10 },
+        { name: "سارة علي", tasksCompleted: Math.floor(Math.random() * 15) + 10 },
+        { name: "خالد محمود", tasksCompleted: Math.floor(Math.random() * 15) + 10 }
+      ],
+      keyAchievements: [
+        "إتمام 3 حملات تسويقية ناجحة",
+        "إطلاق موقع إلكتروني جديد لأحد العملاء",
+        "زيادة متابعي العملاء على وسائل التواصل بنسبة 25%"
+      ],
+      challengesAndSolutions: [
+        {
+          challenge: "تأخير في تسليم المحتوى من بعض العملاء",
+          solution: "إنشاء نظام تذكير آلي وتحديد مواعيد نهائية واضحة"
+        },
+        {
+          challenge: "صعوبة في التنسيق بين الفرق المختلفة",
+          solution: "تطبيق نظام إدارة مشاريع جديد وتحسين آلية التواصل الداخلي"
+        }
+      ],
+      nextMonthPlan: [
+        "إطلاق استراتيجية محتوى جديدة لعميلين رئيسيين",
+        "تنفيذ نظام تحليل أداء محسن",
+        "تطوير مهارات الفريق من خلال دورات تدريبية متخصصة"
+      ],
+      revenueAndCosts: {
+        revenue: Math.floor(Math.random() * 50000) + 30000,
+        costs: Math.floor(Math.random() * 20000) + 15000,
+        profit: Math.floor(Math.random() * 30000) + 15000,
+        revenueChange: Math.floor(Math.random() * 20) + 5
+      }
+    };
+    
+    // إنشاء تقرير جديد
+    const newReport = {
+      id: Math.floor(Math.random() * 1000) + 100,
+      agencyId,
+      month: now.getMonth() + 1,
+      year: now.getFullYear(),
+      monthStart,
+      monthEnd,
+      createdAt: format(now, "yyyy-MM-dd"),
+      reportData
+    };
+    
+    // في تطبيق حقيقي، سيتم حفظ التقرير في قاعدة البيانات
+    // للعرض التوضيحي، سنعيد التقرير مباشرة
+    
+    return newReport;
   }
   
   /**
    * الحصول على جميع التقارير الشهرية للوكالة
+   * @param agencyId معرف الوكالة
    */
-  async getAllMonthlyReports(agencyId: number): Promise<MonthlyReport[]> {
-    const reports = await db.select().from(monthlyReportsCache)
-      .where(eq(monthlyReportsCache.agencyId, agencyId))
-      .orderBy(desc(monthlyReportsCache.month));
+  async getAllMonthlyReports(agencyId: number) {
+    // للعرض التوضيحي، سنعيد تقارير وهمية للأشهر السابقة
+    const now = new Date();
+    const reports = [];
+    
+    for (let i = 0; i < 6; i++) {
+      const reportDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthStart = format(new Date(reportDate.getFullYear(), reportDate.getMonth(), 1), "yyyy-MM-dd");
+      const monthEnd = format(new Date(reportDate.getFullYear(), reportDate.getMonth() + 1, 0), "yyyy-MM-dd");
       
+      reports.push({
+        id: 200 + i,
+        agencyId,
+        month: reportDate.getMonth() + 1,
+        year: reportDate.getFullYear(),
+        monthStart,
+        monthEnd,
+        createdAt: format(new Date(reportDate.getFullYear(), reportDate.getMonth() + 1, -5), "yyyy-MM-dd"),
+        reportData: {
+          totalProjects: Math.floor(Math.random() * 10) + 5,
+          completedProjects: Math.floor(Math.random() * 3) + 1,
+          activeProjects: Math.floor(Math.random() * 7) + 3,
+          totalTasks: Math.floor(Math.random() * 50) + 30,
+          tasksCompleted: Math.floor(Math.random() * 30) + 20,
+          tasksInProgress: Math.floor(Math.random() * 20) + 10,
+          averageCompletionRate: Math.floor(Math.random() * 20) + 80,
+          clientSatisfaction: Math.floor(Math.random() * 1) + 4,
+          // باقي البيانات المماثلة للتقرير الشهري...
+        }
+      });
+    }
+    
     return reports;
   }
   
   /**
-   * توليد نص تقرير WhatsApp للعميل
+   * الحصول على أحدث تقرير شهري للوكالة
+   * @param agencyId معرف الوكالة
    */
-  generateWhatsAppReportText(client: Client, report: any): string {
-    const clientName = client.name.split(' ')[0]; // استخدام الاسم الأول فقط
-    const totalProjects = report.projects.length;
-    const activeProjects = report.projects.filter((p: any) => p.status === 'open').length;
-    const completedTasks = report.projects.reduce((sum: number, p: any) => sum + p.completedTasksCount, 0);
-    const overdueTasks = report.projects.reduce((sum: number, p: any) => sum + p.overdueTasksCount, 0);
+  async getLatestMonthlyReport(agencyId: number) {
+    const reports = await this.getAllMonthlyReports(agencyId);
     
-    let reportText = `*تقرير أسبوعي*: ${clientName}،\n\n`;
-    reportText += `إليك ملخص التقدم في مشاريعك خلال هذا الأسبوع (${new Date(report.weekStart).toLocaleDateString('ar-EG')} - ${new Date(report.weekEnd).toLocaleDateString('ar-EG')}):\n\n`;
-    
-    if (totalProjects === 0) {
-      reportText += "لا توجد مشاريع نشطة حاليًا.\n";
-    } else {
-      reportText += `📊 *نظرة عامة*:\n`;
-      reportText += `- مشاريع نشطة: ${activeProjects}\n`;
-      reportText += `- مهام تم إنجازها: ${completedTasks}\n`;
-      reportText += overdueTasks > 0 ? `- مهام متأخرة: ${overdueTasks} ⚠️\n\n` : `- لا توجد مهام متأخرة ✅\n\n`;
-      
-      // تفاصيل المشاريع
-      reportText += `*تفاصيل المشاريع*:\n`;
-      report.projects.forEach((project: any, index: number) => {
-        const progressEmoji = project.progress >= 75 ? "🟢" : 
-                            project.progress >= 50 ? "🟡" : 
-                            project.progress >= 25 ? "🟠" : "🔴";
-                            
-        reportText += `${index + 1}. *${project.name}* - ${progressEmoji} ${project.progress}%\n`;
-        reportText += `   ✅ ${project.completedTasksCount} مهام مكتملة`;
-        
-        if (project.overdueTasksCount > 0) {
-          reportText += ` | ⚠️ ${project.overdueTasksCount} مهام متأخرة`;
-        }
-        
-        reportText += `\n`;
-      });
+    if (reports.length === 0) {
+      return null;
     }
     
-    reportText += `\n📱 *لمزيد من التفاصيل*، يرجى زيارة لوحة المعلومات الخاصة بك على الرابط: https://taskaaya.app/client/dashboard\n\n`;
-    reportText += `مع خالص التقدير،\nفريق وكالة تاسكايا`;
+    // ترتيب التقارير بناءً على التاريخ (الأحدث أولاً)
+    const sortedReports = reports.sort((a, b) => {
+      if (a.year !== b.year) {
+        return b.year - a.year;
+      }
+      return b.month - a.month;
+    });
     
-    return reportText;
+    return sortedReports[0];
   }
 }
 
