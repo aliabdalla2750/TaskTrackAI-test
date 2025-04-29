@@ -4,6 +4,7 @@ import {
   RiCalendarLine, RiTimeLine, RiUser3Line, 
   RiCheckboxCircleLine, RiErrorWarningLine, RiInformationLine 
 } from 'react-icons/ri';
+import { useLocation } from 'wouter';
 
 export interface ProjectCardProps {
   id: number | string;
@@ -58,6 +59,7 @@ const statusConfig: Record<string, { color: string; icon: React.ReactNode; label
 };
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
+  id,
   title,
   description,
   client,
@@ -74,6 +76,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onClick,
   className
 }) => {
+  // Use wouter navigation
+  const [, navigate] = useLocation();
+  
   // Default status info if status not found in config
   const defaultStatusInfo = {
     color: 'bg-gray-100 text-gray-800',
@@ -84,12 +89,23 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   // Get status info from config or use default
   const statusInfo = statusConfig[status] || defaultStatusInfo;
   
+  // Handle click on project card
+  const handleCardClick = () => {
+    if (onClick) {
+      // Use custom click handler if provided
+      onClick();
+    } else {
+      // Navigate to project detail page
+      navigate(`/dashboard/agency/projects/${id}`);
+    }
+  };
+  
   return (
     <motion.div 
-      className={`dashboard-card card-hover ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      className={`dashboard-card card-hover cursor-pointer ${className}`}
       whileHover={{ y: -5 }}
-      whileTap={onClick ? { scale: 0.98 } : undefined}
-      onClick={onClick}
+      whileTap={{ scale: 0.98 }}
+      onClick={handleCardClick}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
