@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useLocation } from 'wouter';
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -11,6 +12,8 @@ interface StatCardProps {
   };
   color?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info';
   onClick?: () => void;
+  route?: string; // مسار التنقل
+  linkTo?: string; // مسار URL مباشر
 }
 
 const colorVariants = {
@@ -52,19 +55,38 @@ export const StatCard = ({
   value, 
   change, 
   color = 'primary',
-  onClick
+  onClick,
+  route,
+  linkTo
 }: StatCardProps) => {
   const colorClasses = colorVariants[color];
+  const [, navigate] = useLocation();
+  
+  const handleClick = () => {
+    if (onClick) {
+      // استخدم المعالج المخصص إذا كان متوفرًا
+      onClick();
+    } else if (route) {
+      // انتقل إلى المسار المحدد
+      navigate(route);
+    } else if (linkTo) {
+      // افتح الرابط في نافذة جديدة
+      window.open(linkTo, '_blank');
+    }
+  };
+  
+  // حدد ما إذا كان العنصر قابل للنقر
+  const isClickable = onClick || route || linkTo;
   
   return (
     <motion.div 
-      className={`dashboard-card dashboard-card-hover ${onClick ? 'cursor-pointer' : ''}`}
+      className={`dashboard-card dashboard-card-hover ${isClickable ? 'cursor-pointer' : ''}`}
       whileHover={{ y: -4, boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }}
-      whileTap={onClick ? { scale: 0.98 } : undefined}
+      whileTap={isClickable ? { scale: 0.98 } : undefined}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      onClick={onClick}
+      onClick={isClickable ? handleClick : undefined}
     >
       <div className="flex justify-between items-start">
         <div>

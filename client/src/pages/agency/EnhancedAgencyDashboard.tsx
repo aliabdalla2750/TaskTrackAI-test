@@ -4,9 +4,10 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { ProjectCard } from '@/components/dashboard/ProjectCard';
 import { DataTable } from '@/components/dashboard/DataTable';
 import { motion } from 'framer-motion';
+import { useLocation } from 'wouter';
 import {
   RiFolderLine, RiTrophyLine, RiTaskLine, RiTeamLine,
-  RiPieChartLine, RiCalendarLine, RiBarChartLine
+  RiPieChartLine, RiCalendarLine, RiBarChartLine, RiAddLine
 } from 'react-icons/ri';
 
 const sampleProjects = [
@@ -147,6 +148,9 @@ const taskColumns = [
 ];
 
 const EnhancedAgencyDashboard = () => {
+  // استخدام التنقل
+  const [, navigate] = useLocation();
+  
   // Animation variants for staggered animations
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -161,6 +165,11 @@ const EnhancedAgencyDashboard = () => {
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
+  
+  // معالج إنشاء مشروع جديد
+  const handleCreateProject = () => {
+    navigate('/dashboard/agency/create-project');
   };
   
   return (
@@ -181,6 +190,7 @@ const EnhancedAgencyDashboard = () => {
               value="12"
               change={{ value: 20, type: 'increase' }}
               color="primary"
+              route="/dashboard/agency/projects"
             />
             <StatCard
               icon={<RiTrophyLine size={20} />}
@@ -188,6 +198,7 @@ const EnhancedAgencyDashboard = () => {
               value="24"
               change={{ value: 5, type: 'increase' }}
               color="success"
+              route="/dashboard/agency/projects?status=completed"
             />
             <StatCard
               icon={<RiTaskLine size={20} />}
@@ -195,12 +206,14 @@ const EnhancedAgencyDashboard = () => {
               value="38"
               change={{ value: 10, type: 'decrease' }}
               color="warning"
+              route="/dashboard/agency/tasks"
             />
             <StatCard
               icon={<RiTeamLine size={20} />}
               title="الفريق"
               value="8"
               color="info"
+              route="/dashboard/agency/employees"
             />
           </div>
         </motion.div>
@@ -209,9 +222,12 @@ const EnhancedAgencyDashboard = () => {
         <motion.div variants={itemVariants}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold">المشاريع الحالية</h2>
-            <button className="btn btn-primary flex items-center gap-2">
+            <button 
+              className="btn btn-primary flex items-center gap-2"
+              onClick={handleCreateProject}
+            >
+              <RiAddLine size={18} />
               <span>إنشاء مشروع</span>
-              <span>+</span>
             </button>
           </div>
           
