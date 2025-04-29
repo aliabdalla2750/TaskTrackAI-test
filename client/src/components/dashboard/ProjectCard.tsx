@@ -104,10 +104,35 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       
       <p className="mt-2 text-gray-600 text-sm line-clamp-2">{description}</p>
       
-      <div className="flex items-center mt-4 text-sm text-gray-500">
-        <RiUser3Line className="ml-1" />
-        <span>{client}</span>
-      </div>
+      {client && (
+        <div className="flex items-center mt-4 text-sm text-gray-500">
+          <RiUser3Line className="ml-1" />
+          <span>{client}</span>
+        </div>
+      )}
+      
+      {/* Team display if available */}
+      {team && team.length > 0 && (
+        <div className="flex items-center mt-4">
+          <div className="flex -space-x-3 rtl:space-x-reverse">
+            {team.map((member, index) => (
+              <div key={index} className="relative inline-flex items-center justify-center w-8 h-8 overflow-hidden rounded-full border-2 border-white bg-gray-100">
+                {member.avatar ? (
+                  <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div 
+                    className="w-full h-full flex items-center justify-center text-white text-xs font-bold"
+                    style={{ backgroundColor: member.avatarColor ? `#${member.avatarColor}` : '#6366f1' }}
+                  >
+                    {member.name.substring(0, 2)}
+                  </div>
+                )}
+                <span className="sr-only">{member.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
       <div className="mt-4">
         <div className="flex justify-between items-center mb-2">
@@ -125,9 +150,16 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       </div>
       
       <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
+        {/* Date information - different formats depending on what's available */}
         <div className="flex items-center">
           <RiCalendarLine className="ml-1" />
-          <span>{startDate} - {endDate}</span>
+          {dueDate ? (
+            <span>الموعد النهائي: {dueDate}</span>
+          ) : startDate && endDate ? (
+            <span>{startDate} - {endDate}</span>
+          ) : (
+            <span>لا يوجد تاريخ</span>
+          )}
         </div>
         
         {subgoals !== undefined && completedSubgoals !== undefined && (
