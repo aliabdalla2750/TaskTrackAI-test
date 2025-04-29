@@ -116,6 +116,15 @@ const BillingPage: React.FC = () => {
       description: 'يتم الآن إنشاء ملف PDF للفاتورة...',
     });
     
+    // Add loading state
+    const loadingToastId = Math.random().toString();
+    toast({
+      id: loadingToastId,
+      title: 'جاري التحميل',
+      description: 'يرجى الانتظار...',
+      duration: 3000,
+    });
+    
     // Call the API to generate PDF
     fetch(`/api/billings/${invoiceId}/pdf`)
       .then(response => {
@@ -124,11 +133,18 @@ const BillingPage: React.FC = () => {
         }
         return response.json();
       })
-      .then(() => {
+      .then((data) => {
+        // Close loading toast
         toast({
           title: 'تم إنشاء الفاتورة بنجاح',
           description: 'يمكنك الآن تنزيل أو مشاركة الفاتورة',
+          variant: 'success',
         });
+        
+        // If a file URL is returned, open it in a new tab
+        if (data && data.fileUrl) {
+          window.open(data.fileUrl, '_blank');
+        }
       })
       .catch(error => {
         toast({
@@ -310,6 +326,41 @@ const BillingPage: React.FC = () => {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    <Button variant="outline" className="w-full md:w-auto" onClick={() => {
+                      toast({
+                        title: "جاري تصدير البيانات",
+                        description: "يتم تصدير جميع بيانات الفواتير بتنسيق اكسل..."
+                      });
+                      
+                      fetch(`/api/agency/${agencyId}/billings/export-excel`)
+                        .then(response => {
+                          if (!response.ok) {
+                            throw new Error('فشل تصدير البيانات');
+                          }
+                          return response.json();
+                        })
+                        .then(data => {
+                          if (data && data.fileUrl) {
+                            window.open(data.fileUrl, '_blank');
+                            toast({
+                              title: "تم تصدير البيانات بنجاح",
+                              description: "تم فتح ملف الاكسل في نافذة جديدة",
+                              variant: "success"
+                            });
+                          }
+                        })
+                        .catch(error => {
+                          toast({
+                            title: "خطأ",
+                            description: error.message,
+                            variant: "destructive"
+                          });
+                        });
+                    }}>
+                      <BarChartIcon className="w-4 h-4 mr-2" />
+                      تصدير اكسل
+                    </Button>
                     
                     <Dialog>
                       <DialogTrigger asChild>
@@ -699,7 +750,7 @@ const BillingPage: React.FC = () => {
                         </div>
                         <div className="flex flex-col gap-2">
                           <label>العميل</label>
-                          <Select defaultValue="all">
+                          <Select defaultValue="all" id="report-client">
                             <SelectTrigger>
                               <SelectValue placeholder="اختر العميل" />
                             </SelectTrigger>
@@ -718,9 +769,40 @@ const BillingPage: React.FC = () => {
                         </Button>
                         <Button variant="outline" className="w-full sm:w-auto"
                           onClick={() => {
+                            const startDate = document.getElementById('report-start-date') as HTMLInputElement;
+                            const endDate = document.getElementById('report-end-date') as HTMLInputElement;
+                            
+                            // Input validation
+                            if (!startDate?.value) {
+                              toast({
+                                title: "تنبيه",
+                                description: "يرجى تحديد تاريخ بداية التقرير",
+                                variant: "warning",
+                              });
+                              return;
+                            }
+                            
+                            if (!endDate?.value) {
+                              toast({
+                                title: "تنبيه",
+                                description: "يرجى تحديد تاريخ نهاية التقرير",
+                                variant: "warning",
+                              });
+                              return;
+                            }
+                            
                             toast({
                               title: "جاري توليد التقرير بصيغة PDF",
                               description: "يتم الآن إنشاء ملف PDF للتقرير المالي...",
+                            });
+                            
+                            // Add loading state with animation
+                            const loadingToastId = Math.random().toString();
+                            toast({
+                              id: loadingToastId,
+                              title: 'جاري توليد التقرير',
+                              description: 'يرجى الانتظار...',
+                              duration: 4000,
                             });
                             
                             // Call API to generate PDF report
@@ -730,8 +812,8 @@ const BillingPage: React.FC = () => {
                                 'Content-Type': 'application/json',
                               },
                               body: JSON.stringify({
-                                startDate: document.getElementById('report-start-date')?.value || new Date().toISOString(),
-                                endDate: document.getElementById('report-end-date')?.value || new Date().toISOString(),
+                                startDate: startDate.value || new Date().toISOString(),
+                                endDate: endDate.value || new Date().toISOString(),
                                 type: document.getElementById('report-type')?.value || 'all',
                                 clientId: document.getElementById('report-client')?.value || 'all',
                               }),
@@ -742,11 +824,17 @@ const BillingPage: React.FC = () => {
                                 }
                                 return response.json();
                               })
-                              .then(() => {
+                              .then((data) => {
                                 toast({
                                   title: "تم إنشاء التقرير بنجاح",
                                   description: "يمكنك الآن تنزيل ملف PDF للتقرير المالي",
+                                  variant: "success",
                                 });
+                                
+                                // Open the PDF in a new tab if available
+                                if (data && data.fileUrl) {
+                                  window.open(data.fileUrl, '_blank');
+                                }
                               })
                               .catch(error => {
                                 toast({
