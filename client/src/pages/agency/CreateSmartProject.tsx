@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AiChatBox } from '@/components/dashboard/AiChatBox';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
@@ -53,8 +53,30 @@ export default function CreateSmartProject() {
   const [step, setStep] = useState<'form' | 'ai-setup' | 'ai-chat' | 'review'>('form');
   const [aiResult, setAiResult] = useState<ProjectResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [providerId, setProviderId] = useState<number>(1); // قيمة افتراضية
+  const [aiModel, setAiModel] = useState<string>('gpt-4o'); // قيمة افتراضية
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  
+  // استعلام عن مزود الذكاء الاصطناعي الافتراضي عند تحميل الصفحة
+  useEffect(() => {
+    const fetchAiProvider = async () => {
+      try {
+        const response = await apiRequest('GET', '/api/admin/ai-providers');
+        const providers = await response.json();
+        
+        if (providers && providers.length > 0) {
+          // استخدام أول مزود متاح
+          console.log("Available AI providers:", providers);
+          setProviderId(providers[0].id);
+        }
+      } catch (error) {
+        console.error("Failed to fetch AI providers:", error);
+      }
+    };
+    
+    fetchAiProvider();
+  }, []);
   
   // إعدادات الذكاء الاصطناعي
   const [aiSetup, setAiSetup] = useState<AiSetup>({
@@ -642,8 +664,8 @@ export default function CreateSmartProject() {
               welcomeMessage={getWelcomeMessage()}
               scenarioKey="project-creation"
               onResultGenerated={handleAiResult}
-              providerId={2} // استخدام OpenRouter (رقم معرف المزود 2)
-              model="gpt-3.5-turbo" // استخدام نموذج محدد لـ OpenRouter للاختبار
+              providerId={1} // استخدام OpenRouter (رقم معرف المزود 1)
+              model="openai/gpt-4" // استخدام نموذج محدد لـ OpenRouter
             />
           </CardContent>
           <CardFooter className="border-t pt-5">
