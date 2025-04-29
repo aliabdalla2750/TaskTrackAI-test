@@ -168,6 +168,42 @@ export const insertFileSchema = createInsertSchema(files).omit({
   uploadedAt: true,
 });
 
+// AI providers table
+export const aiProviders = pgTable("ai_providers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),  // 'openai', 'deepseek', 'openrouter'
+  displayName: text("display_name").notNull(), // 'OpenAI', 'DeepSeek', 'OpenRouter'
+  apiKey: text("api_key").notNull(),
+  baseUrl: text("base_url"),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertAiProviderSchema = createInsertSchema(aiProviders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// AI models table
+export const aiModels = pgTable("ai_models", {
+  id: serial("id").primaryKey(),
+  providerId: integer("provider_id").notNull(),
+  name: text("name").notNull(), // 'gpt-4o', 'deepseek-chat', etc.
+  displayName: text("display_name").notNull(), // 'GPT-4o', 'DeepSeek Chat', etc.
+  maxTokens: integer("max_tokens").notNull().default(4000),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAiModelSchema = createInsertSchema(aiModels).omit({
+  id: true,
+  createdAt: true,
+});
+
 // AI scenarios table
 export const aiScenarios = pgTable("ai_scenarios", {
   id: serial("id").primaryKey(),
@@ -176,6 +212,7 @@ export const aiScenarios = pgTable("ai_scenarios", {
   description: text("description"),
   systemPrompt: text("system_prompt").notNull(),
   model: text("model").notNull().default("gpt-4o"),
+  providerId: integer("provider_id"), // Link to specific AI provider
   temperature: integer("temperature").notNull().default(70), // 0-100, divided by 100 when used
   maxTokens: integer("max_tokens").notNull().default(4000),
   isActive: boolean("is_active").notNull().default(true),
@@ -266,6 +303,12 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 export type File = typeof files.$inferSelect;
 export type InsertFile = z.infer<typeof insertFileSchema>;
+
+export type AiProvider = typeof aiProviders.$inferSelect;
+export type InsertAiProvider = z.infer<typeof insertAiProviderSchema>;
+
+export type AiModel = typeof aiModels.$inferSelect;
+export type InsertAiModel = z.infer<typeof insertAiModelSchema>;
 
 export type AiScenario = typeof aiScenarios.$inferSelect;
 export type InsertAiScenario = z.infer<typeof insertAiScenarioSchema>;
