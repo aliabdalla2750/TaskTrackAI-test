@@ -213,6 +213,8 @@ export class MemStorage implements IStorage {
     this.payments = new Map();
     this.aiChatLogs = new Map();
     this.dailyStandups = new Map();
+    this.weeklyReports = new Map();
+    this.monthlyReports = new Map();
 
     // Initialize with default AI scenarios
     this.seedAiScenarios();

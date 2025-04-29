@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, date, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -342,21 +342,25 @@ export const insertMonthlyReportSchema = createInsertSchema(monthlyReportsCache)
   createdAt: true,
 });
 
-// Export types
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
+// Define relations for weekly reports
+export const weeklyReportsRelations = relations(weeklyReportsSent, ({ one }) => ({
+  client: one(clients, {
+    fields: [weeklyReportsSent.clientId],
+    references: [clients.id],
+  }),
+  agency: one(agencies, {
+    fields: [weeklyReportsSent.agencyId],
+    references: [agencies.id],
+  }),
+}));
 
-export type Agency = typeof agencies.$inferSelect;
-export type InsertAgency = z.infer<typeof insertAgencySchema>;
-
-export type Client = typeof clients.$inferSelect;
-export type InsertClient = z.infer<typeof insertClientSchema>;
-
-export type Employee = typeof employees.$inferSelect;
-export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
-
-export type Project = typeof projects.$inferSelect;
-export type InsertProject = z.infer<typeof insertProjectSchema>;
+// Define relations for monthly reports
+export const monthlyReportsRelations = relations(monthlyReportsCache, ({ one }) => ({
+  agency: one(agencies, {
+    fields: [monthlyReportsCache.agencyId],
+    references: [agencies.id],
+  }),
+}));
 
 export type Subgoal = typeof subgoals.$inferSelect;
 export type InsertSubgoal = z.infer<typeof insertSubgoalSchema>;
@@ -583,22 +587,62 @@ export const dailyStandupsRelations = relations(dailyStandups, ({ one }) => ({
   }),
 }));
 
-// Weekly Reports relations
-export const weeklyReportsRelations = relations(weeklyReportsSent, ({ one }) => ({
-  client: one(clients, {
-    fields: [weeklyReportsSent.clientId],
-    references: [clients.id],
-  }),
-  agency: one(agencies, {
-    fields: [weeklyReportsSent.agencyId],
-    references: [agencies.id],
-  }),
-}));
+// Export type definitions
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 
-// Monthly Reports relations
-export const monthlyReportsRelations = relations(monthlyReportsCache, ({ one }) => ({
-  agency: one(agencies, {
-    fields: [monthlyReportsCache.agencyId],
-    references: [agencies.id],
-  }),
-}));
+export type Agency = typeof agencies.$inferSelect;
+export type InsertAgency = z.infer<typeof insertAgencySchema>;
+
+export type Client = typeof clients.$inferSelect;
+export type InsertClient = z.infer<typeof insertClientSchema>;
+
+export type Employee = typeof employees.$inferSelect;
+export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
+
+export type Project = typeof projects.$inferSelect;
+export type InsertProject = z.infer<typeof insertProjectSchema>;
+
+export type Subgoal = typeof subgoals.$inferSelect;
+export type InsertSubgoal = z.infer<typeof insertSubgoalSchema>;
+
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = z.infer<typeof insertTaskSchema>;
+
+export type TaskSubmission = typeof taskSubmissions.$inferSelect;
+export type InsertTaskSubmission = z.infer<typeof insertTaskSubmissionSchema>;
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type File = typeof files.$inferSelect;
+export type InsertFile = z.infer<typeof insertFileSchema>;
+
+export type AiProvider = typeof aiProviders.$inferSelect;
+export type InsertAiProvider = z.infer<typeof insertAiProviderSchema>;
+
+export type AiModel = typeof aiModels.$inferSelect;
+export type InsertAiModel = z.infer<typeof insertAiModelSchema>;
+
+export type AiScenario = typeof aiScenarios.$inferSelect;
+export type InsertAiScenario = z.infer<typeof insertAiScenarioSchema>;
+
+export type AiUsageLog = typeof aiUsageLogs.$inferSelect;
+export type InsertAiUsageLog = z.infer<typeof insertAiUsageLogSchema>;
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+
+export type AiChatLog = typeof aiChatLogs.$inferSelect;
+export type InsertAiChatLog = z.infer<typeof insertAiChatLogSchema>;
+
+export type DailyStandup = typeof dailyStandups.$inferSelect;
+export type InsertDailyStandup = z.infer<typeof insertDailyStandupSchema>;
+
+export type WeeklyReport = typeof weeklyReportsSent.$inferSelect;
+export type InsertWeeklyReport = z.infer<typeof insertWeeklyReportSchema>;
+
+export type MonthlyReport = typeof monthlyReportsCache.$inferSelect;
+export type InsertMonthlyReport = z.infer<typeof insertMonthlyReportSchema>;
+
+
