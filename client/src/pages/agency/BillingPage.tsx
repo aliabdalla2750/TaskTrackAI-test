@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, CreditCard, DollarSign, FileText, Filter, Printer, Search } from 'lucide-react';
+import { BarChartIcon, Calendar, CreditCard, DollarSign, Download, FileText, Filter, PieChartIcon, Printer, RefreshCw, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { queryClient } from '@/lib/queryClient';
@@ -675,17 +675,17 @@ const BillingPage: React.FC = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-2">
                           <label>تاريخ البداية</label>
-                          <Input type="date" />
+                          <Input id="report-start-date" type="date" />
                         </div>
                         <div className="flex flex-col gap-2">
                           <label>تاريخ النهاية</label>
-                          <Input type="date" />
+                          <Input id="report-end-date" type="date" />
                         </div>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-2">
                           <label>نوع التقرير</label>
-                          <Select defaultValue="all">
+                          <Select defaultValue="all" id="report-type">
                             <SelectTrigger>
                               <SelectValue placeholder="اختر نوع التقرير" />
                             </SelectTrigger>
