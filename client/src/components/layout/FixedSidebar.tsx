@@ -22,12 +22,15 @@ const itemVariants = {
 };
 
 const SidebarLink = ({ path, icon, label, active }: SidebarLinkProps) => {
+  // Check if this is a new feature link
+  const isNewFeature = label.includes('🆕');
+  
   return (
     <motion.li 
       variants={itemVariants}
       initial="initial"
       animate="animate"
-      className="mb-2"
+      className="mb-2 relative"
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >
@@ -38,10 +41,13 @@ const SidebarLink = ({ path, icon, label, active }: SidebarLinkProps) => {
             active
               ? 'text-white bg-primary shadow-md'
               : 'text-gray-700 hover:bg-accent hover:text-primary'
-          }`}
+          } ${isNewFeature && !active ? 'border-2 border-secondary' : ''}`}
         >
           <span className="text-lg">{icon}</span>
           <span>{label}</span>
+          {isNewFeature && !active && (
+            <div className="absolute right-1 top-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          )}
         </Link>
         {active && (
           <motion.div 
