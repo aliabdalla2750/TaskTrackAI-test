@@ -20,11 +20,11 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
+      {/* Sidebar - Always show on desktop (lg screens) */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto lg:mr-72 transition-all duration-300">
+      {/* Main Content - adjust margin based on sidebar visibility */}
+      <main className="flex-1 overflow-auto transition-all duration-300">
         {/* Header */}
         <Header 
           title={title} 

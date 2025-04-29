@@ -145,9 +145,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {/* Sidebar */}
       <motion.aside 
         variants={sideVariants}
-        initial="closed"
-        animate={open ? "open" : "closed"}
-        className="w-72 bg-white shadow-xl fixed h-full z-30 overflow-hidden lg:translate-x-0 overflow-y-auto"
+        initial={{ x: 0 }}  
+        animate={open ? "open" : { x: "100%" }}
+        className="w-72 bg-white shadow-xl fixed h-full z-30 overflow-hidden lg:translate-x-0 overflow-y-auto lg:relative"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b bg-gradient-to-l from-primary/5 to-primary/10">
