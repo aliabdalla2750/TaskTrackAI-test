@@ -6,7 +6,8 @@ import {
   RiTeamLine, RiUser3Line, RiFileTextLine, RiRobot2Line,
   RiSettings3Line, RiBrainLine, RiBuildingLine, RiUserStarLine,
   RiShieldUserLine, RiUserLine, RiCloseLine, RiMenuLine,
-  RiCodeSSlashLine, RiServerLine, RiChat1Line, RiClipboardLine, RiLineChartLine
+  RiCodeSSlashLine, RiServerLine, RiChat1Line, RiClipboardLine, RiLineChartLine,
+  RiFileList2Line
 } from 'react-icons/ri';
 
 interface SidebarProps {
@@ -85,7 +86,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     { path: '/dashboard/agency/overview', icon: <RiDashboardLine />, label: 'نظرة عامة' },
     { path: '/dashboard/agency/projects', icon: <RiFolderOpenLine />, label: 'المشاريع' },
     { path: '/dashboard/agency/create-smart-project', icon: <RiMagicLine />, label: 'إنشاء مشروع ذكي' },
-    { path: '/dashboard/agency/create-manual-project', icon: <RiFileTextLine />, label: 'إنشاء مشروع يدوي' },
+    { path: '/dashboard/agency/create-manual-project', icon: <RiFileList2Line />, label: 'إنشاء مشروع يدوي' },
     { path: '/dashboard/agency/tasks', icon: <RiTaskLine />, label: 'المهام' },
     { path: '/dashboard/agency/daily-standup', icon: <RiClipboardLine />, label: 'خطة العمل اليومية' },
     { path: '/dashboard/agency/daily-review', icon: <RiLineChartLine />, label: 'مراجعة التقارير اليومية 🆕' },

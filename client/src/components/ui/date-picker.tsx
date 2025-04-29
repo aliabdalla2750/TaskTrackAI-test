@@ -1,52 +1,49 @@
 import * as React from "react";
-import { Input } from "./input";
-import { Label } from "./label";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { ar } from 'date-fns/locale';
+
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface DatePickerProps {
-  date?: Date;
+  date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   placeholder?: string;
-  className?: string;
-  label?: string;
+  disabled?: boolean;
 }
 
-export function DatePicker({
-  date,
-  setDate,
-  placeholder = "اختر تاريخ",
-  className,
-  label
-}: DatePickerProps) {
-  // Event handler for input change
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) {
-      setDate(new Date(e.target.value));
-    } else {
-      setDate(undefined);
-    }
-  };
-
-  // Format date to YYYY-MM-DD for input[type="date"]
-  const formatDate = (date?: Date): string => {
-    if (!date) return "";
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
+export function DatePicker({ date, setDate, placeholder = "اختر تاريخ", disabled = false }: DatePickerProps) {
   return (
-    <div className={cn("space-y-2", className)}>
-      {label && <Label>{label}</Label>}
-      <Input
-        type="date"
-        value={formatDate(date)}
-        onChange={handleChange}
-        placeholder={placeholder}
-        dir="ltr" // Keep date input left-to-right
-        className={cn("h-10 text-right", className)}
-      />
-    </div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant={"outline"}
+          className={cn(
+            "w-full justify-between text-right font-normal",
+            !date && "text-muted-foreground"
+          )}
+          disabled={disabled}
+        >
+          {date ? format(date, "PPP", { locale: ar }) : <span>{placeholder}</span>}
+          <CalendarIcon className="mr-2 h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={setDate}
+          initialFocus
+          locale={ar}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
