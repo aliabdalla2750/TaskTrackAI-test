@@ -247,13 +247,37 @@ export const insertAiUsageLogSchema = createInsertSchema(aiUsageLogs).omit({
   createdAt: true,
 });
 
-// Payments table
-export const payments = pgTable("payments", {
+// Billing table
+export const billing = pgTable("billing", {
   id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull(),
+  projectId: integer("project_id").notNull(),
   agencyId: integer("agency_id").notNull(),
   amount: integer("amount").notNull(), // in cents
   status: text("status").notNull().default("pending"), // 'pending', 'paid'
-  paymentDate: timestamp("payment_date"),
+  invoiceLink: text("invoice_link"),
+  periodStart: date("period_start"),
+  periodEnd: date("period_end"),
+  dueDate: date("due_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertBillingSchema = createInsertSchema(billing).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Payments table
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  billingId: integer("billing_id").notNull(),
+  clientId: integer("client_id").notNull(),
+  agencyId: integer("agency_id").notNull(),
+  projectId: integer("project_id").notNull(),
+  amount: integer("amount").notNull(), // in cents
+  status: text("status").notNull().default("completed"), // 'pending', 'completed'
+  paymentDate: timestamp("payment_date").defaultNow(),
+  reference: text("reference"), // Reference from payment gateway (Paymob)
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -262,6 +286,21 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   createdAt: true,
 });
 
+// Wallet table
+export const wallet = pgTable("wallet", {
+  id: serial("id").primaryKey(),
+  agencyId: integer("agency_id").notNull().unique(),
+  currentBalance: integer("current_balance").notNull().default(0), // in cents
+  totalRevenue: integer("total_revenue").notNull().default(0), // total all-time revenue in cents
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertWalletSchema = createInsertSchema(wallet).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 
 // AI chat logs table
@@ -362,48 +401,6 @@ export const monthlyReportsRelations = relations(monthlyReportsCache, ({ one }) 
   }),
 }));
 
-export type Subgoal = typeof subgoals.$inferSelect;
-export type InsertSubgoal = z.infer<typeof insertSubgoalSchema>;
-
-export type Task = typeof tasks.$inferSelect;
-export type InsertTask = z.infer<typeof insertTaskSchema>;
-
-export type TaskSubmission = typeof taskSubmissions.$inferSelect;
-export type InsertTaskSubmission = z.infer<typeof insertTaskSubmissionSchema>;
-
-export type Notification = typeof notifications.$inferSelect;
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;
-
-export type File = typeof files.$inferSelect;
-export type InsertFile = z.infer<typeof insertFileSchema>;
-
-export type AiProvider = typeof aiProviders.$inferSelect;
-export type InsertAiProvider = z.infer<typeof insertAiProviderSchema>;
-
-export type AiModel = typeof aiModels.$inferSelect;
-export type InsertAiModel = z.infer<typeof insertAiModelSchema>;
-
-export type AiScenario = typeof aiScenarios.$inferSelect;
-export type InsertAiScenario = z.infer<typeof insertAiScenarioSchema>;
-
-export type AiUsageLog = typeof aiUsageLogs.$inferSelect;
-export type InsertAiUsageLog = z.infer<typeof insertAiUsageLogSchema>;
-
-export type Payment = typeof payments.$inferSelect;
-export type InsertPayment = z.infer<typeof insertPaymentSchema>;
-
-export type AiChatLog = typeof aiChatLogs.$inferSelect;
-export type InsertAiChatLog = z.infer<typeof insertAiChatLogSchema>;
-
-export type DailyStandup = typeof dailyStandups.$inferSelect;
-export type InsertDailyStandup = z.infer<typeof insertDailyStandupSchema>;
-
-export type WeeklyReport = typeof weeklyReportsSent.$inferSelect;
-export type InsertWeeklyReport = z.infer<typeof insertWeeklyReportSchema>;
-
-export type MonthlyReport = typeof monthlyReportsCache.$inferSelect;
-export type InsertMonthlyReport = z.infer<typeof insertMonthlyReportSchema>;
-
 // Relations
 
 // User relations
@@ -415,12 +412,17 @@ export const usersRelations = relations(users, ({ one }) => ({
 }));
 
 // Agency relations
-export const agenciesRelations = relations(agencies, ({ many }) => ({
+export const agenciesRelations = relations(agencies, ({ one, many }) => ({
   users: many(users),
   clients: many(clients),
   employees: many(employees),
   projects: many(projects),
+  billings: many(billing),
   payments: many(payments),
+  wallet: one(wallet, {
+    fields: [agencies.id],
+    references: [wallet.agencyId],
+  }),
 }));
 
 // Client relations
@@ -430,6 +432,8 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
     references: [agencies.id],
   }),
   projects: many(projects),
+  billings: many(billing),
+  payments: many(payments),
 }));
 
 // Employee relations
@@ -460,6 +464,8 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   }),
   subgoals: many(subgoals),
   tasks: many(tasks),
+  billings: many(billing),
+  payments: many(payments),
 }));
 
 // Subgoal relations
@@ -529,8 +535,44 @@ export const aiUsageLogsRelations = relations(aiUsageLogs, ({ one }) => ({
   }),
 }));
 
+// Billing relations
+export const billingRelations = relations(billing, ({ one }) => ({
+  client: one(clients, {
+    fields: [billing.clientId],
+    references: [clients.id],
+  }),
+  project: one(projects, {
+    fields: [billing.projectId],
+    references: [projects.id],
+  }),
+  agency: one(agencies, {
+    fields: [billing.agencyId],
+    references: [agencies.id],
+  }),
+}));
+
+// Wallet relations
+export const walletRelations = relations(wallet, ({ one }) => ({
+  agency: one(agencies, {
+    fields: [wallet.agencyId],
+    references: [agencies.id],
+  }),
+}));
+
 // Payment relations
 export const paymentsRelations = relations(payments, ({ one }) => ({
+  billing: one(billing, {
+    fields: [payments.billingId],
+    references: [billing.id],
+  }),
+  client: one(clients, {
+    fields: [payments.clientId],
+    references: [clients.id],
+  }),
+  project: one(projects, {
+    fields: [payments.projectId],
+    references: [projects.id],
+  }),
   agency: one(agencies, {
     fields: [payments.agencyId],
     references: [agencies.id],
@@ -645,4 +687,9 @@ export type InsertWeeklyReport = z.infer<typeof insertWeeklyReportSchema>;
 export type MonthlyReport = typeof monthlyReportsCache.$inferSelect;
 export type InsertMonthlyReport = z.infer<typeof insertMonthlyReportSchema>;
 
+export type Billing = typeof billing.$inferSelect;
+export type InsertBilling = z.infer<typeof insertBillingSchema>;
+
+export type Wallet = typeof wallet.$inferSelect;
+export type InsertWallet = z.infer<typeof insertWalletSchema>;
 
