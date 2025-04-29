@@ -258,6 +258,8 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   createdAt: true,
 });
 
+
+
 // AI chat logs table
 export const aiChatLogs = pgTable("ai_chat_logs", {
   id: serial("id").primaryKey(),
