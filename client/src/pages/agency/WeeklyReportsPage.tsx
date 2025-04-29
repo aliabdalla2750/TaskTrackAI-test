@@ -45,8 +45,7 @@ const WeeklyReportsPage: React.FC = () => {
     isLoading: isLoadingClients,
     error: clientsError,
   } = useQuery({
-    queryKey: ["/api/clients"],
-    queryFn: getQueryFn(),
+    queryKey: ["/api/clients"]
   });
 
   const {
@@ -55,8 +54,7 @@ const WeeklyReportsPage: React.FC = () => {
     error: reportsError,
     refetch: refetchReports,
   } = useQuery({
-    queryKey: ["/api/reports/weekly"],
-    queryFn: getQueryFn(),
+    queryKey: ["/api/reports/weekly"]
   });
 
   const handleResendReport = async (clientId: number, reportId: number) => {
