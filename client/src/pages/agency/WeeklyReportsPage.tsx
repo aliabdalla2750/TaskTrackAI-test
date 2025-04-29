@@ -35,6 +35,7 @@ import { Client, WeeklyReport } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+
 const WeeklyReportsPage: React.FC = () => {
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -159,7 +160,7 @@ const WeeklyReportsPage: React.FC = () => {
     );
   }
 
-  return (
+    return (
     <div className="container mx-auto p-6 rtl">
       <div className="flex flex-col space-y-6">
         <div className="flex justify-between items-center">
