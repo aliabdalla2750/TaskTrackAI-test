@@ -371,6 +371,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Create project
+      // تحقق من صحة التواريخ وتحويلها بشكل آمن
+      let startDate = new Date(); // استخدام تاريخ اليوم كتاريخ بدء افتراضي
+      let endDate = null;
+      
+      // محاولة تحويل تاريخ البدء إذا كان صالحًا
+      if (aiResult.timeline?.startDate && !isNaN(Date.parse(aiResult.timeline.startDate))) {
+        startDate = new Date(aiResult.timeline.startDate);
+      }
+      
+      // محاولة تحويل تاريخ الانتهاء إذا كان صالحًا
+      if (aiResult.timeline?.endDate && !isNaN(Date.parse(aiResult.timeline.endDate))) {
+        endDate = new Date(aiResult.timeline.endDate);
+      } else if (aiResult.timeline?.duration) {
+        // إذا كان هناك مدة محددة، يمكن حساب تاريخ الانتهاء
+        const durationMatch = aiResult.timeline.duration.match(/(\d+)/);
+        if (durationMatch && durationMatch[1]) {
+          const durationValue = parseInt(durationMatch[1]);
+          
+          // افتراض أن المدة بالأسابيع إذا ذكرت كلمة "أسابيع" أو "أسبوع"
+          if (aiResult.timeline.duration.includes('أسبوع') || aiResult.timeline.duration.includes('أسابيع')) {
+            endDate = new Date(startDate.getTime() + (durationValue * 7 * 24 * 60 * 60 * 1000));
+          } 
+          // افتراض أن المدة بالأيام إذا ذكرت كلمة "يوم" أو "أيام"
+          else if (aiResult.timeline.duration.includes('يوم') || aiResult.timeline.duration.includes('أيام')) {
+            endDate = new Date(startDate.getTime() + (durationValue * 24 * 60 * 60 * 1000));
+          }
+          // افتراض أن المدة بالشهور إذا ذكرت كلمة "شهر" أو "شهور"
+          else if (aiResult.timeline.duration.includes('شهر') || aiResult.timeline.duration.includes('شهور')) {
+            const newEndDate = new Date(startDate);
+            newEndDate.setMonth(newEndDate.getMonth() + durationValue);
+            endDate = newEndDate;
+          }
+        }
+      }
+      
+      console.log("Processed dates:", { 
+        originalStart: aiResult.timeline?.startDate,
+        originalEnd: aiResult.timeline?.endDate,
+        computedStart: startDate,
+        computedEnd: endDate,
+        duration: aiResult.timeline?.duration
+      });
+      
       const project = await storage.createProject({
         name,
         description: aiResult.description || "",
@@ -378,8 +421,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         agencyId,
         createdBy: 1, // In a real app, would be from user session
         status: "open",
-        startDate: aiResult.timeline?.startDate ? new Date(aiResult.timeline.startDate) : new Date(),
-        endDate: aiResult.timeline?.endDate ? new Date(aiResult.timeline.endDate) : null
+        startDate: startDate,
+        endDate: endDate
       });
       
       // Create subgoals
@@ -393,13 +436,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue; // Skip invalid subgoals
           }
           
-          const subgoal = await storage.createSubgoal({
-            title: subgoalData.title,
-            description: subgoalData.description || "",
-            projectId: project.id,
-            kpi: subgoalData.kpi || null,
-            dueDate: subgoalData.dueDate ? new Date(subgoalData.dueDate) : null
-          });
+          // تحقق من صحة تاريخ الاستحقاق للهدف الفرعي
+        let subgoalDueDate = null;
+        if (subgoalData.dueDate && !isNaN(Date.parse(subgoalData.dueDate))) {
+          subgoalDueDate = new Date(subgoalData.dueDate);
+        }
+          
+        const subgoal = await storage.createSubgoal({
+          title: subgoalData.title,
+          description: subgoalData.description || "",
+          projectId: project.id,
+          kpi: subgoalData.kpi || null,
+          dueDate: subgoalDueDate
+        });
           subgoalMap.set(i, subgoal.id);
         }
       }
@@ -417,13 +466,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const subgoalIndex = subgoalMap.size > 0 ? Math.floor(Math.random() * subgoalMap.size) : null;
           const subgoalId = subgoalIndex !== null ? subgoalMap.get(subgoalIndex) || null : null;
           
+          // تحقق من صحة التاريخ المقدر للمهمة
+          let taskDueDate = null;
+          if (taskData.deadline && !isNaN(Date.parse(taskData.deadline))) {
+            taskDueDate = new Date(taskData.deadline);
+          }
+          
+          // إنشاء المهمة بتاريخ صحيح
           await storage.createTask({
             title: taskData.title,
             description: taskData.description || "",
             projectId: project.id,
             subgoalId,
             assignedTo: null,
-            dueDate: taskData.deadline ? new Date(taskData.deadline) : null,
+            dueDate: taskDueDate,
             status: "open"
           });
         }
