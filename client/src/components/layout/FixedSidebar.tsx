@@ -7,7 +7,7 @@ import {
   RiSettings3Line, RiBrainLine, RiBuildingLine, RiUserStarLine,
   RiShieldUserLine, RiUserLine, RiCloseLine, RiMenuLine,
   RiCodeSSlashLine, RiServerLine, RiChat1Line, RiClipboardLine, RiLineChartLine,
-  RiFileChartLine, RiFilePaper2Line, RiCalendarCheckLine, RiBarChartBoxLine
+  RiFileChartLine, RiFilePaper2Line, RiCalendarCheckLine, RiBarChartBoxLine, RiMoneyDollarCircleLine
 } from 'react-icons/ri';
 
 interface SidebarLinkProps {
@@ -83,6 +83,7 @@ export function FixedSidebar() {
     // Reports section
     { path: '/dashboard/agency/weekly-reports', icon: <RiFilePaper2Line />, label: 'التقارير الأسبوعية 🆕' },
     { path: '/dashboard/agency/monthly-report', icon: <RiBarChartBoxLine />, label: 'التقرير الشهري 🆕' },
+    { path: '/dashboard/agency/billing', icon: <RiMoneyDollarCircleLine />, label: 'الفواتير والمدفوعات 🆕' },
     
     { path: '/dashboard/agency/team', icon: <RiTeamLine />, label: 'فريق العمل' },
     { path: '/dashboard/agency/clients', icon: <RiUser3Line />, label: 'العملاء' },
