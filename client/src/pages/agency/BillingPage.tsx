@@ -643,11 +643,47 @@ const BillingPage: React.FC = () => {
             {/* Payments Tab */}
             <TabsContent value="payments">
               <Card>
-                <CardHeader>
-                  <CardTitle>سجل المدفوعات</CardTitle>
-                  <CardDescription>
-                    جميع المدفوعات المستلمة من العملاء
-                  </CardDescription>
+                <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <div>
+                    <CardTitle>سجل المدفوعات</CardTitle>
+                    <CardDescription>
+                      جميع المدفوعات المستلمة من العملاء
+                    </CardDescription>
+                  </div>
+                  <Button variant="outline" className="mt-4 sm:mt-0" onClick={() => {
+                    toast({
+                      title: "جاري تصدير المدفوعات",
+                      description: "يتم تصدير بيانات المدفوعات بتنسيق اكسل..."
+                    });
+                    
+                    fetch(`/api/agency/${agencyId}/payments/export-excel`)
+                      .then(response => {
+                        if (!response.ok) {
+                          throw new Error('فشل تصدير بيانات المدفوعات');
+                        }
+                        return response.json();
+                      })
+                      .then(data => {
+                        if (data && data.fileUrl) {
+                          window.open(data.fileUrl, '_blank');
+                          toast({
+                            title: "تم تصدير البيانات بنجاح",
+                            description: "تم فتح ملف المدفوعات بتنسيق اكسل في نافذة جديدة",
+                            variant: "success"
+                          });
+                        }
+                      })
+                      .catch(error => {
+                        toast({
+                          title: "خطأ",
+                          description: error.message,
+                          variant: "destructive"
+                        });
+                      });
+                  }}>
+                    <BarChartIcon className="w-4 h-4 mr-2" />
+                    تصدير المدفوعات
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   <Table>

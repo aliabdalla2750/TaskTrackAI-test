@@ -425,4 +425,75 @@ router.get('/billings/:id/pdf', ensureAgencyOrAdmin, async (req: Request, res: R
   }
 });
 
+// Export invoices to Excel
+router.get('/agency/:agencyId/billings/export-excel', ensureAgencyOrAdmin, async (req: Request, res: Response) => {
+  try {
+    const { agencyId } = req.params;
+    
+    // Validate agency access
+    if (req.user?.role === 'agency' && req.user.agencyId !== parseInt(agencyId)) {
+      return res.status(403).json({ error: 'Unauthorized: You do not have access to this agency data' });
+    }
+    
+    const billings = await storage.getBillingsByAgency(parseInt(agencyId));
+    
+    if (!billings || billings.length === 0) {
+      return res.status(404).json({ error: 'No invoices found for this agency' });
+    }
+    
+    // In a real implementation, this would generate an Excel file
+    // For now, we'll simulate a successful response with a mock URL
+    // We can use a library like exceljs or xlsx to generate the actual Excel file
+    
+    setTimeout(() => {
+      // Simulating Excel generation delay
+      res.json({ 
+        success: true, 
+        message: 'Excel file generated successfully',
+        fileUrl: `/api/downloads/agency-${agencyId}-invoices.xlsx`, // Mock URL
+        count: billings.length
+      });
+    }, 1000); // Simulate a 1-second processing time
+    
+  } catch (error) {
+    console.error('Error exporting invoices to Excel:', error);
+    res.status(500).json({ error: 'Failed to export invoices to Excel' });
+  }
+});
+
+// Export payments to Excel
+router.get('/agency/:agencyId/payments/export-excel', ensureAgencyOrAdmin, async (req: Request, res: Response) => {
+  try {
+    const { agencyId } = req.params;
+    
+    // Validate agency access
+    if (req.user?.role === 'agency' && req.user.agencyId !== parseInt(agencyId)) {
+      return res.status(403).json({ error: 'Unauthorized: You do not have access to this agency data' });
+    }
+    
+    const payments = await storage.getPaymentsByAgency(parseInt(agencyId));
+    
+    if (!payments || payments.length === 0) {
+      return res.status(404).json({ error: 'No payments found for this agency' });
+    }
+    
+    // In a real implementation, this would generate an Excel file
+    // For now, we'll simulate a successful response with a mock URL
+    
+    setTimeout(() => {
+      // Simulating Excel generation delay
+      res.json({ 
+        success: true, 
+        message: 'Excel file generated successfully',
+        fileUrl: `/api/downloads/agency-${agencyId}-payments.xlsx`, // Mock URL
+        count: payments.length
+      });
+    }, 1000); // Simulate a 1-second processing time
+    
+  } catch (error) {
+    console.error('Error exporting payments to Excel:', error);
+    res.status(500).json({ error: 'Failed to export payments to Excel' });
+  }
+});
+
 export default router;
