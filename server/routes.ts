@@ -6,6 +6,7 @@ import { aiSettingsService } from "./services/ai-settings-service";
 import { insertAiScenarioSchema, insertClientSchema, insertEmployeeSchema, insertProjectSchema, insertSubgoalSchema, insertTaskSchema, insertTaskSubmissionSchema, insertUserSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import OpenAI from "openai";
+import axios from "axios";
 
 // تهيئة عميل OpenAI للاختبار المباشر
 const openai = new OpenAI({
@@ -703,7 +704,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         if (provider.name === 'openai') {
-          const axios = require('axios');
           const response = await axios.post(
             provider.baseUrl || 'https://api.openai.com/v1/chat/completions',
             {
@@ -723,7 +723,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           testMessage = 'OpenAI connection successful';
         } else if (provider.name === 'deepseek') {
           // اختبار DeepSeek API
-          const axios = require('axios');
           const response = await axios.post(
             provider.baseUrl || 'https://api.deepseek.com/v1/chat/completions',
             {
@@ -743,7 +742,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           testMessage = 'DeepSeek connection successful';
         } else if (provider.name === 'openrouter') {
           // اختبار OpenRouter API
-          const axios = require('axios');
           const response = await axios.post(
             provider.baseUrl || 'https://openrouter.ai/api/v1/chat/completions',
             {
