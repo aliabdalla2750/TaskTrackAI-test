@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { ProjectCard } from '@/components/dashboard/ProjectCard';
 import { TaskTable } from '@/components/dashboard/TaskTable';
 import { AiChatBox } from '@/components/dashboard/AiChatBox';
-import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
 import { Link, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import {
   RiFolderLine, RiTrophyLine, RiTaskLine, RiTeamLine,
   RiPieChartLine, RiCalendarLine, RiBarChartLine, RiAddLine,
   RiUserLine, RiAlertLine, RiBuildingLine, RiTimeLine,
-  RiFileWarningLine, RiLightbulbLine, RiPercentLine, RiMoneyDollarCircleLine
+  RiFileWarningLine, RiLightbulbLine, RiPercentLine, RiMoneyDollarCircleLine,
+  RiArrowLeftLine
 } from 'react-icons/ri';
 
 // نموذج بيانات للتنبيهات الذكية
@@ -195,7 +195,7 @@ export default function AgencyOverview() {
     }
   ];
   
-  // Mock data for the dashboard
+  // بيانات المشاريع
   const recentProjects = [
     {
       id: '1',
@@ -237,6 +237,7 @@ export default function AgencyOverview() {
     },
   ];
   
+  // بيانات المهام
   const recentTasks = [
     {
       id: '1',
@@ -331,7 +332,7 @@ export default function AgencyOverview() {
               route="/dashboard/agency/tasks"
             />
             <StatCard
-              icon={<RiTaskLine size={20} />}
+              icon={<RiTrophyLine size={20} />}
               title="المهام المكتملة"
               value="67"
               progress={100}
@@ -355,25 +356,26 @@ export default function AgencyOverview() {
         {/* Recent Projects Section */}
         <motion.div variants={itemVariants} className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">المشاريع الأخيرة</h2>
+            <h2 className="text-2xl font-bold">المشاريع الأخيرة</h2>
             <Link href="/dashboard/agency/projects" className="text-primary text-sm flex items-center gap-1 hover:underline">
               <span>عرض الكل</span>
-              <i className="fas fa-arrow-left text-xs"></i>
+              <RiArrowLeftLine className="text-xs" />
             </Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {recentProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                id={project.id}
-                title={project.title}
-                description={project.description}
-                status={project.status}
-                progress={project.progress}
-                dueDate={project.dueDate}
-                team={project.team}
-              />
+              <div key={project.id} onClick={() => navigate(`/dashboard/agency/projects/${project.id}`)}>
+                <ProjectCard
+                  id={project.id}
+                  title={project.title}
+                  description={project.description}
+                  status={project.status}
+                  progress={project.progress}
+                  dueDate={project.dueDate}
+                  team={project.team}
+                />
+              </div>
             ))}
           </div>
         </motion.div>
@@ -381,30 +383,34 @@ export default function AgencyOverview() {
         {/* Recent Tasks Section */}
         <motion.div variants={itemVariants} className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">المهام الأخيرة</h2>
+            <h2 className="text-2xl font-bold">المهام الأخيرة</h2>
             <Link href="/dashboard/agency/tasks" className="text-primary text-sm flex items-center gap-1 hover:underline">
               <span>عرض الكل</span>
-              <i className="fas fa-arrow-left text-xs"></i>
+              <RiArrowLeftLine className="text-xs" />
             </Link>
           </div>
           
-          <TaskTable tasks={recentTasks} />
+          <div className="dashboard-card">
+            <TaskTable tasks={recentTasks} />
+          </div>
         </motion.div>
         
         {/* AI Assistant Preview */}
         <motion.div variants={itemVariants} className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">المساعد الذكي</h2>
+            <h2 className="text-2xl font-bold">المساعد الذكي</h2>
             <Link href="/dashboard/agency/ai-assistant" className="text-primary text-sm flex items-center gap-1 hover:underline">
               <span>فتح المساعد</span>
-              <i className="fas fa-arrow-left text-xs"></i>
+              <RiArrowLeftLine className="text-xs" />
             </Link>
           </div>
           
-          <AiChatBox
-            title=""
-            welcomeMessage="مرحباً بك! أنا المساعد الذكي الخاص بك في تاسكايا. كيف يمكنني مساعدتك اليوم؟"
-          />
+          <div className="dashboard-card p-0 overflow-hidden">
+            <AiChatBox
+              title=""
+              welcomeMessage="مرحباً بك! أنا المساعد الذكي الخاص بك في تاسكايا. كيف يمكنني مساعدتك اليوم؟"
+            />
+          </div>
         </motion.div>
       </motion.div>
     </DashboardLayout>
