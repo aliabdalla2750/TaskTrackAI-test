@@ -12,6 +12,7 @@ import AgencyProjects from "@/pages/agency/AgencyProjects";
 import CreateSmartProject from "@/pages/agency/CreateSmartProject";
 import ProjectDetail from "@/pages/agency/ProjectDetail";
 import DailyStandUp from "@/pages/agency/DailyStandUp";
+import AgencyDailyReview from "@/pages/agency/AgencyDailyReview";
 import AgencyTasks from "@/pages/agency/AgencyTasks";
 import AgencyTeam from "@/pages/agency/AgencyTeam";
 import AgencyClients from "@/pages/agency/AgencyClients";
@@ -29,6 +30,7 @@ import ClientFiles from "@/pages/client/ClientFiles";
 import EmployeeOverview from "@/pages/employee/EmployeeOverview";
 import EmployeeTasks from "@/pages/employee/EmployeeTasks";
 import EmployeeDailyTasks from "@/pages/employee/EmployeeDailyTasks";
+import EmployeeDailyStandupReport from "@/pages/employee/DailyStandupReport";
 import EmployeeSubmissions from "@/pages/employee/EmployeeSubmissions";
 import EmployeePerformance from "@/pages/employee/EmployeePerformance";
 import EmployeeFiles from "@/pages/employee/EmployeeFiles";
@@ -53,6 +55,7 @@ function Router() {
       <Route path="/dashboard/agency/tasks" component={AgencyTasks} />
       <Route path="/dashboard/agency/team" component={AgencyTeam} />
       <Route path="/dashboard/agency/daily-standup" component={DailyStandUp} />
+      <Route path="/dashboard/agency/daily-review" component={AgencyDailyReview} />
       <Route path="/dashboard/agency/clients" component={AgencyClients} />
       <Route path="/dashboard/agency/files" component={AgencyFiles} />
       <Route path="/dashboard/agency/ai-assistant" component={AgencyAiAssistant} />
@@ -68,6 +71,7 @@ function Router() {
       <Route path="/dashboard/employee/overview" component={EmployeeOverview} />
       <Route path="/dashboard/employee/tasks" component={EmployeeTasks} />
       <Route path="/dashboard/employee/daily-tasks" component={EmployeeDailyTasks} />
+      <Route path="/dashboard/employee/daily-standup" component={EmployeeDailyStandupReport} />
       <Route path="/dashboard/employee/submissions" component={EmployeeSubmissions} />
       <Route path="/dashboard/employee/performance" component={EmployeePerformance} />
       <Route path="/dashboard/employee/files" component={EmployeeFiles} />
