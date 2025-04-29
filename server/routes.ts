@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { openAIService } from "./services/openai-service";
@@ -7,6 +7,7 @@ import { insertAiScenarioSchema, insertClientSchema, insertEmployeeSchema, inser
 import { ZodError } from "zod";
 import OpenAI from "openai";
 import axios from "axios";
+import { upload, handleUploadErrors, extractTextFromFile, cleanExtractedText } from "./services/file-service";
 
 // تهيئة عميل OpenAI للاختبار المباشر
 const openai = new OpenAI({
