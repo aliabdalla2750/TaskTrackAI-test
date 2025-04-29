@@ -284,6 +284,14 @@ export default function CreateSmartProject() {
     setIsSubmitting(true);
     
     try {
+      // استعلام عن المزود الافتراضي ومعرفه بدلاً من استخدام قيمة ثابتة
+      const aiProvidersResponse = await apiRequest('GET', '/api/admin/ai-providers');
+      const providers = await aiProvidersResponse.json();
+      
+      // البحث عن المزود الافتراضي أو استخدام أول مزود متاح
+      let defaultProvider = providers.find((p: any) => p.is_default) || providers[0];
+      console.log("Using AI provider:", defaultProvider);
+      
       const response = await apiRequest('POST', '/api/ai/project-creation', {
         projectName: projectName,
         projectDetails: `تحليل ملف: ${fileName}\n\n${fileContent}`,
@@ -295,7 +303,7 @@ export default function CreateSmartProject() {
           keyObjectives: aiSetup.keyObjectives || ''
         },
         isFileAnalysis: true,
-        providerId: 1
+        providerId: defaultProvider?.id || null // استخدام معرف المزود الافتراضي أو null
       });
       
       const data = await response.json();
