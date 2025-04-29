@@ -21,6 +21,8 @@ export interface ChatRequest {
   messages: Message[];
   userId?: number;
   agencyId?: number;
+  providerId?: number; // إضافة معرف مزود الذكاء الاصطناعي
+  model?: string; // إضافة اسم النموذج المستخدم
 }
 
 export interface ProjectAnalysisResult {
@@ -55,27 +57,125 @@ export class OpenAIService {
       // الحصول على إعدادات الذكاء الاصطناعي
       const aiSettings = await aiSettingsService.getSettings(agencyId);
       
-      // Call OpenAI API
-      const result = await openai.chat.completions.create({
-        model: scenario.model || DEFAULT_MODEL,
-        messages: messages,
-        temperature: aiSettings.temperature || scenario.temperature / 100, // استخدام درجة الحرارة المخصصة
-        max_tokens: scenario.maxTokens,
-      });
+      // تحديد النموذج المستخدم - استخدام النموذج المحدد من الطلب أو من السيناريو أو النموذج الافتراضي
+      const modelToUse = request.model || scenario.model || DEFAULT_MODEL;
       
-      // Extract response
+      let result;
+      
+      // التحقق من نوع مزود الذكاء الاصطناعي المطلوب
+      if (request.providerId) {
+        // الحصول على معلومات المزود
+        const provider = await storage.getAiProvider(request.providerId);
+        if (!provider) {
+          throw new Error(`AI provider with ID ${request.providerId} not found`);
+        }
+        
+        // استدعاء خدمة OpenAI أو خدمة OpenRouter حسب نوع المزود
+        if (provider.name === "openrouter") {
+          // استخدام OpenRouter API
+          console.log(`Using OpenRouter API with model: ${modelToUse}`);
+          
+          // تكوين هيدرز الطلب لـ OpenRouter
+          const headers = {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${provider.apiKey}`,
+            "HTTP-Referer": "https://taskaaya.com", // Replace with your actual domain
+            "X-Title": "Taskaaya AI Assistant",
+            "User-Agent": "Taskaaya/1.0.0"
+          };
+          
+          // إعداد الطلب
+          const requestBody = {
+            model: modelToUse,
+            messages: messages,
+            temperature: aiSettings.temperature || scenario.temperature / 100,
+            max_tokens: scenario.maxTokens,
+          };
+          
+          // استدعاء OpenRouter API
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // زيادة مهلة الطلب إلى 30 ثانية
+          
+          const openRouterResponse = await fetch(`${provider.baseUrl}/chat/completions`, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify(requestBody),
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          // تحقق من استجابة OpenRouter
+          if (!openRouterResponse.ok) {
+            const errorText = await openRouterResponse.text();
+            console.error(`OpenRouter API error (${openRouterResponse.status}):`, errorText);
+            
+            // التحقق إذا كان الرد هو HTML (حدث أحيانًا مع OpenRouter)
+            if (errorText.includes('<!DOCTYPE html>')) {
+              console.warn('Received HTML response from OpenRouter, falling back to OpenAI');
+              
+              // استخدام OpenAI كخطة بديلة
+              result = await openai.chat.completions.create({
+                model: DEFAULT_MODEL, // استخدام النموذج الافتراضي من OpenAI
+                messages: messages,
+                temperature: aiSettings.temperature || scenario.temperature / 100,
+                max_tokens: scenario.maxTokens,
+              });
+            } else {
+              throw new Error(`OpenRouter API error: ${errorText}`);
+            }
+          } else {
+            // تحويل الاستجابة إلى JSON
+            const openRouterResult = await openRouterResponse.json();
+            
+            // محاكاة نفس بنية الاستجابة مثل OpenAI لتسهيل المعالجة
+            result = {
+              choices: [
+                {
+                  message: {
+                    content: openRouterResult.choices[0].message.content
+                  }
+                }
+              ],
+              usage: {
+                total_tokens: openRouterResult.usage?.total_tokens || 0
+              }
+            };
+          }
+        } else {
+          // افتراضي: استخدام OpenAI API عندما المزود غير معروف
+          console.log(`Using default OpenAI API with model: ${modelToUse}`);
+          result = await openai.chat.completions.create({
+            model: modelToUse,
+            messages: messages,
+            temperature: aiSettings.temperature || scenario.temperature / 100,
+            max_tokens: scenario.maxTokens,
+          });
+        }
+      } else {
+        // استخدام OpenAI API بشكل افتراضي إذا لم يتم تحديد مزود
+        console.log(`Using default OpenAI API with model: ${modelToUse}`);
+        result = await openai.chat.completions.create({
+          model: modelToUse,
+          messages: messages,
+          temperature: aiSettings.temperature || scenario.temperature / 100,
+          max_tokens: scenario.maxTokens,
+        });
+      }
+      
+      // استخراج الرد
       const response = result.choices[0].message.content || "";
       
-      // Log AI usage
+      // تسجيل استخدام الذكاء الاصطناعي
       await this.logAIUsage({
         scenarioKey: request.scenarioKey,
         userId: request.userId,
         agencyId: request.agencyId,
         tokensUsed: result.usage?.total_tokens || 0,
-        model: scenario.model || DEFAULT_MODEL
+        model: modelToUse
       });
       
-      // Log chat
+      // تسجيل المحادثة
       await this.logChat({
         scenarioKey: request.scenarioKey,
         userId: request.userId,
@@ -88,7 +188,7 @@ export class OpenAIService {
         tokensUsed: result.usage?.total_tokens || 0
       };
     } catch (error) {
-      console.error('OpenAI API error:', error);
+      console.error('AI service error:', error);
       throw new Error('Failed to generate response from AI service');
     }
   }

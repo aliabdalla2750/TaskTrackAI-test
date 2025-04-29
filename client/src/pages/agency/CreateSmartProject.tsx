@@ -465,6 +465,8 @@ export default function CreateSmartProject() {
               welcomeMessage={getWelcomeMessage()}
               scenarioKey="project-creation"
               onResultGenerated={handleAiResult}
+              providerId={2} // استخدام OpenRouter (رقم معرف المزود 2)
+              model="gpt-3.5-turbo" // استخدام نموذج محدد لـ OpenRouter للاختبار
             />
           </CardContent>
           <CardFooter className="border-t pt-5">

@@ -164,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Chat endpoint
   app.post("/api/ai/chat", async (req: Request, res: Response) => {
     try {
-      const { message, fullConversation, scenarioKey = "general", model = "gpt-4o" } = req.body;
+      const { message, fullConversation, scenarioKey = "general", model = "gpt-4o", providerId } = req.body;
       
       if (!message) {
         return res.status(400).json({ message: "Message is required" });
@@ -173,16 +173,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // استخدام المحادثة الكاملة إذا كانت متوفرة، وإلا استخدام الرسالة الحالية فقط
       const messagesToProcess = fullConversation || [{ role: "user", content: message }];
       
-      // Always use OpenAI
-      const result = await openAIService.processChat({
-        scenarioKey,
-        messages: messagesToProcess
-      });
+      let result;
+      
+      // إذا كان معرف المزود متوفر، نستخدم الخدمة المناسبة
+      if (providerId) {
+        // الحصول على معلومات مزود الذكاء الاصطناعي
+        const provider = await storage.getAiProvider(providerId);
+        if (!provider) {
+          return res.status(400).json({ message: "Invalid AI provider" });
+        }
+        
+        // استخدام طريقة عامة للمحادثة تدعم المزودين المختلفين (عن طريق خدمة OpenAI)
+        result = await openAIService.processChat({
+          scenarioKey,
+          messages: messagesToProcess,
+          providerId: provider.id,
+          model
+        });
+      } else {
+        // استخدام OpenAI افتراضيًا
+        result = await openAIService.processChat({
+          scenarioKey,
+          messages: messagesToProcess,
+          model
+        });
+      }
       
       res.json({
         response: result.response,
         tokensUsed: result.tokensUsed,
-        model: "gpt-4o" // Always use gpt-4o
+        model: model
       });
     } catch (error) {
       console.error("AI chat error:", error);
@@ -193,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Project creation with AI endpoint
   app.post("/api/ai/project-creation", async (req: Request, res: Response) => {
     try {
-      const { projectName, projectDetails, fullConversation, aiSettings, model = "gpt-4o" } = req.body;
+      const { projectName, projectDetails, fullConversation, aiSettings, model = "gpt-4o", providerId } = req.body;
       
       if (!projectName || !projectDetails) {
         return res.status(400).json({ message: "Project name and details are required" });
@@ -202,19 +222,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // استخدام المحادثة الكاملة إذا كانت متوفرة، وإلا استخدام آخر رد
       const conversationContext = fullConversation || projectDetails;
       
-      // Always use OpenAI
-      const result = await openAIService.processProjectCreation(
-        projectName,
-        conversationContext,
-        aiSettings
-      );
-      
-      res.json({
-        response: result.response,
-        result: result.result,
-        tokensUsed: result.tokensUsed,
-        model: "gpt-4o" // Always use gpt-4o
-      });
+      // إذا كان معرف المزود متوفر، نستخدمه كخطوة أولى لإنشاء المشروع
+      if (providerId) {
+        // استخدام نهج المحادثة المنتظمة أولاً لإنشاء المشروع باستخدام OpenRouter
+        // ثم استخدام OpenAI لتنسيق النتيجة إلى JSON
+        
+        // الخطوة 1: استخدام OpenRouter للحصول على تحليل المشروع الأولي
+        const provider = await storage.getAiProvider(providerId);
+        if (!provider) {
+          return res.status(400).json({ message: "Invalid AI provider" });
+        }
+        
+        // استخدام المحادثة لفهم المشروع (مع OpenRouter)
+        const chatResult = await openAIService.processChat({
+          scenarioKey: "project-creation",
+          messages: [
+            {
+              role: "user",
+              content: `أريد إنشاء مشروع جديد باسم "${projectName}".\n\nفيما يلي التفاصيل:\n${conversationContext}\n\nقم بتحليل هذه المعلومات وإنشاء خطة مشروع كاملة تشمل الوصف والأهداف الفرعية والمهام والإطار الزمني. ضع المعلومات بشكل واضح ومنظم.`
+            }
+          ],
+          providerId: provider.id,
+          model: model
+        });
+        
+        // الخطوة 2: استخدام OpenAI لتنسيق النتيجة إلى JSON
+        // نمرر النتيجة التي حصلنا عليها من OpenRouter إلى OpenAI ليقوم بتنسيقها إلى JSON
+        const formattedResult = await openAIService.processProjectCreation(
+          projectName,
+          chatResult.response, // استخدام النتيجة من OpenRouter كمدخل
+          aiSettings
+        );
+        
+        res.json({
+          response: formattedResult.response,
+          result: formattedResult.result,
+          tokensUsed: chatResult.tokensUsed + formattedResult.tokensUsed,
+          model: model
+        });
+      } else {
+        // استخدام OpenAI مباشرة
+        const result = await openAIService.processProjectCreation(
+          projectName,
+          conversationContext,
+          aiSettings
+        );
+        
+        res.json({
+          response: result.response,
+          result: result.result,
+          tokensUsed: result.tokensUsed,
+          model: model || "gpt-4o" // استخدام gpt-4o افتراضيًا
+        });
+      }
     } catch (error) {
       console.error("AI project creation error:", error);
       res.status(500).json({ message: "Failed to create project with AI" });
