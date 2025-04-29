@@ -28,19 +28,30 @@ const SidebarLink = ({ path, icon, label, active }: SidebarLinkProps) => {
       initial="initial"
       animate="animate"
       className="mb-2"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
     >
-      <Link 
-        href={path}
-        className={`flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-300 ${
-          active
-            ? 'text-white bg-primary shadow-md'
-            : 'text-gray-700 hover:bg-accent hover:text-primary'
-        }`}
-      >
-        <span className="text-lg">{icon}</span>
-        <span>{label}</span>
-        {active && <div className="absolute -right-1 w-1.5 h-7 bg-secondary rounded-l-md"></div>}
-      </Link>
+      <div className="relative">
+        <Link 
+          href={path}
+          className={`flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-300 ${
+            active
+              ? 'text-white bg-primary shadow-md'
+              : 'text-gray-700 hover:bg-accent hover:text-primary'
+          }`}
+        >
+          <span className="text-lg">{icon}</span>
+          <span>{label}</span>
+        </Link>
+        {active && (
+          <motion.div 
+            className="absolute top-1/2 -right-1 w-1.5 h-7 bg-secondary rounded-l-md" 
+            style={{ transform: 'translateY(-50%)' }}
+            layoutId="activeIndicator"
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          />
+        )}
+      </div>
     </motion.li>
   );
 };

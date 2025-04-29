@@ -130,9 +130,59 @@
     @apply border border-input bg-background hover:bg-accent hover:text-accent-foreground active:scale-95;
   }
   
-  /* Card styling */
+  /* Enhanced card styling with hover effects */
   .card {
-    @apply bg-card text-card-foreground rounded-2xl border shadow-sm;
+    @apply bg-card text-card-foreground rounded-2xl border shadow-sm transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply hover:shadow-lg hover:border-primary/30 hover:translate-y-[-2px] transition-all duration-300;
+  }
+  
+  .card-interactive {
+    @apply cursor-pointer hover:shadow-md hover:border-primary/20 active:scale-[0.99] transition-all duration-200;
+  }
+  
+  /* Modern dashboard card */
+  .dashboard-card {
+    @apply rounded-2xl bg-white p-5 shadow-sm border border-gray-100 transition-all duration-300;
+  }
+
+  .dashboard-card-hover {
+    @apply hover:shadow-md hover:border-primary/20 transition-all duration-300;
+  }
+  
+  .dashboard-card-header {
+    @apply flex justify-between items-center mb-4;
+  }
+  
+  .dashboard-card-title {
+    @apply text-lg font-bold text-gray-800;
+  }
+  
+  .dashboard-card-badge {
+    @apply px-3 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .badge-primary {
+    @apply bg-primary/10 text-primary;
+  }
+  
+  .badge-secondary {
+    @apply bg-secondary/10 text-secondary;
+  }
+  
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .badge-warning {
+    @apply bg-amber-100 text-amber-800;
+  }
+  
+  /* Glassmorphism effect */
+  .glass {
+    @apply bg-white/30 backdrop-blur-lg border border-white/30 shadow-sm;
   }
   
   /* Input styling */

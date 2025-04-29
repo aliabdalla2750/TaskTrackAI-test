@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 
 // Agency Dashboard Pages
 import AgencyOverview from "@/pages/agency/AgencyOverview";
+import EnhancedAgencyDashboard from "@/pages/agency/EnhancedAgencyDashboard";
 import AgencyProjects from "@/pages/agency/AgencyProjects";
 import CreateSmartProject from "@/pages/agency/CreateSmartProject";
 import AgencyTasks from "@/pages/agency/AgencyTasks";
@@ -40,7 +41,8 @@ function Router() {
   return (
     <Switch>
       {/* Agency Dashboard Routes */}
-      <Route path="/" component={AgencyOverview} />
+      <Route path="/" component={EnhancedAgencyDashboard} />
+      <Route path="/dashboard/agency/enhanced" component={EnhancedAgencyDashboard} />
       <Route path="/dashboard/agency/overview" component={AgencyOverview} />
       <Route path="/dashboard/agency/projects" component={AgencyProjects} />
       <Route path="/dashboard/agency/create-smart-project" component={CreateSmartProject} />

@@ -1,91 +1,155 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { 
+  RiCalendarLine, RiTimeLine, RiUser3Line, 
+  RiCheckboxCircleLine, RiErrorWarningLine, RiInformationLine 
+} from 'react-icons/ri';
 
-type ProjectStatus = 'active' | 'completed' | 'paused';
-
-interface TeamMember {
-  name: string;
-  avatarColor: string;
-}
-
-interface ProjectCardProps {
+export interface ProjectCardProps {
+  id: number;
   title: string;
   description: string;
-  status: ProjectStatus;
+  client: string;
   progress: number;
-  dueDate: string;
-  team: TeamMember[];
+  startDate: string;
+  endDate: string;
+  status: 'completed' | 'in-progress' | 'delayed' | 'upcoming';
+  subgoals?: number;
+  completedSubgoals?: number;
+  tasks?: number;
+  completedTasks?: number;
+  onClick?: () => void;
+  className?: string;
 }
 
-export function ProjectCard({
+const statusConfig = {
+  completed: {
+    color: 'bg-green-100 text-green-800',
+    icon: <RiCheckboxCircleLine className="text-green-500" />,
+    label: 'مكتمل'
+  },
+  'in-progress': {
+    color: 'bg-blue-100 text-blue-800',
+    icon: <RiInformationLine className="text-blue-500" />,
+    label: 'قيد التنفيذ'
+  },
+  delayed: {
+    color: 'bg-red-100 text-red-800',
+    icon: <RiErrorWarningLine className="text-red-500" />,
+    label: 'متأخر'
+  },
+  upcoming: {
+    color: 'bg-amber-100 text-amber-800',
+    icon: <RiTimeLine className="text-amber-500" />,
+    label: 'قادم'
+  }
+};
+
+export const ProjectCard: React.FC<ProjectCardProps> = ({
   title,
   description,
-  status,
+  client,
   progress,
-  dueDate,
-  team,
-}: ProjectCardProps) {
-  const getStatusLabel = () => {
-    switch (status) {
-      case 'active':
-        return { label: 'جاري', color: 'bg-blue-100 text-primary' };
-      case 'completed':
-        return { label: 'مكتمل', color: 'bg-green-100 text-secondary' };
-      case 'paused':
-        return { label: 'متوقف', color: 'bg-yellow-100 text-yellow-600' };
-    }
-  };
-  
-  const { label, color } = getStatusLabel();
-  
-  const getProgressColor = () => {
-    if (status === 'completed') return 'bg-secondary';
-    if (status === 'paused') return 'bg-yellow-500';
-    return 'bg-primary';
-  };
+  startDate,
+  endDate,
+  status,
+  subgoals,
+  completedSubgoals,
+  tasks,
+  completedTasks,
+  onClick,
+  className
+}) => {
+  const statusInfo = statusConfig[status];
   
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-      <div className="p-4 border-b">
-        <div className="flex justify-between items-start">
-          <h3 className="font-bold text-lg mb-1">{title}</h3>
-          <span className={`${color} text-xs px-2 py-1 rounded-full`}>
-            {label}
-          </span>
-        </div>
-        <p className="text-gray-600 text-sm line-clamp-2">{description}</p>
+    <motion.div 
+      className={`dashboard-card card-hover ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      whileHover={{ y: -5 }}
+      whileTap={onClick ? { scale: 0.98 } : undefined}
+      onClick={onClick}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="flex justify-between items-start">
+        <h3 className="font-bold text-lg">{title}</h3>
+        <span className={`px-2 py-1 text-xs rounded-full flex items-center gap-1 ${statusInfo.color}`}>
+          {statusInfo.icon}
+          {statusInfo.label}
+        </span>
       </div>
       
-      <div className="p-4">
-        <div className="flex justify-between text-sm mb-2">
-          <span className="text-gray-500">تقدم المشروع</span>
-          <span className="font-medium">{progress}%</span>
+      <p className="mt-2 text-gray-600 text-sm line-clamp-2">{description}</p>
+      
+      <div className="flex items-center mt-4 text-sm text-gray-500">
+        <RiUser3Line className="ml-1" />
+        <span>{client}</span>
+      </div>
+      
+      <div className="mt-4">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm text-gray-500">التقدم</span>
+          <span className="text-sm font-medium">{progress}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-          <div 
-            className={`${getProgressColor()} rounded-full h-2`} 
-            style={{ width: `${progress}%` }}
-          ></div>
+        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+          <motion.div 
+            className="h-full bg-primary rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
+      </div>
+      
+      <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
+        <div className="flex items-center">
+          <RiCalendarLine className="ml-1" />
+          <span>{startDate} - {endDate}</span>
         </div>
         
-        <div className="flex justify-between items-center">
-          <div className="flex -space-x-2 space-x-reverse">
-            {team.map((member, index) => (
-              <img 
-                key={index}
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=${encodeURIComponent(member.avatarColor)}&color=fff`}
-                className="w-6 h-6 rounded-full border border-white"
-                alt={member.name}
-              />
-            ))}
+        {subgoals !== undefined && completedSubgoals !== undefined && (
+          <div>
+            <span className="font-medium">{completedSubgoals}/{subgoals}</span> أهداف فرعية
           </div>
-          <span className="text-gray-500 text-sm">
-            {status === 'completed' 
-              ? `تم التسليم: ${dueDate}` 
-              : `تاريخ التسليم: ${dueDate}`
-            }
-          </span>
+        )}
+        
+        {tasks !== undefined && completedTasks !== undefined && (
+          <div>
+            <span className="font-medium">{completedTasks}/{tasks}</span> مهام
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+export const ProjectCardSkeleton = () => {
+  return (
+    <div className="dashboard-card">
+      <div className="flex justify-between items-start">
+        <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-6 w-16 bg-gray-200 rounded-full animate-pulse"></div>
+      </div>
+      
+      <div className="mt-2 h-12 bg-gray-200 rounded animate-pulse"></div>
+      
+      <div className="flex items-center mt-4">
+        <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+      
+      <div className="mt-4">
+        <div className="flex justify-between items-center mb-2">
+          <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-4 w-8 bg-gray-200 rounded animate-pulse"></div>
         </div>
+        <div className="h-2 w-full bg-gray-100 rounded-full"></div>
+      </div>
+      
+      <div className="mt-4 flex flex-wrap gap-4">
+        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
       </div>
     </div>
   );
-}
+};
