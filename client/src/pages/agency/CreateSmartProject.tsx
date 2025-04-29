@@ -220,8 +220,14 @@ export default function CreateSmartProject() {
       
       console.log("Sending project data:", projectData);
       
-      // أولاً إنشاء المشروع الأساسي
-      const response = await apiRequest('POST', '/api/projects', projectData);
+      // بدلاً من إنشاء المشروع الأساسي والأهداف والمهام بشكل منفصل،
+      // نستخدم واجهة برمجة أبسط تقوم بكل ذلك دفعة واحدة
+      const response = await apiRequest('POST', '/api/projects/create-from-ai', {
+        name: projectName,
+        clientId: clientId ? parseInt(clientId) : null,
+        agencyId: agencyId,
+        aiResult: aiResult
+      });
       
       const data = await response.json();
       
