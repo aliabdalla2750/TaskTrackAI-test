@@ -31,6 +31,7 @@ import ClientOverview from "@/pages/client/ClientOverview";
 import ClientProjects from "@/pages/client/ClientProjects";
 import ClientTasks from "@/pages/client/ClientTasks";
 import ClientFiles from "@/pages/client/ClientFiles";
+import ClientBillingPage from "@/pages/client/BillingPage";
 
 // Employee Dashboard Pages
 import EmployeeOverview from "@/pages/employee/EmployeeOverview";
@@ -77,6 +78,7 @@ function Router() {
       <Route path="/dashboard/client/overview" component={ClientOverview} />
       <Route path="/dashboard/client/projects" component={ClientProjects} />
       <Route path="/dashboard/client/tasks" component={ClientTasks} />
+      <Route path="/dashboard/client/billing" component={ClientBillingPage} />
       <Route path="/dashboard/client/files" component={ClientFiles} />
       
       {/* Employee Dashboard Routes */}
