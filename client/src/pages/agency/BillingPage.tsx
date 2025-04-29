@@ -311,10 +311,150 @@ const BillingPage: React.FC = () => {
                       </Select>
                     </div>
                     
-                    <Button className="w-full md:w-auto">
-                      <FileText className="w-4 h-4 mr-2" />
-                      إنشاء فاتورة جديدة
-                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="w-full md:w-auto">
+                          <FileText className="w-4 h-4 mr-2" />
+                          إنشاء فاتورة جديدة
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-lg">
+                        <DialogHeader>
+                          <DialogTitle>إنشاء فاتورة جديدة</DialogTitle>
+                          <DialogDescription>
+                            أدخل بيانات الفاتورة الجديدة
+                          </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          
+                          const formData = new FormData(e.target as HTMLFormElement);
+                          const clientId = Number(formData.get('clientId'));
+                          const projectId = Number(formData.get('projectId'));
+                          const amount = Number(formData.get('amount'));
+                          const dueDate = formData.get('dueDate') as string;
+                          const description = formData.get('description') as string;
+                          
+                          fetch('/api/billings', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              agencyId,
+                              clientId,
+                              projectId,
+                              amount,
+                              dueDate,
+                              description,
+                              status: 'pending',
+                            }),
+                          })
+                            .then(response => {
+                              if (!response.ok) {
+                                throw new Error('فشل في إنشاء الفاتورة');
+                              }
+                              return response.json();
+                            })
+                            .then(() => {
+                              toast({
+                                title: 'تم إنشاء الفاتورة بنجاح',
+                                description: 'تمت إضافة الفاتورة الجديدة للنظام',
+                              });
+                              
+                              // Invalidate queries to refresh data
+                              queryClient.invalidateQueries({ queryKey: [`/api/agency/${agencyId}/billings`] });
+                              
+                              // Close the dialog
+                              const closeButton = document.querySelector('[data-state="open"] button[aria-label="Close"]');
+                              if (closeButton instanceof HTMLElement) {
+                                closeButton.click();
+                              }
+                            })
+                            .catch(error => {
+                              toast({
+                                title: 'خطأ',
+                                description: error.message,
+                                variant: 'destructive',
+                              });
+                            });
+                        }}>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <label htmlFor="clientId" className="text-right">العميل</label>
+                              <select 
+                                name="clientId" 
+                                id="clientId"
+                                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-foreground file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                required
+                              >
+                                <option value="">اختر العميل</option>
+                                {/* يمكن استبداله بجلب قائمة العملاء من API */}
+                                <option value="1">شركة الأمل</option>
+                                <option value="2">مؤسسة المستقبل</option>
+                                <option value="3">مجموعة النور</option>
+                              </select>
+                            </div>
+                            
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <label htmlFor="projectId" className="text-right">المشروع</label>
+                              <select 
+                                name="projectId" 
+                                id="projectId"
+                                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-foreground file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                required
+                              >
+                                <option value="">اختر المشروع</option>
+                                {/* يمكن استبداله بجلب قائمة المشاريع من API */}
+                                <option value="1">تطوير موقع الويب</option>
+                                <option value="2">حملة تسويق رقمي</option>
+                                <option value="3">تصميم العلامة التجارية</option>
+                              </select>
+                            </div>
+                            
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <label htmlFor="amount" className="text-right">المبلغ</label>
+                              <Input
+                                id="amount"
+                                name="amount"
+                                type="number"
+                                min="1"
+                                step="0.01"
+                                placeholder="أدخل المبلغ"
+                                className="col-span-3"
+                                required
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <label htmlFor="dueDate" className="text-right">تاريخ الاستحقاق</label>
+                              <Input
+                                id="dueDate"
+                                name="dueDate"
+                                type="date"
+                                className="col-span-3"
+                                required
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <label htmlFor="description" className="text-right">الوصف</label>
+                              <textarea
+                                id="description"
+                                name="description"
+                                placeholder="وصف الفاتورة"
+                                className="col-span-3 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-foreground file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                required
+                              ></textarea>
+                            </div>
+                          </div>
+                          
+                          <DialogFooter>
+                            <Button type="submit">إنشاء الفاتورة</Button>
+                          </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
                 
@@ -571,10 +711,56 @@ const BillingPage: React.FC = () => {
                           </Select>
                         </div>
                       </div>
-                      <Button className="w-full sm:w-auto mt-4">
-                        <FileText className="w-4 h-4 mr-2" />
-                        إنشاء التقرير
-                      </Button>
+                      <div className="flex flex-col sm:flex-row gap-4 mt-4">
+                        <Button className="w-full sm:w-auto">
+                          <FileText className="w-4 h-4 mr-2" />
+                          إنشاء التقرير
+                        </Button>
+                        <Button variant="outline" className="w-full sm:w-auto"
+                          onClick={() => {
+                            toast({
+                              title: "جاري توليد التقرير بصيغة PDF",
+                              description: "يتم الآن إنشاء ملف PDF للتقرير المالي...",
+                            });
+                            
+                            // Call API to generate PDF report
+                            fetch(`/api/agency/${agencyId}/financial-reports/pdf`, {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                startDate: document.getElementById('report-start-date')?.value || new Date().toISOString(),
+                                endDate: document.getElementById('report-end-date')?.value || new Date().toISOString(),
+                                type: document.getElementById('report-type')?.value || 'all',
+                                clientId: document.getElementById('report-client')?.value || 'all',
+                              }),
+                            })
+                              .then(response => {
+                                if (!response.ok) {
+                                  throw new Error('فشل في توليد ملف PDF');
+                                }
+                                return response.json();
+                              })
+                              .then(() => {
+                                toast({
+                                  title: "تم إنشاء التقرير بنجاح",
+                                  description: "يمكنك الآن تنزيل ملف PDF للتقرير المالي",
+                                });
+                              })
+                              .catch(error => {
+                                toast({
+                                  title: "خطأ",
+                                  description: error.message,
+                                  variant: "destructive",
+                                });
+                              });
+                          }}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          تصدير PDF
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
