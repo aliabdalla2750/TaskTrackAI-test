@@ -95,6 +95,7 @@ export function FixedSidebar() {
     { path: '/dashboard/client/overview', icon: <RiDashboardLine />, label: 'نظرة عامة' },
     { path: '/dashboard/client/projects', icon: <RiFolderOpenLine />, label: 'المشاريع' },
     { path: '/dashboard/client/tasks', icon: <RiTaskLine />, label: 'المهام' },
+    { path: '/dashboard/client/billing', icon: <RiMoneyDollarCircleLine />, label: 'الفواتير والمدفوعات' },
     { path: '/dashboard/client/files', icon: <RiFileTextLine />, label: 'الملفات' },
   ];
   
