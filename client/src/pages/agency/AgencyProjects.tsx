@@ -127,7 +127,7 @@ export default function AgencyProjects() {
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={() => navigate('/dashboard/agency/create-project-smart')}
+              onClick={() => navigate('/dashboard/agency/create-smart-project')}
               className="btn-animate bg-primary hover:bg-opacity-90 text-white"
             >
               <i className="fas fa-magic ml-2"></i>
