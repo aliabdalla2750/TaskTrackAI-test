@@ -674,7 +674,13 @@ export class MemStorage implements IStorage {
 
   async createTaskSubmission(submission: InsertTaskSubmission): Promise<TaskSubmission> {
     const id = this.taskSubmissionIdCounter++;
-    const newSubmission: TaskSubmission = { ...submission, id, submittedAt: new Date() };
+    const now = new Date();
+    const newSubmission: TaskSubmission = { 
+      ...submission, 
+      id, 
+      submittedAt: now,
+      createdAt: now
+    };
     this.taskSubmissions.set(id, newSubmission);
     return newSubmission;
   }

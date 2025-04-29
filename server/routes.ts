@@ -713,7 +713,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Task submissions endpoints
   app.post("/api/task-submissions", async (req: Request, res: Response) => {
     try {
+      // Parse the request data
       const submissionData = insertTaskSubmissionSchema.parse(req.body);
+      
+      // Create the task submission (including comment)
       const submission = await storage.createTaskSubmission(submissionData);
       
       // After creating a submission (comment), return it in the format expected by the UI
@@ -721,11 +724,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: submission.id,
         text: submission.content || "",
         createdBy: submission.submittedBy || "User",
-        createdAt: submission.createdAt
+        createdAt: submission.createdAt || submission.submittedAt
       };
       
+      // Return both the submission record and the formatted comment for the UI
       res.status(201).json({ submission, comment });
     } catch (error) {
+      console.error("Error creating task submission:", error);
       if (error instanceof ZodError) {
         res.status(400).json({ message: "Invalid submission data", errors: error.errors });
       } else {
@@ -831,12 +836,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const messages = [
         { role: "system", content: systemPrompt },
         { role: "user", content: message }
-      ];
+      ] as const;
       
       // استدعاء واجهة برمجة التطبيقات OpenAI مباشرة
+      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       const result = await openai.chat.completions.create({
         model: "gpt-4o", // استخدام أحدث نموذج
-        messages,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
         temperature: parseFloat(temperature.toString()),
         max_tokens: 800,
       });
