@@ -12,7 +12,9 @@ import {
   aiScenarios, AiScenario, InsertAiScenario,
   aiUsageLogs, AiUsageLog, InsertAiUsageLog,
   payments, Payment, InsertPayment,
-  aiChatLogs, AiChatLog, InsertAiChatLog
+  aiChatLogs, AiChatLog, InsertAiChatLog,
+  aiProviders, AiProvider, InsertAiProvider,
+  aiModels, AiModel, InsertAiModel
 } from "@shared/schema";
 
 // Define the storage interface
@@ -112,6 +114,25 @@ export interface IStorage {
   // AI Chat Logs
   createAiChatLog(log: InsertAiChatLog): Promise<AiChatLog>;
   getAiChatLogsByAgency(agencyId: number): Promise<AiChatLog[]>;
+  
+  // AI Providers
+  getAiProvider(id: number): Promise<AiProvider | undefined>;
+  getAiProviderByName(name: string): Promise<AiProvider | undefined>;
+  listAiProviders(): Promise<AiProvider[]>;
+  listEnabledAiProviders(): Promise<AiProvider[]>;
+  getDefaultAiProvider(): Promise<AiProvider | undefined>;
+  createAiProvider(provider: InsertAiProvider): Promise<AiProvider>;
+  updateAiProvider(id: number, provider: Partial<InsertAiProvider>): Promise<AiProvider | undefined>;
+  deleteAiProvider(id: number): Promise<boolean>;
+  
+  // AI Models
+  getAiModel(id: number): Promise<AiModel | undefined>;
+  getAiModelsByProvider(providerId: number): Promise<AiModel[]>;
+  listEnabledAiModels(): Promise<AiModel[]>;
+  getDefaultAiModelForProvider(providerId: number): Promise<AiModel | undefined>;
+  createAiModel(model: InsertAiModel): Promise<AiModel>;
+  updateAiModel(id: number, model: Partial<InsertAiModel>): Promise<AiModel | undefined>;
+  deleteAiModel(id: number): Promise<boolean>;
 }
 
 // In-memory storage implementation

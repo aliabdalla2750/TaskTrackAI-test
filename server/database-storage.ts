@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and, desc, isNull } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, User, InsertUser,
@@ -14,7 +14,9 @@ import {
   aiScenarios, AiScenario, InsertAiScenario,
   aiUsageLogs, AiUsageLog, InsertAiUsageLog,
   payments, Payment, InsertPayment,
-  aiChatLogs, AiChatLog, InsertAiChatLog
+  aiChatLogs, AiChatLog, InsertAiChatLog,
+  aiProviders, AiProvider, InsertAiProvider,
+  aiModels, AiModel, InsertAiModel
 } from "@shared/schema";
 import { IStorage } from "./storage";
 
@@ -405,5 +407,137 @@ export class DatabaseStorage implements IStorage {
 
   async getAiChatLogsByAgency(agencyId: number): Promise<AiChatLog[]> {
     return db.select().from(aiChatLogs).where(eq(aiChatLogs.agencyId, agencyId));
+  }
+
+  // AI Providers
+  async getAiProvider(id: number): Promise<AiProvider | undefined> {
+    const [provider] = await db.select().from(aiProviders).where(eq(aiProviders.id, id));
+    return provider;
+  }
+
+  async getAiProviderByName(name: string): Promise<AiProvider | undefined> {
+    const [provider] = await db.select().from(aiProviders).where(eq(aiProviders.name, name));
+    return provider;
+  }
+
+  async listAiProviders(): Promise<AiProvider[]> {
+    return db.select().from(aiProviders);
+  }
+
+  async listEnabledAiProviders(): Promise<AiProvider[]> {
+    return db.select().from(aiProviders).where(eq(aiProviders.isEnabled, true));
+  }
+
+  async getDefaultAiProvider(): Promise<AiProvider | undefined> {
+    const [provider] = await db.select().from(aiProviders)
+      .where(and(
+        eq(aiProviders.isEnabled, true),
+        eq(aiProviders.isDefault, true)
+      ));
+    return provider;
+  }
+
+  async createAiProvider(provider: InsertAiProvider): Promise<AiProvider> {
+    // If this is set as default, remove default from others
+    if (provider.isDefault) {
+      await db.update(aiProviders)
+        .set({ isDefault: false })
+        .where(eq(aiProviders.isDefault, true));
+    }
+    
+    const [newProvider] = await db.insert(aiProviders).values(provider).returning();
+    return newProvider;
+  }
+
+  async updateAiProvider(id: number, provider: Partial<InsertAiProvider>): Promise<AiProvider | undefined> {
+    // If this is set as default, remove default from others
+    if (provider.isDefault) {
+      await db.update(aiProviders)
+        .set({ isDefault: false })
+        .where(and(
+          eq(aiProviders.isDefault, true),
+          eq(aiProviders.id, id, true) // NOT id
+        ));
+    }
+    
+    const [updatedProvider] = await db
+      .update(aiProviders)
+      .set(provider)
+      .where(eq(aiProviders.id, id))
+      .returning();
+    return updatedProvider;
+  }
+
+  async deleteAiProvider(id: number): Promise<boolean> {
+    const result = await db.delete(aiProviders).where(eq(aiProviders.id, id));
+    return result.rowCount > 0;
+  }
+
+  // AI Models
+  async getAiModel(id: number): Promise<AiModel | undefined> {
+    const [model] = await db.select().from(aiModels).where(eq(aiModels.id, id));
+    return model;
+  }
+
+  async getAiModelsByProvider(providerId: number): Promise<AiModel[]> {
+    return db.select().from(aiModels).where(eq(aiModels.providerId, providerId));
+  }
+
+  async listEnabledAiModels(): Promise<AiModel[]> {
+    return db.select().from(aiModels).where(eq(aiModels.isEnabled, true));
+  }
+
+  async getDefaultAiModelForProvider(providerId: number): Promise<AiModel | undefined> {
+    const [model] = await db.select().from(aiModels)
+      .where(and(
+        eq(aiModels.providerId, providerId),
+        eq(aiModels.isEnabled, true),
+        eq(aiModels.isDefault, true)
+      ));
+    return model;
+  }
+
+  async createAiModel(model: InsertAiModel): Promise<AiModel> {
+    // If this is set as default, remove default from others
+    if (model.isDefault) {
+      await db.update(aiModels)
+        .set({ isDefault: false })
+        .where(and(
+          eq(aiModels.providerId, model.providerId),
+          eq(aiModels.isDefault, true)
+        ));
+    }
+    
+    const [newModel] = await db.insert(aiModels).values(model).returning();
+    return newModel;
+  }
+
+  async updateAiModel(id: number, model: Partial<InsertAiModel>): Promise<AiModel | undefined> {
+    // If this is set as default and providerId doesn't change, remove default from others with same provider
+    const [existingModel] = await db.select().from(aiModels).where(eq(aiModels.id, id));
+    
+    if (model.isDefault) {
+      const providerId = model.providerId || existingModel.providerId;
+      
+      await db.update(aiModels)
+        .set({ isDefault: false })
+        .where(and(
+          eq(aiModels.providerId, providerId),
+          eq(aiModels.isDefault, true),
+          eq(aiModels.id, id, true) // NOT id
+        ));
+    }
+    
+    const [updatedModel] = await db
+      .update(aiModels)
+      .set(model)
+      .where(eq(aiModels.id, id))
+      .returning();
+    return updatedModel;
+  }
+
+  async deleteAiModel(id: number): Promise<boolean> {
+    const result = await db.delete(aiModels).where(eq(aiModels.id, id));
+    return result.rowCount > 0;
   }
 }

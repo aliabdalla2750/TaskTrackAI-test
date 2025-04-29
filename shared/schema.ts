@@ -454,6 +454,28 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   }),
 }));
 
+// AI providers relations
+export const aiProvidersRelations = relations(aiProviders, ({ many }) => ({
+  models: many(aiModels),
+  scenarios: many(aiScenarios),
+}));
+
+// AI models relations
+export const aiModelsRelations = relations(aiModels, ({ one }) => ({
+  provider: one(aiProviders, {
+    fields: [aiModels.providerId],
+    references: [aiProviders.id],
+  }),
+}));
+
+// AI scenarios relations
+export const aiScenariosRelations = relations(aiScenarios, ({ one }) => ({
+  provider: one(aiProviders, {
+    fields: [aiScenarios.providerId],
+    references: [aiProviders.id],
+  }),
+}));
+
 // AI chat logs relations
 export const aiChatLogsRelations = relations(aiChatLogs, ({ one }) => ({
   user: one(users, {
