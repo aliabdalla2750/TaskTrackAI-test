@@ -817,7 +817,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             requestBody = {
               model: "openai/gpt-4",
               messages: [{ role: "user", content: "Hello" }],
-              max_tokens: 5
+              max_tokens: 5,
+              temperature: 0.7
+            };
+            // إضافة مرجع HTTP لمنع 403 Forbidden
+            headers = {
+              ...headers,
+              'HTTP-Referer': 'https://taskaaya.com'
             };
             break;
             
@@ -1069,24 +1075,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         case 'openrouter': {
           // استدعاء OpenRouter API
-          const response = await axios.post(
-            provider.baseUrl || 'https://openrouter.ai/api/v1/chat/completions',
-            {
-              model: model.name,
-              messages,
-              temperature: 0.7,
-              max_tokens: model.maxTokens || 1000
-            },
-            {
-              headers: {
-                'Authorization': `Bearer ${provider.apiKey}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://taskaaya.com'
+          try {
+            const response = await axios.post(
+              provider.baseUrl || 'https://openrouter.ai/api/v1/chat/completions',
+              {
+                model: model.name,
+                messages,
+                temperature: 0.7,
+                max_tokens: model.maxTokens || 1000
+              },
+              {
+                headers: {
+                  'Authorization': `Bearer ${provider.apiKey}`,
+                  'Content-Type': 'application/json',
+                  'HTTP-Referer': 'https://taskaaya.com'
+                }
               }
+            );
+            
+            // التحقق من شكل البيانات والتعامل مع الاختلافات المحتملة
+            if (response.data && response.data.choices && response.data.choices.length > 0) {
+              const choice = response.data.choices[0];
+              if (choice.message && choice.message.content) {
+                aiResponse = choice.message.content;
+              } else if (choice.content) {
+                aiResponse = choice.content;
+              } else {
+                aiResponse = "تم استلام استجابة من المزود ولكن لم يتم العثور على محتوى الرسالة.";
+              }
+            } else {
+              console.log("Unexpected OpenRouter API response:", response.data);
+              aiResponse = "تم استلام استجابة من المزود بتنسيق غير متوقع.";
             }
-          );
-          
-          aiResponse = response.data.choices[0].message.content;
+          } catch (error: any) {
+            console.error("OpenRouter API error:", error);
+            throw new Error(`OpenRouter API error: ${error.message || JSON.stringify(error)}`);
+          }
           break;
         }
         
