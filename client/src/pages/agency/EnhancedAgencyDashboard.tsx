@@ -357,40 +357,48 @@ const EnhancedAgencyDashboard = () => {
           <AIAlerts alerts={aiAlerts} />
         </motion.div>
         
-        {/* Stats Cards */}
+        {/* Stats Cards - Grid 2x2 */}
         <motion.div variants={itemVariants}>
           <h2 className="text-2xl font-bold mb-4">نظرة سريعة</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
             <StatCard
               icon={<RiFolderLine size={20} />}
               title="المشاريع النشطة"
               value="12"
-              change={{ value: 20, type: 'increase' }}
+              progress={75}
+              detailText="تقدم جيد في معظم المشاريع"
+              actionLabel="عرض التفاصيل"
               color="primary"
               route="/dashboard/agency/projects"
             />
             <StatCard
-              icon={<RiTrophyLine size={20} />}
-              title="المشاريع المكتملة"
-              value="24"
-              change={{ value: 5, type: 'increase' }}
-              color="success"
-              route="/dashboard/agency/projects?status=completed"
-            />
-            <StatCard
               icon={<RiTaskLine size={20} />}
-              title="المهام المعلقة"
+              title="المهام النشطة"
               value="38"
-              change={{ value: 10, type: 'decrease' }}
-              color="warning"
+              progress={45}
+              detailText="متبقي 21 مهمة للإكمال"
+              actionLabel="عرض التفاصيل"
+              color="info"
               route="/dashboard/agency/tasks"
             />
             <StatCard
-              icon={<RiTeamLine size={20} />}
-              title="الفريق"
-              value="8"
-              color="info"
-              route="/dashboard/agency/employees"
+              icon={<RiTaskLine size={20} />}
+              title="المهام المكتملة"
+              value="67"
+              progress={100}
+              detailText="تم إنجاز 15 مهمة هذا الأسبوع"
+              actionLabel="عرض التفاصيل"
+              color="success"
+              route="/dashboard/agency/tasks?status=completed"
+            />
+            <StatCard
+              icon={<RiTimeLine size={20} />}
+              title="المهام المتأخرة"
+              value="7"
+              detailText="تحتاج متابعة عاجلة"
+              actionLabel="متابعة"
+              color="danger"
+              route="/dashboard/agency/tasks?status=late"
             />
           </div>
         </motion.div>

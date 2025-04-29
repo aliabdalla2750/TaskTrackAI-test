@@ -14,6 +14,9 @@ interface StatCardProps {
   onClick?: () => void;
   route?: string; // مسار التنقل
   linkTo?: string; // مسار URL مباشر
+  progress?: number; // نسبة التقدم من 0 إلى 100
+  detailText?: string; // نص توضيحي إضافي
+  actionLabel?: string; // نص زر الإجراء
 }
 
 const colorVariants = {
@@ -57,7 +60,10 @@ export const StatCard = ({
   color = 'primary',
   onClick,
   route,
-  linkTo
+  linkTo,
+  progress,
+  detailText,
+  actionLabel
 }: StatCardProps) => {
   const colorClasses = colorVariants[color];
   const [, navigate] = useLocation();
@@ -99,22 +105,98 @@ export const StatCard = ({
               </p>
             )}
           </div>
+          {detailText && (
+            <p className="mt-1 text-xs text-gray-500">{detailText}</p>
+          )}
         </div>
         <div className={`p-2 rounded-full ${colorClasses.icon}`}>
           {icon}
         </div>
       </div>
       
-      {change && (
+      {/* مؤشر التقدم الخطي (إما من progress أو change) */}
+      {(progress !== undefined || change) && (
         <div className="mt-4">
           <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
             <motion.div 
-              className={`h-full rounded-full ${change.type === 'increase' ? 'bg-green-500' : 'bg-red-500'}`}
+              className={`h-full rounded-full ${
+                progress !== undefined 
+                  ? (
+                    color === 'primary' ? 'bg-primary' : 
+                    color === 'secondary' ? 'bg-secondary' :
+                    color === 'success' ? 'bg-green-500' :
+                    color === 'warning' ? 'bg-amber-500' :
+                    color === 'danger' ? 'bg-red-500' :
+                    'bg-blue-500'
+                  ) 
+                  : change?.type === 'increase' 
+                    ? 'bg-green-500' 
+                    : 'bg-red-500'
+              }`}
               initial={{ width: 0 }}
-              animate={{ width: `${Math.min(Math.abs(change.value) * 2, 100)}%` }}
+              animate={{ 
+                width: `${progress !== undefined 
+                  ? Math.min(Math.max(progress, 0), 100) 
+                  : Math.min(Math.abs((change?.value || 0) * 2), 100)}%` 
+              }}
               transition={{ duration: 0.5, delay: 0.2 }}
             />
           </div>
+        </div>
+      )}
+      
+      {/* مؤشر التقدم الدائري إذا تم توفير progress فقط */}
+      {progress !== undefined && (
+        <div className="mt-3 flex justify-center">
+          <div className="relative w-10 h-10">
+            <svg className="w-full h-full" viewBox="0 0 36 36">
+              <path
+                className="stroke-gray-200"
+                fill="none"
+                strokeWidth="3"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <path
+                className={`${
+                  color === 'primary' ? 'stroke-primary' : 
+                  color === 'secondary' ? 'stroke-secondary' :
+                  color === 'success' ? 'stroke-green-500' :
+                  color === 'warning' ? 'stroke-amber-500' :
+                  color === 'danger' ? 'stroke-red-500' :
+                  'stroke-blue-500'
+                }`}
+                fill="none"
+                strokeWidth="3"
+                strokeDasharray={`${Math.min(Math.max(progress, 0), 100)}, 100`}
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xs font-medium">{progress}%</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* زر إجراء إضافي */}
+      {actionLabel && (
+        <div className="mt-4 text-center">
+          <button
+            className={`text-xs ${
+              color === 'primary' ? 'text-primary hover:text-primary/80' : 
+              color === 'secondary' ? 'text-secondary hover:text-secondary/80' :
+              color === 'success' ? 'text-green-600 hover:text-green-700' :
+              color === 'warning' ? 'text-amber-600 hover:text-amber-700' :
+              color === 'danger' ? 'text-red-600 hover:text-red-700' :
+              'text-blue-600 hover:text-blue-700'
+            } transition-colors font-medium`}
+            onClick={(e) => {
+              e.stopPropagation(); // منع تنفيذ النقر العام
+              handleClick();
+            }}
+          >
+            {actionLabel}
+          </button>
         </div>
       )}
     </motion.div>
