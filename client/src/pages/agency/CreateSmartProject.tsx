@@ -152,7 +152,7 @@ export default function CreateSmartProject() {
             industryKnowledge: aiSetup.industryKnowledge || '',
             keyObjectives: aiSetup.keyObjectives || ''
           },
-          providerId: 1 // استخدام OpenAI بدلاً من OpenRouter للتحليل
+          providerId: providerId // استخدام مزود الذكاء الاصطناعي الديناميكي
         });
         
         const data = await response.json();
@@ -664,8 +664,8 @@ export default function CreateSmartProject() {
               welcomeMessage={getWelcomeMessage()}
               scenarioKey="project-creation"
               onResultGenerated={handleAiResult}
-              providerId={1} // استخدام OpenRouter (رقم معرف المزود 1)
-              model="openai/gpt-4" // استخدام نموذج محدد لـ OpenRouter
+              providerId={providerId} // استخدام قيمة متغير providerId الديناميكية
+              model={aiModel} // استخدام قيمة متغير aiModel الديناميكية
             />
           </CardContent>
           <CardFooter className="border-t pt-5">
