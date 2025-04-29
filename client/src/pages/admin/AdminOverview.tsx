@@ -106,6 +106,12 @@ export default function AdminOverview() {
                 <span>إدارة المستخدمين</span>
               </a>
             </Link>
+            <Link href="/dashboard/admin/ai-providers">
+              <a className="btn-animate bg-accent hover:bg-opacity-90 text-white px-4 py-2 rounded-md flex items-center gap-2">
+                <i className="fas fa-plug"></i>
+                <span>مزودي الذكاء الاصطناعي</span>
+              </a>
+            </Link>
             <Link href="/dashboard/admin/ai-scenarios">
               <a className="btn-animate bg-secondary hover:bg-opacity-90 text-white px-4 py-2 rounded-md flex items-center gap-2">
                 <i className="fas fa-robot"></i>

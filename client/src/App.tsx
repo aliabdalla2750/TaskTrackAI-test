@@ -33,6 +33,7 @@ import EmployeeFiles from "@/pages/employee/EmployeeFiles";
 import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminAiScenarios from "@/pages/admin/AdminAiScenarios";
+import AdminAiProviders from "@/pages/admin/AdminAiProviders";
 
 function Router() {
   return (
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/dashboard/admin/overview" component={AdminOverview} />
       <Route path="/dashboard/admin/users" component={AdminUsers} />
       <Route path="/dashboard/admin/ai-scenarios" component={AdminAiScenarios} />
+      <Route path="/dashboard/admin/ai-providers" component={AdminAiProviders} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
