@@ -69,6 +69,7 @@ export function FixedSidebar() {
     { path: '/dashboard/agency/projects', icon: <RiFolderOpenLine />, label: 'المشاريع' },
     { path: '/dashboard/agency/create-smart-project', icon: <RiMagicLine />, label: 'إنشاء مشروع ذكي' },
     { path: '/dashboard/agency/tasks', icon: <RiTaskLine />, label: 'المهام' },
+    { path: '/dashboard/agency/daily-standup', icon: <RiClipboardLine />, label: 'التقرير اليومي 🆕' },
     { path: '/dashboard/agency/team', icon: <RiTeamLine />, label: 'فريق العمل' },
     { path: '/dashboard/agency/clients', icon: <RiUser3Line />, label: 'العملاء' },
     { path: '/dashboard/agency/files', icon: <RiFileTextLine />, label: 'الملفات' },
@@ -93,6 +94,7 @@ export function FixedSidebar() {
   const employeeLinks = [
     { path: '/dashboard/employee/overview', icon: <RiDashboardLine />, label: 'نظرة عامة' },
     { path: '/dashboard/employee/tasks', icon: <RiTaskLine />, label: 'المهام' },
+    { path: '/dashboard/employee/daily-tasks', icon: <RiClipboardLine />, label: 'المهام اليومية 🆕' },
     { path: '/dashboard/employee/submissions', icon: <RiClipboardLine />, label: 'التسليمات' },
     { path: '/dashboard/employee/performance', icon: <RiLineChartLine />, label: 'الأداء' },
     { path: '/dashboard/employee/files', icon: <RiFileTextLine />, label: 'الملفات' },
