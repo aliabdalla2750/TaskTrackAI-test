@@ -3,7 +3,11 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { motion } from 'framer-motion';
 import { 
   RiCheckLine, RiInformationLine, RiAddLine, 
-  RiPlayLine, RiArrowRightLine, RiUser3Line 
+  RiPlayLine, RiArrowRightLine, RiUser3Line,
+  RiClipboardLine, RiTimeLine, RiArrowLeftLine,
+  RiCheckboxCircleLine, RiCalendarLine, RiTaskLine,
+  RiAlarmLine, RiListCheck, RiExchangeLine,
+  RiShieldCheckLine, RiEyeLine, RiMessage2Line
 } from 'react-icons/ri';
 
 // UI Components
@@ -15,6 +19,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { 
   Select, SelectContent, SelectItem, 
   SelectTrigger, SelectValue 
@@ -118,17 +124,98 @@ interface StandupUpdate {
   blockers: StandupItem[];
 }
 
+// Demo data for available tasks
+const availableTasks = [
+  {
+    id: 1,
+    title: 'تطوير واجهة API للمدفوعات',
+    project: 'تطبيق الخدمات المصرفية',
+    description: 'تطوير واجهة برمجية للتعامل مع عمليات الدفع المختلفة والتكامل مع بوابات الدفع',
+    priority: 'عالية',
+    dueDate: '30 أبريل 2025',
+    estimatedHours: 8,
+    skills: ['Node.js', 'Express', 'API']
+  },
+  {
+    id: 2,
+    title: 'تصميم واجهة صفحة المدفوعات',
+    project: 'تطبيق الخدمات المصرفية',
+    description: 'تصميم واجهة المستخدم لصفحة المدفوعات مع جميع حالات الخطأ المحتملة',
+    priority: 'عالية',
+    dueDate: '29 أبريل 2025',
+    estimatedHours: 6,
+    skills: ['UI/UX', 'Figma']
+  },
+  {
+    id: 3,
+    title: 'اختبار وظائف التسجيل',
+    project: 'إعادة تصميم الموقع الإلكتروني',
+    description: 'اختبار جميع وظائف تسجيل المستخدمين وإدارة الحسابات',
+    priority: 'متوسطة',
+    dueDate: '1 مايو 2025',
+    estimatedHours: 4,
+    skills: ['QA', 'Testing']
+  },
+  {
+    id: 4,
+    title: 'توثيق API',
+    project: 'تطبيق الخدمات المصرفية',
+    description: 'كتابة توثيق شامل لجميع نقاط النهاية API في النظام',
+    priority: 'منخفضة',
+    dueDate: '5 مايو 2025',
+    estimatedHours: 5,
+    skills: ['Documentation', 'API']
+  }
+];
+
+// Demo data for current team tasks assignments
+const teamTaskAssignments = [
+  {
+    memberId: 1, // سارة أحمد
+    taskId: 2,
+    assignedDate: '28 أبريل 2025',
+    status: 'قيد التنفيذ',
+    progress: 60,
+    notes: 'جاري العمل على التصميم، وسيتم الانتهاء غدًا',
+  },
+  {
+    memberId: 2, // محمد خالد
+    taskId: 1,
+    assignedDate: '27 أبريل 2025',
+    status: 'قيد التنفيذ',
+    progress: 80,
+    notes: 'في انتظار بيانات اعتماد بوابة الدفع',
+  },
+  {
+    memberId: 4, // ليلى حسن
+    taskId: 3,
+    assignedDate: '28 أبريل 2025',
+    status: 'قيد التنفيذ',
+    progress: 40,
+    notes: 'مشكلة في API التواصل الاجتماعي',
+  }
+];
+
 export default function DailyStandUp() {
   const [standupData, setStandupData] = useState(demoStandupData);
   const [selectedTeamIndex, setSelectedTeamIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState(demoStandupData.date);
   const [isAddingUpdate, setIsAddingUpdate] = useState(false);
+  const [isAssigningTask, setIsAssigningTask] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<number | null>(null);
+  const [selectedAssignee, setSelectedAssignee] = useState<string>('');
+  const [taskDueDate, setTaskDueDate] = useState<string>('');
+  const [taskNotes, setTaskNotes] = useState<string>('');
+  const [selectedMember, setSelectedMember] = useState<string>('');
+  const [currentTabView, setCurrentTabView] = useState('teamView');
   const [newUpdate, setNewUpdate] = useState<StandupUpdate>({
     yesterday: [{ id: 1, text: '', done: true }],
     today: [{ id: 1, text: '', done: false }],
     blockers: []
   });
-  const [selectedMember, setSelectedMember] = useState<string>('');
+  const [selectedMemberForFeedback, setSelectedMemberForFeedback] = useState<number | null>(null);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
   
   // Helpers for form state
   const addYesterdayItem = () => {
@@ -211,6 +298,75 @@ export default function DailyStandUp() {
       blockers: []
     });
   };
+
+  const handleAssignTask = () => {
+    // In a real app, you would assign the task via API
+    console.log("Assigned task:", { 
+      taskId: selectedTask, 
+      memberId: selectedAssignee,
+      dueDate: taskDueDate,
+      notes: taskNotes
+    });
+    
+    setIsAssigningTask(false);
+    setSelectedTask(null);
+    setSelectedAssignee('');
+    setTaskDueDate('');
+    setTaskNotes('');
+  };
+
+  const handleSubmitFeedback = () => {
+    // In a real app, you would send this feedback to the API
+    console.log("Submitted feedback for member:", selectedMemberForFeedback, feedbackText);
+    setIsFeedbackDialogOpen(false);
+    setSelectedMemberForFeedback(null);
+    setFeedbackText('');
+  };
+  
+  // Get task details by ID
+  const getTaskById = (id: number) => {
+    return availableTasks.find(task => task.id === id);
+  };
+  
+  // Get member by ID
+  const getMemberById = (id: number) => {
+    for (const team of standupData.teams) {
+      const member = team.members.find(m => m.id === id);
+      if (member) return member;
+    }
+    return null;
+  };
+  
+  // Check if a task is assigned to a member
+  const isTaskAssigned = (taskId: number) => {
+    return teamTaskAssignments.some(assignment => assignment.taskId === taskId);
+  };
+  
+  // Get task assignments for a member
+  const getMemberAssignments = (memberId: number) => {
+    return teamTaskAssignments.filter(assignment => assignment.memberId === memberId);
+  };
+  
+  // Count tasks by status across all team members
+  const taskStatusCounts = {
+    total: teamTaskAssignments.length,
+    inProgress: teamTaskAssignments.filter(t => t.status === 'قيد التنفيذ').length,
+    completed: teamTaskAssignments.filter(t => t.status === 'مكتمل').length,
+    blocked: teamTaskAssignments.filter(t => t.notes.includes('انتظار') || t.notes.includes('مشكلة')).length,
+  };
+  
+  // Count member updates across all teams
+  const memberUpdateCounts = {
+    total: standupData.teams.reduce((acc, team) => acc + team.members.length, 0),
+    updated: standupData.teams.reduce((acc, team) => {
+      return acc + team.members.filter(member => 
+        member.yesterday.length > 0 || member.today.length > 0
+      ).length;
+    }, 0),
+    withBlockers: standupData.teams.reduce((acc, team) => {
+      return acc + team.members.filter(member => member.blockers.length > 0).length;
+    }, 0),
+  };
   
   // Animations
   const containerVariants = {
@@ -243,11 +399,97 @@ export default function DailyStandUp() {
           <div>
             <h1 className="text-xl font-bold">تقرير الـ Stand-up اليومي</h1>
             <p className="text-gray-500">
-              ما الذي تم إنجازه بالأمس، وما هي خطة اليوم، وما هي العوائق؟
+              مراجعة المهام ومتابعة تقدم الفريق وتوزيع المهام الجديدة
             </p>
           </div>
           
           <div className="flex items-center gap-2">
+            <Dialog open={isAssigningTask} onOpenChange={setIsAssigningTask}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <RiAddLine />
+                  <span>تعيين مهمة</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>تعيين مهمة جديدة</DialogTitle>
+                  <DialogDescription>
+                    اختر المهمة وعضو الفريق الذي سيتم تكليفه بها.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="grid gap-4 py-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">المهمة</label>
+                    <Select value={selectedTask?.toString() || ''} onValueChange={(v) => setSelectedTask(parseInt(v))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر المهمة" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableTasks.map((task) => (
+                          <SelectItem 
+                            key={task.id} 
+                            value={task.id.toString()}
+                            disabled={isTaskAssigned(task.id)}
+                          >
+                            {isTaskAssigned(task.id) ? `${task.title} (مُسندة)` : task.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">عضو الفريق</label>
+                    <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر عضو الفريق" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {demoTeam.map((member) => (
+                          <SelectItem key={member.id} value={member.id.toString()}>
+                            {member.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">تاريخ الاستحقاق</label>
+                    <Input
+                      type="text"
+                      placeholder="مثال: 5 مايو 2025"
+                      value={taskDueDate}
+                      onChange={(e) => setTaskDueDate(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">ملاحظات</label>
+                    <Textarea
+                      placeholder="أي ملاحظات إضافية حول المهمة..."
+                      value={taskNotes}
+                      onChange={(e) => setTaskNotes(e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setIsAssigningTask(false)}>
+                    إلغاء
+                  </Button>
+                  <Button 
+                    onClick={handleAssignTask}
+                    disabled={!selectedTask || !selectedAssignee}
+                  >
+                    تعيين المهمة
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
             <Dialog open={isAddingUpdate} onOpenChange={setIsAddingUpdate}>
               <DialogTrigger asChild>
                 <Button className="btn-primary flex items-center gap-2">
@@ -301,25 +543,26 @@ export default function DailyStandUp() {
                               onClick={() => removeYesterdayItem(item.id)}
                               className="text-red-500 hover:text-red-700"
                             >
-                              ×
+                              <RiInformationLine />
                             </button>
                           )}
                         </div>
                       ))}
                       <Button 
-                        type="button" 
                         variant="outline" 
                         size="sm"
                         onClick={addYesterdayItem}
+                        className="mt-2"
                       >
-                        + إضافة إنجاز آخر
+                        <RiAddLine className="ml-1" />
+                        إضافة بند
                       </Button>
                     </div>
                   </div>
                   
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium">
-                      ما هي خطتك لليوم؟
+                      ما الذي ستعمل عليه اليوم؟
                     </label>
                     <div className="space-y-2">
                       {newUpdate.today.map((item, index) => (
@@ -330,7 +573,7 @@ export default function DailyStandUp() {
                           <Input
                             value={item.text}
                             onChange={(e) => updateTodayItem(item.id, e.target.value)}
-                            placeholder="مثال: بدء العمل على صفحة المنتجات"
+                            placeholder="مثال: سأعمل على تطوير واجهة المدفوعات"
                             className="flex-1"
                           />
                           {newUpdate.today.length > 1 && (
@@ -338,86 +581,65 @@ export default function DailyStandUp() {
                               onClick={() => removeTodayItem(item.id)}
                               className="text-red-500 hover:text-red-700"
                             >
-                              ×
+                              <RiInformationLine />
                             </button>
                           )}
                         </div>
                       ))}
                       <Button 
-                        type="button" 
                         variant="outline" 
                         size="sm"
                         onClick={addTodayItem}
+                        className="mt-2"
                       >
-                        + إضافة مهمة أخرى
+                        <RiAddLine className="ml-1" />
+                        إضافة بند
                       </Button>
                     </div>
                   </div>
                   
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium">
-                      هل هناك عوائق تواجهك؟
+                      هل هناك أي عوائق تواجهك؟
                     </label>
-                    {newUpdate.blockers.length === 0 ? (
+                    <div className="space-y-2">
+                      {newUpdate.blockers.map((item, index) => (
+                        <div key={item.id} className="flex items-center gap-2">
+                          <div className="text-red-500">
+                            <RiInformationLine />
+                          </div>
+                          <Input
+                            value={item.text}
+                            onChange={(e) => updateBlockerItem(item.id, e.target.value)}
+                            placeholder="مثال: في انتظار بيانات اعتماد من العميل"
+                            className="flex-1"
+                          />
+                          <button 
+                            onClick={() => removeBlockerItem(item.id)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <RiInformationLine />
+                          </button>
+                        </div>
+                      ))}
                       <Button 
-                        type="button" 
                         variant="outline" 
                         size="sm"
                         onClick={addBlockerItem}
+                        className="mt-2"
                       >
-                        + إضافة عائق
+                        <RiAddLine className="ml-1" />
+                        إضافة عائق
                       </Button>
-                    ) : (
-                      <div className="space-y-2">
-                        {newUpdate.blockers.map((item, index) => (
-                          <div key={item.id} className="flex items-center gap-2">
-                            <div className="text-red-500">
-                              <RiInformationLine />
-                            </div>
-                            <Input
-                              value={item.text}
-                              onChange={(e) => updateBlockerItem(item.id, e.target.value)}
-                              placeholder="مثال: في انتظار المعلومات من العميل"
-                              className="flex-1"
-                            />
-                            <button 
-                              onClick={() => removeBlockerItem(item.id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm"
-                          onClick={addBlockerItem}
-                        >
-                          + إضافة عائق آخر
-                        </Button>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
                 
                 <DialogFooter>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setIsAddingUpdate(false)}
-                  >
+                  <Button variant="ghost" onClick={() => setIsAddingUpdate(false)}>
                     إلغاء
                   </Button>
-                  <Button 
-                    type="button" 
-                    onClick={handleSubmitUpdate}
-                    disabled={!selectedMember || 
-                      newUpdate.yesterday.some(i => !i.text) || 
-                      newUpdate.today.some(i => !i.text) ||
-                      newUpdate.blockers.some(i => !i.text)
-                    }
-                  >
+                  <Button onClick={handleSubmitUpdate}>
                     إرسال
                   </Button>
                 </DialogFooter>
@@ -426,110 +648,435 @@ export default function DailyStandUp() {
           </div>
         </motion.div>
         
-        {/* Date selector */}
-        <motion.div variants={itemVariants} className="dashboard-card p-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-medium">{selectedDate}</span>
+        {/* Stats overview */}
+        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="dashboard-card p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+              <RiUser3Line size={24} />
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">أعضاء الفريق</div>
+              <div className="text-2xl font-bold">{memberUpdateCounts.total}</div>
+            </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">السابق</Button>
-            <Button variant="outline" size="sm">اليوم</Button>
-            <Button variant="outline" size="sm" disabled>التالي</Button>
+          <div className="dashboard-card p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+              <RiTaskLine size={24} />
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">المهام النشطة</div>
+              <div className="text-2xl font-bold">{taskStatusCounts.total}</div>
+            </div>
+          </div>
+          
+          <div className="dashboard-card p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+              <RiInformationLine size={24} />
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">المهام المعطلة</div>
+              <div className="text-2xl font-bold">{taskStatusCounts.blocked}</div>
+            </div>
+          </div>
+          
+          <div className="dashboard-card p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+              <RiCalendarLine size={24} />
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">التاريخ</div>
+              <div className="text-xl font-bold">{selectedDate}</div>
+            </div>
           </div>
         </motion.div>
         
-        {/* Teams tabs */}
+        {/* View tabs */}
         <motion.div variants={itemVariants}>
           <Tabs 
-            defaultValue={selectedTeam.id.toString()} 
-            onValueChange={(value) => setSelectedTeamIndex(
-              standupData.teams.findIndex(t => t.id.toString() === value)
-            )}
+            value={currentTabView} 
+            onValueChange={setCurrentTabView} 
+            className="w-full"
           >
-            <TabsList className="mb-6">
-              {standupData.teams.map((team) => (
-                <TabsTrigger key={team.id} value={team.id.toString()}>
-                  {team.name}
-                </TabsTrigger>
-              ))}
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="teamView" className="flex items-center gap-2">
+                <RiUser3Line />
+                <span>عرض الفريق</span>
+              </TabsTrigger>
+              <TabsTrigger value="taskView" className="flex items-center gap-2">
+                <RiTaskLine />
+                <span>عرض المهام</span>
+              </TabsTrigger>
             </TabsList>
             
-            {standupData.teams.map((team) => (
-              <TabsContent key={team.id} value={team.id.toString()} className="space-y-6">
-                {team.members.map((member) => (
-                  <div key={member.id} className="dashboard-card overflow-hidden">
-                    <div className="p-4 flex items-center justify-between bg-gray-50 border-b">
-                      <div className="flex items-center gap-3">
-                        <img src={member.avatar} alt={member.name} className="w-10 h-10 rounded-full" />
-                        <div>
-                          <h3 className="font-medium">{member.name}</h3>
+            {/* Team view */}
+            <TabsContent value="teamView" className="space-y-6">
+              {/* Team selection */}
+              <div className="flex items-center gap-4">
+                <label className="text-sm font-medium" htmlFor="team-select">
+                  الفريق:
+                </label>
+                <Select 
+                  value={selectedTeamIndex.toString()} 
+                  onValueChange={(value) => setSelectedTeamIndex(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[240px]">
+                    <SelectValue placeholder="اختر الفريق" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {standupData.teams.map((team, index) => (
+                      <SelectItem key={team.id} value={index.toString()}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Team members */}
+              <div>
+                <h2 className="text-lg font-semibold mb-4">
+                  أعضاء الفريق ({selectedTeam.members.length})
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {selectedTeam.members.map((member) => (
+                    <div key={member.id} className="dashboard-card overflow-hidden">
+                      <div className="p-4 sm:p-6">
+                        <div className="flex items-center justify-between gap-3 mb-4">
+                          <div className="flex items-center gap-3">
+                            <img 
+                              src={member.avatar} 
+                              alt={member.name}
+                              className="w-10 h-10 rounded-full" 
+                            />
+                            <div>
+                              <h3 className="font-medium">{member.name}</h3>
+                            </div>
+                          </div>
+                          
+                          <Dialog open={selectedMemberForFeedback === member.id && isFeedbackDialogOpen} onOpenChange={(open) => {
+                            if (!open) {
+                              setIsFeedbackDialogOpen(false);
+                              setSelectedMemberForFeedback(null);
+                            }
+                          }}>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-blue-600"
+                                onClick={() => {
+                                  setSelectedMemberForFeedback(member.id);
+                                  setIsFeedbackDialogOpen(true);
+                                }}
+                              >
+                                <RiMessage2Line className="ml-1" />
+                                تعليق
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                              <DialogHeader>
+                                <DialogTitle>إضافة تعليق أو ملاحظات للموظف</DialogTitle>
+                                <DialogDescription>
+                                  أضف تعليقك أو ملاحظاتك على تقدم {member.name}
+                                </DialogDescription>
+                              </DialogHeader>
+                              
+                              <div className="py-4">
+                                <Textarea
+                                  placeholder="اكتب تعليقك أو ملاحظاتك هنا..."
+                                  rows={5}
+                                  value={feedbackText}
+                                  onChange={(e) => setFeedbackText(e.target.value)}
+                                />
+                              </div>
+                              
+                              <DialogFooter>
+                                <Button variant="ghost" onClick={() => {
+                                  setIsFeedbackDialogOpen(false);
+                                  setSelectedMemberForFeedback(null);
+                                }}>
+                                  إلغاء
+                                </Button>
+                                <Button 
+                                  onClick={handleSubmitFeedback}
+                                  disabled={!feedbackText.trim()}
+                                >
+                                  إرسال
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                        
+                        {/* Assigned tasks */}
+                        {getMemberAssignments(member.id).length > 0 && (
+                          <div className="mb-6">
+                            <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
+                              <RiListCheck className="text-purple-500" />
+                              <span>المهام المسندة</span>
+                            </h4>
+                            <div className="space-y-3">
+                              {getMemberAssignments(member.id).map((assignment) => {
+                                const task = getTaskById(assignment.taskId);
+                                return task && (
+                                  <div key={assignment.taskId} className="border rounded-md p-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="font-medium">{task.title}</div>
+                                      {assignment.status === 'قيد التنفيذ' ? (
+                                        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                                          قيد التنفيذ
+                                        </Badge>
+                                      ) : (
+                                        <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                                          مكتمل
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="mb-3">
+                                      <div className="flex justify-between text-xs mb-1">
+                                        <span>التقدم</span>
+                                        <span>{assignment.progress}%</span>
+                                      </div>
+                                      <Progress value={assignment.progress} className="h-1" />
+                                    </div>
+                                    {assignment.notes && (
+                                      <div className="text-xs text-gray-600">
+                                        ملاحظات: {assignment.notes}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="space-y-6">
+                          {/* Yesterday's achievements */}
+                          <div>
+                            <h4 className="text-sm font-medium flex items-center gap-2 mb-2">
+                              <RiArrowRightLine className="text-green-500" />
+                              <span>بالأمس</span>
+                            </h4>
+                            {member.yesterday.length > 0 ? (
+                              <ul className="ms-6 space-y-1 list-disc list-outside">
+                                {member.yesterday.map((item) => (
+                                  <li key={item.id} className="text-sm">
+                                    {item.text}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-sm text-gray-500 ms-6">
+                                لا توجد تحديثات
+                              </p>
+                            )}
+                          </div>
+                          
+                          {/* Today's plan */}
+                          <div>
+                            <h4 className="text-sm font-medium flex items-center gap-2 mb-2">
+                              <RiPlayLine className="text-blue-500" />
+                              <span>خطة اليوم</span>
+                            </h4>
+                            {member.today.length > 0 ? (
+                              <ul className="ms-6 space-y-1 list-disc list-outside">
+                                {member.today.map((item) => (
+                                  <li key={item.id} className="text-sm">
+                                    {item.text}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-sm text-gray-500 ms-6">
+                                لا توجد خطة معلنة لليوم
+                              </p>
+                            )}
+                          </div>
+                          
+                          {/* Blockers */}
+                          {member.blockers.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium flex items-center gap-2 mb-2">
+                                <RiInformationLine className="text-red-500" />
+                                <span>العوائق</span>
+                              </h4>
+                              <ul className="ms-6 space-y-1 list-disc list-outside">
+                                {member.blockers.map((item) => (
+                                  <li key={item.id} className="text-sm text-red-600">
+                                    {item.text}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="p-4 flex flex-col md:flex-row gap-6">
-                      {/* Yesterday */}
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-500 mb-3">ماذا أنجز بالأمس؟</h4>
-                        {member.yesterday.length > 0 ? (
-                          <ul className="space-y-2">
-                            {member.yesterday.map((item) => (
-                              <li key={item.id} className="flex items-start gap-2">
-                                <div className="mt-0.5 text-green-500">
-                                  <RiCheckLine />
-                                </div>
-                                <span>{item.text}</span>
-                              </li>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Task view */}
+            <TabsContent value="taskView" className="space-y-6">
+              {/* Available Tasks */}
+              <div>
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <RiClipboardLine />
+                  <span>المهام المتاحة للتعيين ({availableTasks.filter(t => !isTaskAssigned(t.id)).length})</span>
+                </h2>
+                
+                <div className="space-y-4">
+                  {availableTasks.filter(t => !isTaskAssigned(t.id)).map((task) => (
+                    <div key={task.id} className="dashboard-card p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-medium">{task.title}</h3>
+                            {task.priority === 'عالية' ? (
+                              <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-200">{task.priority}</Badge>
+                            ) : task.priority === 'متوسطة' ? (
+                              <Badge variant="outline" className="bg-amber-100 text-amber-800 hover:bg-amber-200">{task.priority}</Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">{task.priority}</Badge>
+                            )}
+                          </div>
+                          
+                          <p className="text-sm text-gray-600 mb-3">{task.description}</p>
+                          
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            <div className="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                              المشروع: {task.project}
+                            </div>
+                            <div className="text-xs bg-gray-100 px-2 py-1 rounded-full flex items-center gap-1">
+                              <RiCalendarLine size={12} />
+                              {task.dueDate}
+                            </div>
+                            <div className="text-xs bg-gray-100 px-2 py-1 rounded-full flex items-center gap-1">
+                              <RiTimeLine size={12} />
+                              {task.estimatedHours} ساعات
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {task.skills.map((skill, index) => (
+                              <span key={index} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                                {skill}
+                              </span>
                             ))}
-                          </ul>
-                        ) : (
-                          <p className="text-gray-400 italic">لا يوجد إنجازات مسجلة للأمس</p>
-                        )}
-                      </div>
-                      
-                      {/* Today */}
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-500 mb-3">ما هي خطته لليوم؟</h4>
-                        {member.today.length > 0 ? (
-                          <ul className="space-y-2">
-                            {member.today.map((item) => (
-                              <li key={item.id} className="flex items-start gap-2">
-                                <div className="mt-0.5 text-blue-500">
-                                  <RiPlayLine />
-                                </div>
-                                <span>{item.text}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-gray-400 italic">لا توجد خطة مسجلة لليوم</p>
-                        )}
-                      </div>
-                      
-                      {/* Blockers */}
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-500 mb-3">العوائق</h4>
-                        {member.blockers.length > 0 ? (
-                          <ul className="space-y-2">
-                            {member.blockers.map((item) => (
-                              <li key={item.id} className="flex items-start gap-2">
-                                <div className="mt-0.5 text-red-500">
-                                  <RiInformationLine />
-                                </div>
-                                <span>{item.text}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-gray-400 italic">لا توجد عوائق مسجلة</p>
-                        )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <Button 
+                            onClick={() => {
+                              setSelectedTask(task.id);
+                              setTaskDueDate(task.dueDate);
+                              setIsAssigningTask(true);
+                            }}
+                            size="sm"
+                          >
+                            <RiUser3Line className="ml-1" />
+                            تعيين
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </TabsContent>
-            ))}
+                  ))}
+                  
+                  {availableTasks.filter(t => !isTaskAssigned(t.id)).length === 0 && (
+                    <div className="dashboard-card p-8 text-center">
+                      <RiClipboardLine className="mx-auto mb-4 text-gray-300" size={48} />
+                      <h3 className="text-lg font-medium mb-2">جميع المهام مسندة</h3>
+                      <p className="text-gray-500 mb-4">لا توجد مهام متاحة للتعيين حاليًا</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Assigned Tasks */}
+              <div>
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <RiExchangeLine />
+                  <span>المهام المسندة ({teamTaskAssignments.length})</span>
+                </h2>
+                
+                <div className="space-y-4">
+                  {teamTaskAssignments.map((assignment) => {
+                    const task = getTaskById(assignment.taskId);
+                    const member = getMemberById(assignment.memberId);
+                    
+                    return task && member && (
+                      <div key={assignment.taskId} className="dashboard-card p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-medium">{task.title}</h3>
+                              {task.priority === 'عالية' ? (
+                                <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-200">{task.priority}</Badge>
+                              ) : task.priority === 'متوسطة' ? (
+                                <Badge variant="outline" className="bg-amber-100 text-amber-800 hover:bg-amber-200">{task.priority}</Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">{task.priority}</Badge>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="flex items-center gap-2">
+                                <img src={member.avatar} alt={member.name} className="w-6 h-6 rounded-full" />
+                                <span className="text-sm">{member.name}</span>
+                              </div>
+                              
+                              <div className="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                                المشروع: {task.project}
+                              </div>
+                              
+                              <div className="text-xs bg-gray-100 px-2 py-1 rounded-full flex items-center gap-1">
+                                <RiCalendarLine size={12} />
+                                {task.dueDate}
+                              </div>
+                            </div>
+                            
+                            <div className="mb-3">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>التقدم</span>
+                                <span>{assignment.progress}%</span>
+                              </div>
+                              <Progress value={assignment.progress} className="h-2" />
+                            </div>
+                            
+                            {assignment.notes && (
+                              <div className="text-sm p-3 bg-gray-50 rounded">
+                                <strong className="text-xs text-gray-500">ملاحظات:</strong> {assignment.notes}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="shrink-0 flex items-start">
+                            <Badge className={assignment.status === 'قيد التنفيذ' 
+                              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                              : 'bg-green-100 text-green-800 hover:bg-green-200'
+                            }>
+                              {assignment.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {teamTaskAssignments.length === 0 && (
+                    <div className="dashboard-card p-8 text-center">
+                      <RiExchangeLine className="mx-auto mb-4 text-gray-300" size={48} />
+                      <h3 className="text-lg font-medium mb-2">لا توجد مهام مسندة</h3>
+                      <p className="text-gray-500 mb-4">لم يتم تعيين أي مهام للفريق حتى الآن</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
           </Tabs>
         </motion.div>
       </motion.div>
