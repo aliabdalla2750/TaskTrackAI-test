@@ -10,17 +10,31 @@ import axios from "axios";
 import { upload, handleUploadErrors, extractTextFromFile, cleanExtractedText } from "./services/file-service";
 import { reportsRouter } from "./routes/reports.routes";
 import { clientService } from "./services/client.service";
+import fs from 'fs';
+import path from 'path';
 
 // تهيئة عميل OpenAI للاختبار المباشر
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key-for-development",
 });
 
+// Helper function to read demo data
+const getDemoData = (filename: string): any => {
+  try {
+    const filePath = path.join(process.cwd(), 'server', 'demo-data', filename);
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    return JSON.parse(fileContent);
+  } catch (error) {
+    console.error(`Error reading ${filename}:`, error);
+    throw error;
+  }
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Demo API endpoints for client data
   app.get('/api/clients', async (req: Request, res: Response) => {
     try {
-      const clientsData = require('../server/demo-data/clients.json');
+      const clientsData = getDemoData('clients.json');
       res.json({ clients: clientsData });
     } catch (error) {
       console.error("Error loading clients data:", error);
@@ -31,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Demo API endpoint for projects data
   app.get('/api/projects', async (req: Request, res: Response) => {
     try {
-      const projectsData = require('../server/demo-data/projects.json');
+      const projectsData = getDemoData('projects.json');
       res.json({ projects: projectsData });
     } catch (error) {
       console.error("Error loading projects data:", error);
@@ -42,7 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Demo API endpoint for weekly reports
   app.get('/api/reports/weekly', async (req: Request, res: Response) => {
     try {
-      const reportsData = require('../server/demo-data/weekly-reports.json');
+      const reportsData = getDemoData('weekly-reports.json');
       res.json(reportsData);
     } catch (error) {
       console.error("Error loading weekly reports data:", error);
@@ -56,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { clientId } = req.body;
       // In a real app, we would generate a new report here
       // For demo, we'll just return an existing one
-      const reportsData = require('../server/demo-data/weekly-reports.json');
+      const reportsData = getDemoData('weekly-reports.json');
       const clientReport = reportsData.find((r: any) => r.clientId === parseInt(clientId));
       
       if (clientReport) {
@@ -73,7 +87,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Demo API endpoint for generating all weekly reports
   app.post('/api/reports/weekly/generate-all', async (req: Request, res: Response) => {
     try {
-      const reportsData = require('../server/demo-data/weekly-reports.json');
+      const reportsData = getDemoData('weekly-reports.json');
       res.json({ message: 'All weekly reports generated', count: reportsData.length });
     } catch (error) {
       console.error("Error generating all weekly reports:", error);
@@ -84,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Demo API endpoint for monthly reports
   app.get('/api/reports/monthly', async (req: Request, res: Response) => {
     try {
-      const reportsData = require('../server/demo-data/monthly-reports.json');
+      const reportsData = getDemoData('monthly-reports.json');
       const { clientId, month } = req.query;
       
       if (clientId) {
@@ -105,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { clientId, month } = req.body;
       // In a real app, we would generate a new report here
       // For demo, we'll just return an existing one
-      const reportsData = require('../server/demo-data/monthly-reports.json');
+      const reportsData = getDemoData('monthly-reports.json');
       const clientReport = reportsData.find((r: any) => r.clientId === parseInt(clientId));
       
       if (clientReport) {
