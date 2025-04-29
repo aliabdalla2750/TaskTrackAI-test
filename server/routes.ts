@@ -213,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Project creation with AI endpoint
   app.post("/api/ai/project-creation", async (req: Request, res: Response) => {
     try {
-      const { projectName, projectDetails, fullConversation, aiSettings, model = "gpt-4o", providerId } = req.body;
+      const { projectName, projectDetails, fullConversation, aiSettings, model = "gpt-4o", providerId, isFileAnalysis } = req.body;
       
       if (!projectName || !projectDetails) {
         return res.status(400).json({ message: "Project name and details are required" });
@@ -233,13 +233,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Invalid AI provider" });
         }
         
-        // استخدام المحادثة لفهم المشروع (مع OpenRouter)
+        // تعديل رسالة المستخدم بناءً على نوع التحليل (ملف مرفوع أو محادثة)
+        let userPrompt = '';
+        if (isFileAnalysis) {
+          userPrompt = `قمت برفع ملف (عقد/بروبوزال) خاص بمشروع "${projectName}".\n\nفيما يلي محتوى الملف:\n${conversationContext}\n\nمهمتك: قم بتحليل محتوى الملف وإنشاء خطة مشروع متكاملة تتضمن:\n1. وصف عام للمشروع\n2. الأهداف الفرعية الرئيسية\n3. قائمة بالمهام المطلوبة مع تواريخ تسليم تقريبية\n4. الإطار الزمني العام المتوقع للمشروع (تاريخ البدء والانتهاء والمدة)`;
+        } else {
+          userPrompt = `أريد إنشاء مشروع جديد باسم "${projectName}".\n\nفيما يلي التفاصيل:\n${conversationContext}\n\nقم بتحليل هذه المعلومات وإنشاء خطة مشروع كاملة تشمل الوصف والأهداف الفرعية والمهام والإطار الزمني. ضع المعلومات بشكل واضح ومنظم.`;
+        }
+        
+        console.log("AI Project Prompt:", userPrompt);
+        
+        // استخدام المحادثة لفهم المشروع (مع OpenRouter أو المزود المختار)
         const chatResult = await openAIService.processChat({
           scenarioKey: "project-creation",
           messages: [
             {
               role: "user",
-              content: `أريد إنشاء مشروع جديد باسم "${projectName}".\n\nفيما يلي التفاصيل:\n${conversationContext}\n\nقم بتحليل هذه المعلومات وإنشاء خطة مشروع كاملة تشمل الوصف والأهداف الفرعية والمهام والإطار الزمني. ضع المعلومات بشكل واضح ومنظم.`
+              content: userPrompt
             }
           ],
           providerId: provider.id,
@@ -247,10 +257,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // الخطوة 2: استخدام OpenAI لتنسيق النتيجة إلى JSON
-        // نمرر النتيجة التي حصلنا عليها من OpenRouter إلى OpenAI ليقوم بتنسيقها إلى JSON
+        // نمرر النتيجة التي حصلنا عليها من المزود إلى OpenAI ليقوم بتنسيقها إلى JSON
         const formattedResult = await openAIService.processProjectCreation(
           projectName,
-          chatResult.response, // استخدام النتيجة من OpenRouter كمدخل
+          chatResult.response, // استخدام النتيجة من المزود كمدخل
           aiSettings
         );
         
@@ -258,13 +268,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           response: formattedResult.response,
           result: formattedResult.result,
           tokensUsed: chatResult.tokensUsed + formattedResult.tokensUsed,
-          model: model
+          model: model,
+          isFileAnalysis: isFileAnalysis || false
         });
       } else {
         // استخدام OpenAI مباشرة
+        // تعديل رسالة المستخدم بناءً على نوع التحليل (ملف مرفوع أو محادثة)
+        let enhancedContext = conversationContext;
+        if (isFileAnalysis) {
+          enhancedContext = `محتوى ملف العقد/البروبوزال للمشروع:\n\n${conversationContext}\n\nالمطلوب: تحليل الملف وإنشاء خطة مشروع متكاملة.`;
+        }
+        
         const result = await openAIService.processProjectCreation(
           projectName,
-          conversationContext,
+          enhancedContext,
           aiSettings
         );
         
@@ -272,7 +289,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           response: result.response,
           result: result.result,
           tokensUsed: result.tokensUsed,
-          model: model || "gpt-4o" // استخدام gpt-4o افتراضيًا
+          model: model || "gpt-4o", // استخدام gpt-4o افتراضيًا
+          isFileAnalysis: isFileAnalysis || false
         });
       }
     } catch (error) {

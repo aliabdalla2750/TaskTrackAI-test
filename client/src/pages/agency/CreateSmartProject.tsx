@@ -251,6 +251,82 @@ export default function CreateSmartProject() {
     }
   };
   
+  // وظيفة للتعامل مع رفع الملفات
+  const [fileContent, setFileContent] = useState<string>("");
+  const [fileName, setFileName] = useState<string>("");
+  
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setFileName(file.name);
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      setFileContent(content);
+    };
+    
+    reader.readAsText(file);
+  };
+  
+  // تحليل الملف المرفوع باستخدام المساعد الذكي
+  const analyzeUploadedFile = async () => {
+    if (!fileContent || !projectName) {
+      toast({
+        title: "المعلومات غير مكتملة",
+        description: "يرجى إدخال اسم المشروع ورفع ملف العقد أو البروبوزال",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const response = await apiRequest('POST', '/api/ai/project-creation', {
+        projectName: projectName,
+        projectDetails: `تحليل ملف: ${fileName}\n\n${fileContent}`,
+        aiSettings: {
+          persona: aiSetup.aiPersona === 'custom' ? aiSetup.customPersona : DEFAULT_PERSONAS[aiSetup.aiPersona as keyof typeof DEFAULT_PERSONAS],
+          thinkingStyle: THINKING_STYLES[aiSetup.thinkingStyle as keyof typeof THINKING_STYLES],
+          agencyContext: aiSetup.agencyContext || '',
+          industryKnowledge: aiSetup.industryKnowledge || '',
+          keyObjectives: aiSetup.keyObjectives || ''
+        },
+        isFileAnalysis: true,
+        providerId: 1
+      });
+      
+      const data = await response.json();
+      console.log("File analysis result:", data);
+      
+      if (!data.result || !data.result.subgoals || !data.result.tasks || !data.result.timeline) {
+        toast({
+          title: "خطأ في التحليل",
+          description: "لم نتمكن من تحليل الملف بشكل صحيح. يرجى التأكد من أن الملف يحتوي على معلومات كافية.",
+          variant: "destructive",
+        });
+      } else {
+        setAiResult(data.result);
+        setStep('review');
+        toast({
+          title: "تم التحليل بنجاح",
+          description: "تم تحليل الملف بنجاح وإنشاء خطة المشروع. يمكنك الآن مراجعة التفاصيل.",
+        });
+      }
+    } catch (error) {
+      console.error('Failed to analyze file:', error);
+      toast({
+        title: "فشل في تحليل الملف",
+        description: "حدث خطأ أثناء تحليل الملف. يرجى المحاولة مرة أخرى.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <DashboardLayout title="إنشاء مشروع ذكي">
       {step === 'form' && (
@@ -282,6 +358,56 @@ export default function CreateSmartProject() {
                     <SelectItem value="3">شركة العالمية</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+            
+            {/* إضافة خيار رفع العقد أو البروبوزال */}
+            <div className="border border-dashed border-gray-300 rounded-lg p-6 mt-4">
+              <h3 className="text-lg font-medium mb-4">رفع العقد أو البروبوزال (اختياري)</h3>
+              <p className="text-gray-600 mb-4">
+                يمكنك رفع ملف العقد أو البروبوزال للمشروع وسيقوم المساعد الذكي بتحليله وتقسيمه إلى مهام وأهداف تلقائياً.
+              </p>
+              
+              <div className="flex flex-col gap-3">
+                <div className="border rounded-md p-3">
+                  <Label htmlFor="fileUpload" className="block mb-2">اختر ملف (PDF, DOCX, TXT)</Label>
+                  <Input
+                    id="fileUpload"
+                    type="file"
+                    accept=".pdf,.docx,.txt"
+                    onChange={handleFileUpload}
+                    className="cursor-pointer"
+                  />
+                  {fileName && (
+                    <div className="mt-2 text-sm text-gray-600">تم اختيار: {fileName}</div>
+                  )}
+                </div>
+                
+                {fileName && (
+                  <Button 
+                    onClick={analyzeUploadedFile}
+                    disabled={isSubmitting}
+                    className="bg-secondary hover:bg-opacity-90 text-white"
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <i className="fas fa-spinner fa-spin"></i>
+                        جاري تحليل الملف...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <i className="fas fa-file-alt ml-2"></i>
+                        تحليل الملف المرفوع
+                      </span>
+                    )}
+                  </Button>
+                )}
+              </div>
+              
+              <div className="mt-4 flex items-center">
+                <div className="h-px flex-1 bg-gray-200"></div>
+                <span className="px-4 text-gray-500 text-sm">أو</span>
+                <div className="h-px flex-1 bg-gray-200"></div>
               </div>
             </div>
             
