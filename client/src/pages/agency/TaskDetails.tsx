@@ -222,17 +222,61 @@ export default function TaskDetails() {
   // جلب البيانات
   useEffect(() => {
     const fetchTaskData = async () => {
+      if (!taskId) return;
+      
       setIsLoading(true);
       try {
-        // في الوضع الحقيقي سنقوم بجلب البيانات من الخادم
-        // توقف قصير لمحاكاة جلب البيانات
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // جلب بيانات المهمة من الخادم
+        const response = await apiRequest("GET", `/api/tasks/${taskId}`);
         
-        // استخدام البيانات المؤقتة
-        setTask(mockTask);
-        setAttachments(mockAttachments);
-        setComments(mockComments);
-        setNewStatus(mockTask.status);
+        if (!response.ok) {
+          throw new Error("فشل في جلب بيانات المهمة");
+        }
+        
+        const data = await response.json();
+        
+        // تحويل البيانات إلى التنسيق المطلوب للواجهة
+        const taskData: Task = {
+          id: data.task.id.toString(),
+          title: data.task.title,
+          description: data.task.description || "",
+          status: data.task.status as 'open' | 'in_review' | 'completed' | 'late',
+          assignedTo: data.assignedTo || {
+            id: "0",
+            name: "غير محدد",
+          },
+          dueDate: data.task.dueDate || new Date().toISOString().split('T')[0],
+          createdAt: data.task.createdAt || new Date().toISOString().split('T')[0],
+          updatedAt: data.task.updatedAt || new Date().toISOString().split('T')[0],
+          progress: data.task.progress || 0,
+          project: data.project || {
+            id: "0",
+            name: "غير محدد",
+          }
+        };
+        
+        // تحويل المرفقات
+        const attachmentsData: Attachment[] = data.attachments ? data.attachments.map((file: any) => ({
+          id: file.id.toString(),
+          fileName: file.fileName,
+          fileUrl: file.fileUrl,
+          fileType: file.fileType,
+          uploadedBy: "المستخدم",
+          uploadedAt: file.createdAt || new Date().toISOString().split('T')[0]
+        })) : [];
+        
+        // تحويل التعليقات
+        const commentsData: Comment[] = data.comments ? data.comments.map((comment: any) => ({
+          id: comment.id.toString(),
+          text: comment.text,
+          createdBy: comment.createdBy || "المستخدم",
+          createdAt: comment.createdAt || new Date().toISOString().split('T')[0]
+        })) : [];
+        
+        setTask(taskData);
+        setAttachments(attachmentsData);
+        setComments(commentsData);
+        setNewStatus(taskData.status);
       } catch (error) {
         console.error("Error fetching task data:", error);
         toast({
@@ -240,6 +284,12 @@ export default function TaskDetails() {
           description: "حدث خطأ أثناء محاولة جلب بيانات المهمة",
           variant: "destructive",
         });
+        
+        // استخدام البيانات المؤقتة في حالة الفشل (للعرض التجريبي فقط)
+        setTask(mockTask);
+        setAttachments(mockAttachments);
+        setComments(mockComments);
+        setNewStatus(mockTask.status);
       } finally {
         setIsLoading(false);
       }
@@ -250,17 +300,27 @@ export default function TaskDetails() {
   
   // تحديث حالة المهمة
   const handleStatusUpdate = async () => {
-    if (!newStatus || !task) return;
+    if (!newStatus || !task || !taskId) return;
     
     setIsSubmitting(true);
     try {
-      // محاكاة تحديث الحالة في الخادم
-      await new Promise(resolve => setTimeout(resolve, 700));
+      // إرسال طلب تحديث الحالة للخادم
+      const response = await apiRequest("PUT", `/api/tasks/${taskId}`, {
+        status: newStatus,
+        progress: newStatus === 'completed' ? 100 : task.progress
+      });
+      
+      if (!response.ok) {
+        throw new Error("فشل في تحديث حالة المهمة");
+      }
+      
+      const updatedTask = await response.json();
       
       // تحديث حالة المهمة محلياً
       setTask({
         ...task,
         status: newStatus as Task['status'],
+        progress: newStatus === 'completed' ? 100 : task.progress,
         updatedAt: new Date().toISOString().split('T')[0]
       });
       
@@ -283,22 +343,40 @@ export default function TaskDetails() {
   
   // إضافة تعليق جديد
   const handleAddComment = async () => {
-    if (!newComment.trim() || !task) return;
+    if (!newComment.trim() || !task || !taskId) return;
     
     setIsSubmitting(true);
     try {
-      // محاكاة إرسال التعليق للخادم
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // إنشاء submission جديد (يعمل كتعليق)
+      const response = await apiRequest("POST", "/api/task-submissions", {
+        taskId: parseInt(taskId),
+        employeeId: 1, // للتجربة نستخدم معرف ثابت
+        status: "comment",
+        content: newComment,
+        submittedBy: "المستخدم الحالي"
+      });
+      
+      if (!response.ok) {
+        throw new Error("فشل في إضافة التعليق");
+      }
+      
+      const data = await response.json();
       
       // إضافة التعليق الجديد محلياً
-      const newCommentObj: Comment = {
-        id: `c${comments.length + 1}`,
-        text: newComment,
-        createdBy: "المستخدم الحالي",
-        createdAt: new Date().toISOString().split('T')[0]
-      };
+      if (data.comment) {
+        // إذا رجع من الخادم التعليق بالتنسيق المطلوب
+        setComments([...comments, data.comment]);
+      } else {
+        // إنشاء تعليق جديد يدوياً
+        const newCommentObj: Comment = {
+          id: data.submission?.id?.toString() || `c${comments.length + 1}`,
+          text: newComment,
+          createdBy: "المستخدم الحالي",
+          createdAt: new Date().toISOString().split('T')[0]
+        };
+        setComments([...comments, newCommentObj]);
+      }
       
-      setComments([...comments, newCommentObj]);
       setNewComment('');
       
       toast({
@@ -311,6 +389,62 @@ export default function TaskDetails() {
       toast({
         title: "خطأ في إضافة التعليق",
         description: "حدث خطأ أثناء إضافة التعليق",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // تحميل ملف مرفق
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !taskId) return;
+    
+    setIsSubmitting(true);
+    try {
+      // إنشاء FormData لتحميل الملف
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', '1'); // للتجربة نستخدم معرف ثابت
+      
+      // إرسال الملف للخادم
+      const response = await fetch(`/api/tasks/${taskId}/attachments`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error("فشل في تحميل الملف");
+      }
+      
+      const data = await response.json();
+      
+      // إضافة المرفق الجديد محلياً
+      const newAttachment: Attachment = {
+        id: data.file.id.toString(),
+        fileName: data.file.fileName,
+        fileUrl: data.file.fileUrl,
+        fileType: data.file.fileType,
+        uploadedBy: "المستخدم الحالي",
+        uploadedAt: new Date().toISOString().split('T')[0]
+      };
+      
+      setAttachments([...attachments, newAttachment]);
+      
+      toast({
+        title: "تم تحميل الملف",
+        description: "تم تحميل الملف بنجاح",
+        variant: "default",
+      });
+      
+      // إعادة تعيين حقل الملف
+      event.target.value = '';
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast({
+        title: "خطأ في تحميل الملف",
+        description: "حدث خطأ أثناء تحميل الملف",
         variant: "destructive",
       });
     } finally {
@@ -487,19 +621,46 @@ export default function TaskDetails() {
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-center">
                   <CardTitle>ملفات المهمة</CardTitle>
-                  <Button variant="outline" size="sm" className="gap-1">
-                    <RiUploadCloud2Line />
-                    رفع ملف جديد
-                  </Button>
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <RiUploadCloud2Line />
+                      رفع ملف جديد
+                    </Button>
+                    <input
+                      id="file-upload"
+                      type="file"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      disabled={isSubmitting}
+                    />
+                  </label>
                 </div>
               </CardHeader>
               <CardContent>
-                {attachments.length > 0 ? (
-                  <div className="space-y-2">
-                    {attachments.map((attachment) => (
-                      <AttachmentCard key={attachment.id} attachment={attachment} />
-                    ))}
+                {isSubmitting && (
+                  <div className="mb-4 p-2 bg-primary/5 text-primary flex items-center justify-center rounded-md">
+                    <div className="h-4 w-4 ml-2 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    جاري تحميل الملف...
                   </div>
+                )}
+                {attachments.length > 0 ? (
+                  <motion.div 
+                    className="space-y-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ staggerChildren: 0.1 }}
+                  >
+                    {attachments.map((attachment) => (
+                      <motion.div
+                        key={attachment.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <AttachmentCard key={attachment.id} attachment={attachment} />
+                      </motion.div>
+                    ))}
+                  </motion.div>
                 ) : (
                   <div className="text-center py-10 text-gray-500">
                     <RiAttachmentLine className="mx-auto mb-2 text-3xl" />

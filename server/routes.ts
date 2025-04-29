@@ -628,6 +628,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get a specific task by ID
+  app.get("/api/tasks/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const task = await storage.getTask(id);
+      
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      // Get additional data: project info, employee info, attachments, comments
+      const project = await storage.getProject(task.projectId);
+      let employee;
+      if (task.assignedTo) {
+        employee = await storage.getEmployee(task.assignedTo);
+      }
+      
+      // Get files attached to this task
+      const attachments = await storage.getFilesByTask(id);
+      
+      // Get submissions (we'll use as comments)
+      const submissions = await storage.getTaskSubmissionsByTask(id);
+      
+      res.json({ 
+        task,
+        project: project ? {
+          id: project.id,
+          name: project.name
+        } : null,
+        assignedTo: employee ? {
+          id: employee.id,
+          name: employee.name,
+          avatar: employee.phone ? `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=random` : null
+        } : null,
+        attachments,
+        comments: submissions.map(sub => ({
+          id: sub.id,
+          text: sub.feedback || "",
+          createdBy: sub.employeeId ? `موظف ${sub.employeeId}` : "مستخدم",
+          createdAt: sub.submittedAt || new Date().toISOString().split('T')[0]
+        }))
+      });
+    } catch (error) {
+      console.error("Error fetching task:", error);
+      res.status(500).json({ message: "Failed to fetch task details" });
+    }
+  });
+  
   app.post("/api/tasks", async (req: Request, res: Response) => {
     try {
       const taskData = insertTaskSchema.parse(req.body);
@@ -667,13 +715,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const submissionData = insertTaskSubmissionSchema.parse(req.body);
       const submission = await storage.createTaskSubmission(submissionData);
-      res.status(201).json({ submission });
+      
+      // After creating a submission (comment), return it in the format expected by the UI
+      const comment = {
+        id: submission.id,
+        text: submission.content || "",
+        createdBy: submission.submittedBy || "User",
+        createdAt: submission.createdAt
+      };
+      
+      res.status(201).json({ submission, comment });
     } catch (error) {
       if (error instanceof ZodError) {
         res.status(400).json({ message: "Invalid submission data", errors: error.errors });
       } else {
         res.status(500).json({ message: "Failed to create task submission" });
       }
+    }
+  });
+  
+  // Add file to a task
+  app.post("/api/tasks/:taskId/attachments", upload.single('file'), handleUploadErrors, async (req: Request, res: Response) => {
+    try {
+      const taskId = parseInt(req.params.taskId);
+      const task = await storage.getTask(taskId);
+      
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      // Create file entry in the database
+      const fileData = {
+        fileName: req.file.originalname,
+        fileUrl: req.file.path,
+        fileType: req.file.mimetype,
+        fileSize: req.file.size,
+        taskId: taskId,
+        projectId: task.projectId,
+        uploadedBy: req.body.userId || 1, // Default to user 1 for demo
+      };
+      
+      const file = await storage.createFile(fileData);
+      
+      res.status(201).json({ file });
+    } catch (error) {
+      console.error("Error uploading file to task:", error);
+      res.status(500).json({ message: "Failed to upload file to task" });
     }
   });
   
