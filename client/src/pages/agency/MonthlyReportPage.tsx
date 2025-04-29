@@ -49,33 +49,89 @@ import { format, parseISO, getMonth, getYear, startOfMonth, endOfMonth } from "d
 import { ar } from "date-fns/locale";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
+// تعريف نوع التقرير الشهري
+interface MonthlyReport {
+  id: number;
+  clientId: number;
+  agencyId: number;
+  monthStart: string;
+  monthEnd: string;
+  status: 'draft' | 'sent';
+  sentAt?: string;
+  createdAt: string;
+  reportData: {
+    projectsSummary: Array<{
+      projectId: number;
+      name: string;
+      status: string;
+      progress: number;
+      achievements: string;
+      challenges: string;
+      nextMonthPlan: string;
+    }>;
+    taskMetrics: {
+      completed: number;
+      inProgress: number;
+      planned: number;
+      delayed: number;
+    };
+    kpiSummary: Array<{
+      name: string;
+      value: string;
+      change: string;
+      status: 'improved' | 'declined' | 'stable';
+    }>;
+    clientInteractions: Array<{
+      date: string;
+      type: string;
+      summary: string;
+    }>;
+    budgetSummary: {
+      allocated: number;
+      spent: number;
+      remaining: number;
+      additionalCosts?: Array<{
+        description: string;
+        amount: number;
+      }>;
+    };
+    completionRate: number;
+    satisfactionScore: number;
+    notes?: string;
+  };
+}
+
 const MonthlyReportPage: React.FC = () => {
   const { toast } = useToast();
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   const [selectedClient, setSelectedClient] = useState<number | null>(null);
   
   const {
-    data: clients,
+    data: clientsData,
     isLoading: isLoadingClients,
     error: clientsError
   } = useQuery({
     queryKey: ["/api/clients"]
   });
   
+  const clients = clientsData?.clients || [];
+
   const {
-    data: projects,
+    data: projectsData,
     isLoading: isLoadingProjects,
     error: projectsError
   } = useQuery({
     queryKey: ["/api/projects"]
   });
   
+  const projects = projectsData?.projects || [];
+  
   const {
     data: monthlyReport,
     isLoading: isLoadingReport,
     error: reportError,
     refetch: refetchReport
-  } = useQuery({
+  } = useQuery<MonthlyReport>({
     queryKey: ["/api/reports/monthly", selectedMonth, selectedClient],
     enabled: !!selectedClient
   });
