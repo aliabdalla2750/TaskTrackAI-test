@@ -9,6 +9,7 @@ import OpenAI from "openai";
 import axios from "axios";
 import { upload, handleUploadErrors, extractTextFromFile, cleanExtractedText } from "./services/file-service";
 import { reportsRouter } from "./routes/reports.routes";
+import { clientService } from "./services/client.service";
 
 // تهيئة عميل OpenAI للاختبار المباشر
 const openai = new OpenAI({
@@ -555,7 +556,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // In a real app, would filter by agency from user session
       const agencyId = parseInt(req.query.agencyId as string) || 1;
-      const clients = await storage.getClientsByAgency(agencyId);
+      
+      // استخدام خدمة العملاء للحصول على بيانات العملاء (مع بيانات ديمو عند الحاجة)
+      const clients = await clientService.getAllClients(agencyId);
       res.json({ clients });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch clients" });
