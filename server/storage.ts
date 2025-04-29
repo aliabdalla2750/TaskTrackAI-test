@@ -197,6 +197,7 @@ export class MemStorage implements IStorage {
     this.aiUsageLogs = new Map();
     this.payments = new Map();
     this.aiChatLogs = new Map();
+    this.dailyStandups = new Map();
 
     // Initialize with default AI scenarios
     this.seedAiScenarios();
@@ -850,6 +851,106 @@ export class MemStorage implements IStorage {
     return Array.from(this.aiChatLogs.values()).filter(
       log => log.agencyId === agencyId
     );
+  }
+  
+  // Daily Standups
+  async getDailyStandup(id: number): Promise<DailyStandup | undefined> {
+    return this.dailyStandups.get(id);
+  }
+  
+  async getDailyStandupByEmployeeAndDate(employeeId: number, date: Date): Promise<DailyStandup | undefined> {
+    const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    return Array.from(this.dailyStandups.values()).find(
+      standup => 
+        standup.employeeId === employeeId && 
+        standup.date.toISOString().split('T')[0] === dateStr
+    );
+  }
+  
+  async getEmployeeDailyStandups(employeeId: number): Promise<DailyStandup[]> {
+    return Array.from(this.dailyStandups.values())
+      .filter(standup => standup.employeeId === employeeId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+  
+  async getAgencyDailyStandups(agencyId: number, date?: Date): Promise<DailyStandup[]> {
+    let standups = Array.from(this.dailyStandups.values())
+      .filter(standup => standup.agencyId === agencyId);
+    
+    if (date) {
+      const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+      standups = standups.filter(
+        standup => standup.date.toISOString().split('T')[0] === dateStr
+      );
+    }
+    
+    return standups.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+  
+  async createDailyStandup(standup: InsertDailyStandup): Promise<DailyStandup> {
+    const id = this.dailyStandupIdCounter++;
+    const timestamp = new Date();
+    const newStandup: DailyStandup = {
+      ...standup,
+      id,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      status: standup.status || 'open',
+      tasksDone: standup.tasksDone || [],
+      dayTasks: standup.dayTasks || []
+    };
+    this.dailyStandups.set(id, newStandup);
+    return newStandup;
+  }
+  
+  async updateDailyStandup(id: number, standup: Partial<InsertDailyStandup>): Promise<DailyStandup | undefined> {
+    const existingStandup = this.dailyStandups.get(id);
+    if (!existingStandup) return undefined;
+    
+    const updatedStandup: DailyStandup = {
+      ...existingStandup,
+      ...standup,
+      updatedAt: new Date()
+    };
+    
+    this.dailyStandups.set(id, updatedStandup);
+    return updatedStandup;
+  }
+  
+  async closeDailyStandup(id: number, tasksDone: number[], comments?: string, rating?: number): Promise<DailyStandup | undefined> {
+    const existingStandup = this.dailyStandups.get(id);
+    if (!existingStandup) return undefined;
+    
+    const updatedStandup: DailyStandup = {
+      ...existingStandup,
+      tasksDone,
+      comments: comments || existingStandup.comments,
+      dayRating: rating !== undefined ? rating : existingStandup.dayRating,
+      status: 'closed',
+      updatedAt: new Date()
+    };
+    
+    this.dailyStandups.set(id, updatedStandup);
+    return updatedStandup;
+  }
+  
+  async reviewDailyStandup(id: number, reviewerId: number, comments: string): Promise<DailyStandup | undefined> {
+    const existingStandup = this.dailyStandups.get(id);
+    if (!existingStandup) return undefined;
+    
+    const updatedStandup: DailyStandup = {
+      ...existingStandup,
+      reviewedBy: reviewerId,
+      reviewComments: comments,
+      updatedAt: new Date()
+    };
+    
+    this.dailyStandups.set(id, updatedStandup);
+    return updatedStandup;
+  }
+  
+  async deleteDailyStandup(id: number): Promise<boolean> {
+    return this.dailyStandups.delete(id);
   }
 }
 
