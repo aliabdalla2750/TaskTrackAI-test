@@ -16,7 +16,8 @@ import {
   payments, Payment, InsertPayment,
   aiChatLogs, AiChatLog, InsertAiChatLog,
   aiProviders, AiProvider, InsertAiProvider,
-  aiModels, AiModel, InsertAiModel
+  aiModels, AiModel, InsertAiModel,
+  dailyStandups, DailyStandup, InsertDailyStandup
 } from "@shared/schema";
 import { IStorage } from "./storage";
 

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -275,6 +275,29 @@ export const insertAiChatLogSchema = createInsertSchema(aiChatLogs).omit({
   createdAt: true,
 });
 
+// Daily standup table
+export const dailyStandups = pgTable("daily_standups", {
+  id: serial("id").primaryKey(),
+  employeeId: integer("employee_id").notNull(),
+  agencyId: integer("agency_id").notNull(),
+  date: date("date").notNull().defaultNow(),
+  tasksToday: json("tasks_today").notNull().default([]), // Array of task IDs assigned for today
+  tasksDone: json("tasks_done").notNull().default([]),    // Array of task IDs completed
+  comments: text("comments"),                             // Employee's comments or blockers
+  dayRating: integer("day_rating"),                       // 1-5 rating of the day
+  status: text("status").notNull().default("open"),       // 'open', 'closed'
+  reviewedBy: integer("reviewed_by"),                     // Agency manager who reviewed
+  reviewComments: text("review_comments"),                // Manager's comments
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertDailyStandupSchema = createInsertSchema(dailyStandups).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -324,6 +347,9 @@ export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type AiChatLog = typeof aiChatLogs.$inferSelect;
 export type InsertAiChatLog = z.infer<typeof insertAiChatLogSchema>;
 
+export type DailyStandup = typeof dailyStandups.$inferSelect;
+export type InsertDailyStandup = z.infer<typeof insertDailyStandupSchema>;
+
 // Relations
 
 // User relations
@@ -360,6 +386,7 @@ export const employeesRelations = relations(employees, ({ one, many }) => ({
   }),
   assignedTasks: many(tasks, { relationName: "employeeTasks" }),
   submissions: many(taskSubmissions),
+  dailyStandups: many(dailyStandups),
 }));
 
 // Project relations
@@ -487,5 +514,21 @@ export const aiChatLogsRelations = relations(aiChatLogs, ({ one }) => ({
   agency: one(agencies, {
     fields: [aiChatLogs.agencyId],
     references: [agencies.id],
+  }),
+}));
+
+// Daily Standup relations
+export const dailyStandupsRelations = relations(dailyStandups, ({ one }) => ({
+  employee: one(employees, {
+    fields: [dailyStandups.employeeId],
+    references: [employees.id],
+  }),
+  agency: one(agencies, {
+    fields: [dailyStandups.agencyId],
+    references: [agencies.id],
+  }),
+  reviewer: one(users, {
+    fields: [dailyStandups.reviewedBy],
+    references: [users.id],
   }),
 }));
