@@ -302,6 +302,46 @@ export const insertDailyStandupSchema = createInsertSchema(dailyStandups).omit({
   updatedAt: true,
 });
 
+// Weekly reports sent table
+export const weeklyReportsSent = pgTable("weekly_reports_sent", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull(),
+  agencyId: integer("agency_id").notNull(),
+  weekStart: date("week_start").notNull(),
+  weekEnd: date("week_end").notNull(),
+  sentAt: timestamp("sent_at").defaultNow(),
+  status: text("status").notNull().default("sent"), // 'sent', 'failed', 'opened'
+  method: text("method").notNull().default("whatsapp"), // 'whatsapp', 'email'
+  reportData: json("report_data"), // Cached report data
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertWeeklyReportSchema = createInsertSchema(weeklyReportsSent).omit({
+  id: true,
+  sentAt: true,
+  createdAt: true,
+});
+
+// Monthly reports cache table
+export const monthlyReportsCache = pgTable("monthly_reports_cache", {
+  id: serial("id").primaryKey(),
+  agencyId: integer("agency_id").notNull(),
+  month: text("month").notNull(), // format: "YYYY-MM"
+  metrics: json("metrics").notNull(), // JSON with all report metrics
+  projectsStats: json("projects_stats"), // Projects statistics
+  employeesStats: json("employees_stats"), // Employees performance
+  clientsStats: json("clients_stats"), // Client activity
+  financialStats: json("financial_stats"), // Financial metrics
+  generatedAt: timestamp("generated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertMonthlyReportSchema = createInsertSchema(monthlyReportsCache).omit({
+  id: true,
+  generatedAt: true,
+  createdAt: true,
+});
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -353,6 +393,12 @@ export type InsertAiChatLog = z.infer<typeof insertAiChatLogSchema>;
 
 export type DailyStandup = typeof dailyStandups.$inferSelect;
 export type InsertDailyStandup = z.infer<typeof insertDailyStandupSchema>;
+
+export type WeeklyReport = typeof weeklyReportsSent.$inferSelect;
+export type InsertWeeklyReport = z.infer<typeof insertWeeklyReportSchema>;
+
+export type MonthlyReport = typeof monthlyReportsCache.$inferSelect;
+export type InsertMonthlyReport = z.infer<typeof insertMonthlyReportSchema>;
 
 // Relations
 
@@ -534,5 +580,25 @@ export const dailyStandupsRelations = relations(dailyStandups, ({ one }) => ({
   reviewer: one(users, {
     fields: [dailyStandups.reviewedBy],
     references: [users.id],
+  }),
+}));
+
+// Weekly Reports relations
+export const weeklyReportsRelations = relations(weeklyReportsSent, ({ one }) => ({
+  client: one(clients, {
+    fields: [weeklyReportsSent.clientId],
+    references: [clients.id],
+  }),
+  agency: one(agencies, {
+    fields: [weeklyReportsSent.agencyId],
+    references: [agencies.id],
+  }),
+}));
+
+// Monthly Reports relations
+export const monthlyReportsRelations = relations(monthlyReportsCache, ({ one }) => ({
+  agency: one(agencies, {
+    fields: [monthlyReportsCache.agencyId],
+    references: [agencies.id],
   }),
 }));
