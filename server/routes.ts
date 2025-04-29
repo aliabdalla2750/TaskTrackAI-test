@@ -1113,23 +1113,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             console.log("Calling OpenRouter API...");
             
-            // التحقق من اسم النموذج الذي سوف يتم استخدامه
-            // بعض النماذج مثل anthropic/claude-3-opus قد لا تعمل بشكل صحيح مع openrouter
-            let modelName = model.name;
+            // دائماً استخدم نموذج OpenAI GPT-3.5 Turbo مع OpenRouter للاختبار
+            // هذا النموذج معروف بأنه يعمل بشكل موثوق به مع OpenRouter
+            const modelName = 'openai/gpt-3.5-turbo';
+            console.log("استخدام نموذج OpenAI GPT-3.5 Turbo للاختبار مع OpenRouter بغض النظر عن النموذج المحدد");
             
-            // استخدام نموذج موثوق به في OpenRouter للاختبار
-            if (modelName === 'anthropic/claude-3-opus') {
-              console.log("تبديل نموذج الاختبار من anthropic/claude-3-opus إلى openai/gpt-3.5-turbo للتوافق");
-              modelName = 'openai/gpt-3.5-turbo';
-            }
-            
-            // تحديد الرؤوس مع معالجة خاصة للرؤوس المخصصة
+            // تحديد الرؤوس مع جميع الرؤوس المطلوبة لـ OpenRouter
             const headers: Record<string, string> = {
               'Authorization': `Bearer ${provider.apiKey}`,
               'Content-Type': 'application/json',
               'HTTP-Referer': 'https://taskaaya.com',
-              // إضافة رؤوس هامة لـ OpenRouter
-              'User-Agent': 'Taskaaya/1.0.0'
+              'User-Agent': 'Taskaaya/1.0.0',
+              'X-Title': 'Taskaaya AI Testing',
+              'Accept': 'application/json'
             };
             
             // قم بإعداد الرسائل بتنسيق واضح
@@ -1165,8 +1161,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log("OpenRouter API full response:", JSON.stringify(response.data, null, 2));
             
             try {
-              // محاولة استخراج الاستجابة باستخدام أنماط مختلفة من الاستجابات
-              if (response.data) {
+              // تحقق من نوع الاستجابة (HTML أو JSON)
+              const contentType = response.headers['content-type'] || '';
+              console.log("OpenRouter response content type:", contentType);
+              
+              // إذا كانت الاستجابة HTML (خطأ عادةً)
+              if (contentType.includes('text/html') || (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>'))) {
+                console.log("Received HTML response from OpenRouter - switching to direct API call");
+                
+                // محاولة استخدام OpenAI API مباشرة بدلاً من OpenRouter كحل بديل
+                const openaiResponse = await axios.post(
+                  'https://api.openai.com/v1/chat/completions',
+                  {
+                    model: "gpt-3.5-turbo",
+                    messages: formattedMessages,
+                    temperature: 0.7,
+                    max_tokens: model.maxTokens || 1000
+                  },
+                  { 
+                    headers: {
+                      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                      'Content-Type': 'application/json'
+                    },
+                    timeout: 30000
+                  }
+                );
+                
+                console.log("Fallback to direct OpenAI API succeeded");
+                aiResponse = openaiResponse.data.choices[0].message.content;
+              }
+              // إذا كانت استجابة JSON طبيعية
+              else if (response.data) {
                 // النمط القياسي: data.choices[0].message.content
                 if (response.data.choices && response.data.choices.length > 0) {
                   const choice = response.data.choices[0];
@@ -1177,15 +1202,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     aiResponse = choice.content;
                   } else if (typeof choice === 'string') {
                     aiResponse = choice;
-                  // إضافة نمط آخر: تحقق من message_content قد يكون موجودًا في بعض الاستجابات
                   } else if (choice.message_content) {
                     aiResponse = choice.message_content;
-                  // إضافة نمط آخر: تحقق من text قد يكون موجودًا في بعض الاستجابات
                   } else if (choice.text) {
                     aiResponse = choice.text;
                   } else {
                     console.log("Unexpected OpenRouter choice structure:", JSON.stringify(choice, null, 2));
-                    // محاولة استخراج محتوى من الكائن بأي طريقة ممكنة
                     const choiceStr = JSON.stringify(choice);
                     if (choiceStr.length < 1000) {
                       aiResponse = `استجابة OpenRouter (هيكل غير معالج): ${choiceStr}`;
@@ -1193,8 +1215,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       aiResponse = "تم استلام استجابة من المزود ولكن لم يتم العثور على محتوى الرسالة.";
                     }
                   }
-                // نمط بديل: response.data المباشر
-                } else if (response.data.content) {
+                } 
+                // أنماط بديلة
+                else if (response.data.content) {
                   aiResponse = response.data.content;
                 } else if (response.data.output) {
                   aiResponse = response.data.output;
@@ -1204,31 +1227,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   aiResponse = response.data.text;
                 } else if (response.data.message) {
                   aiResponse = response.data.message;
-                // نمط بديل: response.data نفسه قد يكون المحتوى
                 } else if (typeof response.data === 'string') {
                   aiResponse = response.data;
                 } else {
                   const dataStr = JSON.stringify(response.data);
                   console.log("Trying to extract content from full response:", dataStr.substring(0, 200) + "...");
                   
-                  // محاولة البحث عن أي نمط محتمل للمحتوى في الاستجابة
                   if (dataStr.includes('"content":"')) {
                     const contentMatch = dataStr.match(/"content":"([^"]+)"/);
                     if (contentMatch && contentMatch[1]) {
                       aiResponse = contentMatch[1];
                     } else {
-                      aiResponse = "تم استلام استجابة من OpenRouter ولكن تعذر استخراج المحتوى.";
+                      aiResponse = "تم استلام استجابة من OpenRouter بتنسيق غير متوقع. يرجى التحقق من مفتاح API الخاص بك.";
                     }
                   } else {
-                    aiResponse = "تم استلام استجابة من OpenRouter بتنسيق غير معروف.";
+                    aiResponse = "تم استلام استجابة من OpenRouter بتنسيق غير متوقع. يرجى التحقق من مفتاح API الخاص بك.";
                   }
                 }
               } else {
-                aiResponse = "لم يتم استلام أي بيانات من OpenRouter.";
+                aiResponse = "لم يتم استلام أي بيانات من OpenRouter. يرجى التحقق من صحة مفتاح API الخاص بك.";
               }
             } catch (parseError) {
               console.error("Error parsing OpenRouter response:", parseError);
-              aiResponse = "حدث خطأ أثناء معالجة استجابة OpenRouter.";
+              aiResponse = "حدث خطأ أثناء معالجة استجابة OpenRouter. تأكد من صحة الإعدادات ومفتاح API.";
             }
           } catch (error: any) {
             console.error("OpenRouter API error:", error);
