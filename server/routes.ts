@@ -645,6 +645,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const providerData = req.body;
       const provider = await storage.createAiProvider(providerData);
+      
+      // إضافة نماذج افتراضية بناءً على نوع المزود
+      try {
+        if (provider.name === 'openai') {
+          // نماذج OpenAI الافتراضية
+          await storage.createAiModel({
+            providerId: provider.id,
+            name: 'gpt-4o',
+            displayName: 'GPT-4o',
+            maxTokens: 4096,
+            isDefault: true,
+            isEnabled: true
+          });
+          
+          await storage.createAiModel({
+            providerId: provider.id,
+            name: 'gpt-4-turbo',
+            displayName: 'GPT-4 Turbo',
+            maxTokens: 4096,
+            isDefault: false,
+            isEnabled: true
+          });
+          
+          await storage.createAiModel({
+            providerId: provider.id,
+            name: 'gpt-3.5-turbo',
+            displayName: 'GPT-3.5 Turbo',
+            maxTokens: 4096,
+            isDefault: false,
+            isEnabled: true
+          });
+        } else if (provider.name === 'deepseek') {
+          // نماذج DeepSeek الافتراضية
+          await storage.createAiModel({
+            providerId: provider.id,
+            name: 'deepseek-chat',
+            displayName: 'DeepSeek Chat',
+            maxTokens: 4096,
+            isDefault: true,
+            isEnabled: true
+          });
+          
+          await storage.createAiModel({
+            providerId: provider.id,
+            name: 'deepseek-coder',
+            displayName: 'DeepSeek Coder',
+            maxTokens: 4096,
+            isDefault: false,
+            isEnabled: true
+          });
+        } else if (provider.name === 'openrouter') {
+          // نماذج OpenRouter الافتراضية
+          await storage.createAiModel({
+            providerId: provider.id,
+            name: 'openai/gpt-4',
+            displayName: 'OpenAI GPT-4',
+            maxTokens: 4096,
+            isDefault: true,
+            isEnabled: true
+          });
+          
+          await storage.createAiModel({
+            providerId: provider.id,
+            name: 'anthropic/claude-3-opus',
+            displayName: 'Anthropic Claude 3 Opus',
+            maxTokens: 4096,
+            isDefault: false,
+            isEnabled: true
+          });
+          
+          await storage.createAiModel({
+            providerId: provider.id,
+            name: 'google/gemini-pro',
+            displayName: 'Google Gemini Pro',
+            maxTokens: 4096,
+            isDefault: false,
+            isEnabled: true
+          });
+        }
+      } catch (modelsError) {
+        console.error("Error creating default models for provider:", modelsError);
+        // لا نوقف إنشاء المزود إذا فشلت إضافة النماذج الافتراضية
+      }
+      
       res.status(201).json(provider);
     } catch (error) {
       console.error("Error creating AI provider:", error);
@@ -803,6 +887,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating AI model:", error);
       res.status(500).json({ message: "Failed to update AI model" });
+    }
+  });
+  
+  // إضافة نماذج افتراضية لمزود ذكاء اصطناعي
+  app.post("/api/admin/ai-providers/:id/add-default-models", async (req: Request, res: Response) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      const provider = await storage.getAiProvider(providerId);
+      
+      if (!provider) {
+        return res.status(404).json({ message: "AI provider not found" });
+      }
+      
+      // إضافة نماذج افتراضية بناءً على نوع المزود
+      const createdModels = [];
+      
+      if (provider.name === 'openai') {
+        // نماذج OpenAI الافتراضية
+        createdModels.push(await storage.createAiModel({
+          providerId: provider.id,
+          name: 'gpt-4o',
+          displayName: 'GPT-4o',
+          maxTokens: 4096,
+          isDefault: true,
+          isEnabled: true
+        }));
+        
+        createdModels.push(await storage.createAiModel({
+          providerId: provider.id,
+          name: 'gpt-4-turbo',
+          displayName: 'GPT-4 Turbo',
+          maxTokens: 4096,
+          isDefault: false,
+          isEnabled: true
+        }));
+        
+        createdModels.push(await storage.createAiModel({
+          providerId: provider.id,
+          name: 'gpt-3.5-turbo',
+          displayName: 'GPT-3.5 Turbo',
+          maxTokens: 4096,
+          isDefault: false,
+          isEnabled: true
+        }));
+      } else if (provider.name === 'deepseek') {
+        // نماذج DeepSeek الافتراضية
+        createdModels.push(await storage.createAiModel({
+          providerId: provider.id,
+          name: 'deepseek-chat',
+          displayName: 'DeepSeek Chat',
+          maxTokens: 4096,
+          isDefault: true,
+          isEnabled: true
+        }));
+        
+        createdModels.push(await storage.createAiModel({
+          providerId: provider.id,
+          name: 'deepseek-coder',
+          displayName: 'DeepSeek Coder',
+          maxTokens: 4096,
+          isDefault: false,
+          isEnabled: true
+        }));
+      } else if (provider.name === 'openrouter') {
+        // نماذج OpenRouter الافتراضية
+        createdModels.push(await storage.createAiModel({
+          providerId: provider.id,
+          name: 'openai/gpt-4',
+          displayName: 'OpenAI GPT-4',
+          maxTokens: 4096,
+          isDefault: true,
+          isEnabled: true
+        }));
+        
+        createdModels.push(await storage.createAiModel({
+          providerId: provider.id,
+          name: 'anthropic/claude-3-opus',
+          displayName: 'Anthropic Claude 3 Opus',
+          maxTokens: 4096,
+          isDefault: false,
+          isEnabled: true
+        }));
+        
+        createdModels.push(await storage.createAiModel({
+          providerId: provider.id,
+          name: 'google/gemini-pro',
+          displayName: 'Google Gemini Pro',
+          maxTokens: 4096,
+          isDefault: false,
+          isEnabled: true
+        }));
+      }
+      
+      res.json({ 
+        message: `Added ${createdModels.length} default models for ${provider.displayName}`,
+        models: createdModels
+      });
+      
+    } catch (error) {
+      console.error("Error adding default models:", error);
+      res.status(500).json({ message: "Failed to add default models" });
     }
   });
 

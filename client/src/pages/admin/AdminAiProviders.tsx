@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, PlusCircle, Edit, Trash2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Loader2, PlusCircle, Edit, Trash2, CheckCircle2, XCircle, AlertCircle, Plus } from "lucide-react";
 
 interface AiProvider {
   id: number;
@@ -40,6 +40,7 @@ const AdminAiProviders = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isTestingProvider, setIsTestingProvider] = useState(false);
+  const [isAddingDefaultModels, setIsAddingDefaultModels] = useState(false);
   const [currentProvider, setCurrentProvider] = useState<AiProvider | null>(null);
   const [newProvider, setNewProvider] = useState<Partial<AiProvider>>({
     name: "",
@@ -165,6 +166,32 @@ const AdminAiProviders = () => {
       });
     } finally {
       setIsTestingProvider(false);
+    }
+  };
+  
+  // إضافة نماذج افتراضية للمزود
+  const addDefaultModels = async (provider: AiProvider) => {
+    setIsAddingDefaultModels(true);
+    try {
+      const response = await apiRequest("POST", `/api/admin/ai-providers/${provider.id}/add-default-models`);
+      const result = await response.json();
+      
+      // تحديث قائمة النماذج
+      queryClient.invalidateQueries({ queryKey: [`/api/admin/ai-providers/${provider.id}/models`] });
+      
+      toast({
+        title: "تمت إضافة النماذج",
+        description: result.message,
+        variant: "default"
+      });
+    } catch (error) {
+      toast({
+        title: "خطأ في إضافة النماذج",
+        description: "حدث خطأ أثناء إضافة النماذج الافتراضية",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAddingDefaultModels(false);
     }
   };
 
@@ -415,6 +442,21 @@ const AdminAiProviders = () => {
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
                           حذف
+                        </Button>
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => addDefaultModels(provider)}
+                          disabled={isAddingDefaultModels}
+                        >
+                          {isAddingDefaultModels ? (
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          ) : (
+                            <>
+                              <Plus className="h-4 w-4 mr-1" />
+                              إضافة نماذج
+                            </>
+                          )}
                         </Button>
                       </div>
                       <Button 
