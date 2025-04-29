@@ -140,12 +140,12 @@ const MonthlyReportPage: React.FC = () => {
   });
   
   const getSelectedClient = () => {
-    if (!clients || !selectedClient) return null;
+    if (!clients || !Array.isArray(clients) || !selectedClient) return null;
     return clients.find((client: Client) => client.id === selectedClient);
   };
   
   const getClientProjects = () => {
-    if (!projects || !selectedClient) return [];
+    if (!projects || !Array.isArray(projects) || !selectedClient) return [];
     return projects.filter((project: Project) => project.clientId === selectedClient);
   };
   

@@ -227,7 +227,7 @@ const DailyStandupReport: React.FC = () => {
   };
   
   const getTaskById = (taskId: number) => {
-    if (!myTasks) return null;
+    if (!myTasks || !Array.isArray(myTasks)) return null;
     return myTasks.find((task: Task) => task.id === taskId);
   };
   
@@ -382,7 +382,7 @@ const DailyStandupReport: React.FC = () => {
               <div>
                 <h3 className="text-lg font-medium mb-3">المهام المنجزة اليوم</h3>
                 <div className="border rounded-lg divide-y">
-                  {myTasks && myTasks.length > 0 ? (
+                  {myTasks && Array.isArray(myTasks) && myTasks.length > 0 ? (
                     myTasks.filter((task: Task) => task.status !== 'completed').map((task: Task) => (
                       <div key={task.id} className="flex items-start gap-3 p-3">
                         <Checkbox
