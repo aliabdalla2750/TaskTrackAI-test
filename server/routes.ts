@@ -1133,40 +1133,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
               { headers }
             );
             
-            console.log("OpenRouter API response received. Structure:", JSON.stringify(Object.keys(response.data)));
+            // طباعة كامل استجابة OpenRouter للتشخيص
+            console.log("OpenRouter API full response:", JSON.stringify(response.data, null, 2));
             
-            // التحقق من شكل البيانات والتعامل مع الاختلافات المحتملة
-            if (response.data) {
-              if (response.data.choices && response.data.choices.length > 0) {
-                const choice = response.data.choices[0];
-                console.log("OpenRouter choice structure:", JSON.stringify(Object.keys(choice)));
-                
-                if (choice.message && choice.message.content) {
-                  aiResponse = choice.message.content;
-                } else if (choice.content) {
-                  aiResponse = choice.content;
-                } else if (typeof choice === 'string') {
-                  aiResponse = choice;
+            try {
+              // محاولة استخراج الاستجابة باستخدام أنماط مختلفة من الاستجابات
+              if (response.data) {
+                // النمط القياسي: data.choices[0].message.content
+                if (response.data.choices && response.data.choices.length > 0) {
+                  const choice = response.data.choices[0];
+                  
+                  if (choice.message && choice.message.content) {
+                    aiResponse = choice.message.content;
+                  } else if (choice.content) {
+                    aiResponse = choice.content;
+                  } else if (typeof choice === 'string') {
+                    aiResponse = choice;
+                  // إضافة نمط آخر: تحقق من message_content قد يكون موجودًا في بعض الاستجابات
+                  } else if (choice.message_content) {
+                    aiResponse = choice.message_content;
+                  // إضافة نمط آخر: تحقق من text قد يكون موجودًا في بعض الاستجابات
+                  } else if (choice.text) {
+                    aiResponse = choice.text;
+                  } else {
+                    console.log("Unexpected OpenRouter choice structure:", JSON.stringify(choice, null, 2));
+                    // محاولة استخراج محتوى من الكائن بأي طريقة ممكنة
+                    const choiceStr = JSON.stringify(choice);
+                    if (choiceStr.length < 1000) {
+                      aiResponse = `استجابة OpenRouter (هيكل غير معالج): ${choiceStr}`;
+                    } else {
+                      aiResponse = "تم استلام استجابة من المزود ولكن لم يتم العثور على محتوى الرسالة.";
+                    }
+                  }
+                // نمط بديل: response.data المباشر
+                } else if (response.data.content) {
+                  aiResponse = response.data.content;
+                } else if (response.data.output) {
+                  aiResponse = response.data.output;
+                } else if (response.data.completion) {
+                  aiResponse = response.data.completion;
+                } else if (response.data.text) {
+                  aiResponse = response.data.text;
+                } else if (response.data.message) {
+                  aiResponse = response.data.message;
+                // نمط بديل: response.data نفسه قد يكون المحتوى
+                } else if (typeof response.data === 'string') {
+                  aiResponse = response.data;
                 } else {
-                  console.log("Unexpected OpenRouter choice structure:", choice);
-                  aiResponse = "تم استلام استجابة من المزود ولكن لم يتم العثور على محتوى الرسالة.";
+                  const dataStr = JSON.stringify(response.data);
+                  console.log("Trying to extract content from full response:", dataStr.substring(0, 200) + "...");
+                  
+                  // محاولة البحث عن أي نمط محتمل للمحتوى في الاستجابة
+                  if (dataStr.includes('"content":"')) {
+                    const contentMatch = dataStr.match(/"content":"([^"]+)"/);
+                    if (contentMatch && contentMatch[1]) {
+                      aiResponse = contentMatch[1];
+                    } else {
+                      aiResponse = "تم استلام استجابة من OpenRouter ولكن تعذر استخراج المحتوى.";
+                    }
+                  } else {
+                    aiResponse = "تم استلام استجابة من OpenRouter بتنسيق غير معروف.";
+                  }
                 }
-              } else if (response.data.content) {
-                aiResponse = response.data.content;
-              } else if (response.data.output) {
-                aiResponse = response.data.output;
-              } else if (response.data.completion) {
-                aiResponse = response.data.completion;
-              } else if (response.data.text) {
-                aiResponse = response.data.text;
-              } else if (response.data.message) {
-                aiResponse = response.data.message;
               } else {
-                console.log("Unexpected OpenRouter API response structure:", response.data);
-                aiResponse = "تم استلام استجابة من OpenRouter بتنسيق غير متوقع.";
+                aiResponse = "لم يتم استلام أي بيانات من OpenRouter.";
               }
-            } else {
-              aiResponse = "لم يتم استلام أي بيانات من OpenRouter.";
+            } catch (parseError) {
+              console.error("Error parsing OpenRouter response:", parseError);
+              aiResponse = "حدث خطأ أثناء معالجة استجابة OpenRouter.";
             }
           } catch (error: any) {
             console.error("OpenRouter API error:", error);
