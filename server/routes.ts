@@ -753,10 +753,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileName: req.file.originalname,
         fileUrl: req.file.path,
         fileType: req.file.mimetype,
-        fileSize: req.file.size,
-        taskId: taskId,
-        projectId: task.projectId,
-        uploadedBy: req.body.userId || 1, // Default to user 1 for demo
+        fileSize: req.file.size.toString(), // convert to string as per schema
+        linkedType: "task",
+        linkedId: taskId,
+        uploaderId: parseInt(req.body.userId) || 1, // Default to user 1 for demo
       };
       
       const file = await storage.createFile(fileData);

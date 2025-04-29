@@ -125,14 +125,18 @@ export const taskSubmissions = pgTable("task_submissions", {
   taskId: integer("task_id").notNull(),
   employeeId: integer("employee_id").notNull(),
   fileUrl: text("file_url"),
-  status: text("status").notNull().default("pending"), // 'pending', 'approved', 'needs_revision', 'rejected'
+  status: text("status").notNull().default("pending"), // 'pending', 'approved', 'needs_revision', 'rejected', 'comment'
   feedback: text("feedback"),
+  content: text("content"), // added for storing comment text
+  submittedBy: text("submitted_by"), // name of the submitter
+  createdAt: timestamp("created_at").defaultNow(),
   submittedAt: timestamp("submitted_at").defaultNow(),
 });
 
 export const insertTaskSubmissionSchema = createInsertSchema(taskSubmissions).omit({
   id: true,
   submittedAt: true,
+  createdAt: true,
 });
 
 // Notifications table
