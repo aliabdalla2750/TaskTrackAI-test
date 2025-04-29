@@ -227,10 +227,16 @@ const AdminAiProviders = () => {
                             "deepseek": "DeepSeek",
                             "openrouter": "OpenRouter"
                           };
+                          const baseUrls = {
+                            "openai": "https://api.openai.com/v1",
+                            "deepseek": "https://api.deepseek.com/v1",
+                            "openrouter": "https://openrouter.ai/api/v1"
+                          };
                           setNewProvider({ 
                             ...newProvider, 
                             name: value,
-                            displayName: displayNames[value as keyof typeof displayNames]
+                            displayName: displayNames[value as keyof typeof displayNames],
+                            baseUrl: baseUrls[value as keyof typeof baseUrls]
                           });
                         }}
                       >
