@@ -1,64 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* تعريف الألوان والمتغيرات الأساسية للمشروع */
 :root {
-  /* ألوان النظام الأساسية */
-  --color-primary: #5A47FF;
-  --color-primary-hover: #4938e0;
-  --color-primary-light: rgba(90, 71, 255, 0.1);
-  --color-secondary: #00BFA6;
-  --color-secondary-hover: #00a891;
-  --color-secondary-light: rgba(0, 191, 166, 0.1);
-  --color-accent: #FF9800;
-  --color-accent-hover: #e68a00;
-  --color-accent-light: rgba(255, 152, 0, 0.1);
-  
-  /* ألوان الخلفيات والنصوص */
-  --color-bg-light: #f9fafb;
-  --color-bg-white: #ffffff;
-  --color-text-dark: #1e293b;
-  --color-text-gray: #64748b;
-  --color-text-light: #f9f8fd;
-  
-  /* ألوان الحالات */
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-info: #3b82f6;
-  
-  /* ظلال مخصصة */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --shadow-card-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-button: 0 1px 3px 0 rgba(90, 71, 255, 0.3);
-  
-  /* زوايا دائرية */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  
-  /* مقاييس لوحة الألوان */
-  --primary-50: #f5f3ff;
-  --primary-100: #ede9fe;
-  --primary-200: #ddd6fe;
-  --primary-300: #c4b5fd;
-  --primary-400: #a78bfa;
-  --primary-500: #8b5cf6;
-  --primary-600: #7c3aed;
-  --primary-700: #6d28d9;
-  --primary-800: #5b21b6;
-  --primary-900: #4c1d95;
-  
-  /* Shadcn/UI compatibility */
+  /* Custom colors based on the provided design */
   --background: 220 14% 98%;
   --foreground: 222 47% 11%;
   
@@ -74,13 +21,15 @@
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
   
+  /* Primary color: #5A47FF */
   --primary: 249 100% 64%;
   --primary-foreground: 210 40% 98%;
   
+  /* Secondary color: #00BFA6 */
   --secondary: 169 100% 37%;
   --secondary-foreground: 210 40% 98%;
   
-  --accent: 35 100% 50%;
+  --accent: 210 40% 96.1%;
   --accent-foreground: 222.2 47.4% 11.2%;
   
   --destructive: 0 84.2% 60.2%;
@@ -89,292 +38,94 @@
   --ring: 215 20.2% 65.1%;
   
   --radius: 0.5rem;
+  
+  /* Chart colors */
+  --chart-1: 249 100% 64%;
+  --chart-2: 169 100% 37%;
+  --chart-3: 43 96% 56%;
+  --chart-4: 358 75% 59%;
+  --chart-5: 262 83% 58%;
+  
+  /* Sidebar colors */
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-primary: 249 100% 64%;
+  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-accent: 210 40% 96.1%;
+  --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+  --sidebar-border: 214.3 31.8% 91.4%;
+  --sidebar-ring: 215 20.2% 65.1%;
 }
 
-/* تعريف الألوان للوضع الداكن */
+/* Custom dark theme - leaving as reference but keeping only light theme active */
 .dark {
-  --color-primary: #6E60FF;
-  --color-primary-hover: #5a4dff;
-  --color-primary-light: rgba(110, 96, 255, 0.15);
-  --color-secondary: #00D0B3;
-  --color-secondary-hover: #00c1a6;
-  --color-bg-light: #111827;
-  --color-bg-white: #1f2937;
-  --color-text-dark: #f3f4f6;
-  --color-text-gray: #9ca3af;
-  
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-  --shadow-card-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-  
-  --background: 224 71% 4%;
-  --foreground: 213 31% 91%;
-  --card: 224 71% 4%;
-  --card-foreground: 213 31% 91%;
-  --popover: 224 71% 4%;
-  --popover-foreground: 213 31% 91%;
-  --primary: 250 95% 75%;
-  --primary-foreground: 210 20% 98%;
-  --secondary: 169 100% 40%;
-  --secondary-foreground: 210 20% 98%;
-  --muted: 223 47% 11%;
-  --muted-foreground: 215.4 16.3% 74%;
-  --accent: 223 47% 15%;
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 249 100% 64%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 169 100% 37%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
   --accent-foreground: 210 40% 98%;
-  --destructive: 0 63% 50%;
+  --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
-  --border: 216 34% 17%;
-  --input: 216 34% 17%;
-  --ring: 215 20.2% 65.1%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
 }
 
 @layer base {
-  /* تخصيص الخطوط للواجهة */
-  html {
-    font-family: 'Inter', sans-serif;
-  }
-  
-  .font-arabic {
-    font-family: 'Cairo', sans-serif;
-  }
-  
-  /* تخصيص الخطوط للعناوين والأزرار */
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cairo', sans-serif;
-  }
-  
-  body {
-    @apply bg-background text-foreground antialiased;
-    direction: rtl;
-  }
-  
   * {
     @apply border-border;
   }
   
-  /* تنسيق العناصر الأساسية */
-  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-    @apply outline-none ring-2 ring-primary;
-  }
-}
-
-/* تعريف تأثيرات الحركة والتحولات */
-@layer utilities {
-  /* تأثيرات الظهور (Fade in) */
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-in-out;
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    direction: rtl;
   }
   
-  /* تأثيرات الانزلاق للأعلى */
-  .animate-slide-up {
-    animation: slideUp 0.4s ease-out;
+  /* Define typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
   }
   
-  /* تأثيرات الانزلاق من اليمين (للواجهة العربية) */
-  .animate-slide-right {
-    animation: slideRight 0.4s ease-out;
+  /* Button animation */
+  .btn-animate {
+    @apply transition-transform duration-100 ease-in-out;
   }
   
-  /* تأثير النبض */
-  .animate-pulse-light {
-    animation: pulseLight 2s infinite;
+  .btn-animate:active {
+    @apply transform scale-95;
   }
   
-  /* تنسيق تأثيرات الظلال */
-  .shadow-card {
-    box-shadow: var(--shadow-card);
+  /* Typing effect for AI chat */
+  .typing-effect::after {
+    content: '|';
+    @apply animate-pulse;
   }
   
-  .shadow-card-hover {
-    box-shadow: var(--shadow-card-hover);
+  /* Fade transition */
+  .fade-enter {
+    opacity: 0;
   }
   
-  .shadow-button {
-    box-shadow: var(--shadow-button);
+  .fade-enter-active {
+    opacity: 1;
+    transition: opacity 200ms;
   }
   
-  /* تنسيقات الشبكة */
-  .grid-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+  .fade-exit {
+    opacity: 1;
   }
   
-  .grid-dashboard {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-  }
-  
-  /* تأثيرات الحركة */
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  
-  @keyframes slideRight {
-    from { transform: translateX(-20px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-  
-  @keyframes pulseLight {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
-  }
-  
-  /* تأثير الكتابة للمحادثة */
-  @keyframes typing {
-    from { width: 0 }
-    to { width: 100% }
-  }
-  
-  @keyframes blink {
-    50% { border-color: transparent }
-  }
-  
-  .typing-effect {
-    overflow: hidden;
-    white-space: nowrap;
-    border-right: 2px solid var(--color-primary);
-    animation: 
-      typing 1.5s steps(30, end),
-      blink 0.75s step-end infinite;
-    max-width: fit-content;
-  }
-}
-
-/* تنسيق المكونات الشائعة */
-@layer components {
-  /* أنماط الأزرار */
-  .btn-primary {
-    @apply bg-primary text-white rounded-xl px-5 py-2.5 font-bold transition-all shadow-button hover:bg-primary-hover focus:ring-2 focus:ring-primary/30;
-  }
-  
-  .btn-secondary {
-    @apply bg-secondary text-white rounded-xl px-5 py-2.5 font-bold transition-all shadow-button hover:bg-secondary-hover focus:ring-2 focus:ring-secondary/30;
-  }
-  
-  .btn-accent {
-    @apply bg-accent text-white rounded-xl px-5 py-2.5 font-bold transition-all shadow-button hover:bg-accent-hover focus:ring-2 focus:ring-accent/30;
-  }
-  
-  .btn-outline {
-    @apply border-2 border-primary text-primary bg-transparent rounded-xl px-5 py-2.5 font-bold transition-all hover:bg-primary-light focus:ring-2 focus:ring-primary/20;
-  }
-  
-  .btn-ghost {
-    @apply text-gray-700 bg-transparent rounded-xl px-5 py-2.5 font-bold transition-all hover:bg-gray-100 focus:ring-2 focus:ring-gray-200;
-  }
-  
-  /* تنسيق البطاقات */
-  .card-base {
-    @apply bg-white rounded-2xl shadow-card border border-gray-100 p-6 transition-all hover:shadow-card-hover;
-  }
-  
-  .card-primary {
-    @apply bg-primary/5 border border-primary/20 rounded-2xl shadow-card p-6 transition-all hover:shadow-card-hover;
-  }
-  
-  .card-secondary {
-    @apply bg-secondary/5 border border-secondary/20 rounded-2xl shadow-card p-6 transition-all hover:shadow-card-hover;
-  }
-  
-  /* تنسيق حقول الإدخال */
-  .input-base {
-    @apply border-2 border-gray-300 rounded-xl px-4 py-2.5 transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10;
-  }
-  
-  .input-primary {
-    @apply border-2 border-primary/30 rounded-xl px-4 py-2.5 transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20;
-  }
-  
-  /* تنسيق العناوين والتيبوغرافيا */
-  .page-title {
-    @apply text-2xl font-bold text-gray-800 mb-6 font-arabic;
-  }
-  
-  .section-title {
-    @apply text-xl font-bold text-gray-800 mb-4 font-arabic;
-  }
-  
-  .card-title {
-    @apply text-lg font-bold text-gray-800 font-arabic;
-  }
-  
-  .text-muted {
-    @apply text-gray-500 text-sm;
-  }
-  
-  /* شريط التقدم */
-  .progress-bar {
-    @apply h-2 rounded-full bg-gray-200 overflow-hidden;
-  }
-  
-  .progress-bar-fill {
-    @apply h-full bg-primary rounded-full transition-all duration-500;
-  }
-  
-  /* مؤشر الحالة */
-  .status-indicator {
-    @apply inline-block w-2.5 h-2.5 rounded-full mr-2;
-  }
-  
-  .status-active {
-    @apply bg-success;
-  }
-  
-  .status-pending {
-    @apply bg-warning;
-  }
-  
-  .status-inactive {
-    @apply bg-error;
-  }
-  
-  /* محادثة الذكاء الاصطناعي */
-  .ai-message {
-    @apply bg-primary/5 p-4 rounded-2xl border border-primary/10 text-gray-800;
-  }
-  
-  .user-message {
-    @apply bg-gray-100 p-4 rounded-2xl text-gray-800;
-  }
-  
-  /* تأثيرات التحميل */
-  .loading-dot {
-    @apply inline-block h-2 w-2 rounded-full bg-primary mx-0.5 animate-pulse;
-  }
-  
-  .loading-spinner {
-    @apply animate-spin w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full;
-  }
-  
-  /* بادج للتسميات */
-  .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
-  }
-  
-  .badge-primary {
-    @apply bg-primary/10 text-primary;
-  }
-  
-  .badge-secondary {
-    @apply bg-secondary/10 text-secondary;
-  }
-  
-  .badge-accent {
-    @apply bg-accent/10 text-accent;
-  }
-  
-  .badge-gray {
-    @apply bg-gray-100 text-gray-700;
+  .fade-exit-active {
+    opacity: 0;
+    transition: opacity 200ms;
   }
 }
