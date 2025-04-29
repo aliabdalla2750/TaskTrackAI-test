@@ -212,6 +212,8 @@ export class MemStorage implements IStorage {
   private paymentIdCounter = 1;
   private aiChatLogIdCounter = 1;
   private dailyStandupIdCounter = 1;
+  private billingIdCounter = 1;
+  private walletIdCounter = 1;
 
   constructor() {
     this.users = new Map();
@@ -231,6 +233,8 @@ export class MemStorage implements IStorage {
     this.dailyStandups = new Map();
     this.weeklyReports = new Map();
     this.monthlyReports = new Map();
+    this.billings = new Map();
+    this.wallets = new Map();
 
     // Initialize with default AI scenarios
     this.seedAiScenarios();
@@ -455,6 +459,70 @@ export class MemStorage implements IStorage {
       createdAt: new Date()
     };
     this.tasks.set(task2.id, task2);
+    
+    // Add wallet for agency
+    const wallet: Wallet = {
+      id: this.walletIdCounter++,
+      agencyId: agency.id,
+      balance: 5000.00,
+      currency: "EGP",
+      lastUpdated: new Date().toISOString(),
+      createdAt: new Date()
+    };
+    this.wallets.set(wallet.id, wallet);
+    
+    // Add billing records
+    const billing1: Billing = {
+      id: this.billingIdCounter++,
+      agencyId: agency.id,
+      clientId: client.id,
+      projectId: project.id,
+      invoiceNumber: "INV-2025-001",
+      amount: 2500.00,
+      currency: "EGP",
+      dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+      status: "unpaid",
+      description: "دفعة أولى لمشروع تطوير موقع الويب",
+      items: JSON.stringify([
+        { description: "تصميم واجهة المستخدم", amount: 1500.00 },
+        { description: "تطوير Frontend", amount: 1000.00 }
+      ]),
+      createdAt: new Date()
+    };
+    this.billings.set(billing1.id, billing1);
+    
+    const billing2: Billing = {
+      id: this.billingIdCounter++,
+      agencyId: agency.id,
+      clientId: client.id,
+      projectId: project.id,
+      invoiceNumber: "INV-2025-002",
+      amount: 1500.00,
+      currency: "EGP",
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      status: "pending",
+      description: "دفعة ثانية لمشروع تطوير موقع الويب",
+      items: JSON.stringify([
+        { description: "تطوير Backend", amount: 1500.00 }
+      ]),
+      createdAt: new Date()
+    };
+    this.billings.set(billing2.id, billing2);
+    
+    // Add a payment record
+    const payment: Payment = {
+      id: this.paymentIdCounter++,
+      agencyId: agency.id,
+      clientId: client.id,
+      projectId: project.id,
+      billingId: billing1.id,
+      amount: 2500.00,
+      status: "completed",
+      paymentDate: new Date(),
+      reference: "PAY-2025-001",
+      createdAt: new Date()
+    };
+    this.payments.set(payment.id, payment);
   }
 
   // Users
@@ -991,10 +1059,71 @@ export class MemStorage implements IStorage {
   async deleteDailyStandup(id: number): Promise<boolean> {
     return this.dailyStandups.delete(id);
   }
+  
+  // Billing operations
+  async getBilling(id: number): Promise<Billing | undefined> {
+    return this.billings.get(id);
+  }
+  
+  async getBillingsByAgency(agencyId: number): Promise<Billing[]> {
+    return Array.from(this.billings.values()).filter(
+      billing => billing.agencyId === agencyId
+    );
+  }
+  
+  async getAllBillings(): Promise<Billing[]> {
+    return Array.from(this.billings.values());
+  }
+  
+  async createBilling(billing: InsertBilling): Promise<Billing> {
+    const id = this.billingIdCounter++;
+    const newBilling: Billing = { ...billing, id, createdAt: new Date() };
+    this.billings.set(id, newBilling);
+    return newBilling;
+  }
+  
+  async updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined> {
+    const existingBilling = this.billings.get(id);
+    if (!existingBilling) return undefined;
+    
+    const updatedBilling = { ...existingBilling, ...billing };
+    this.billings.set(id, updatedBilling);
+    return updatedBilling;
+  }
+  
+  // Wallet operations
+  async getWalletByAgency(agencyId: number): Promise<Wallet | undefined> {
+    return Array.from(this.wallets.values()).find(
+      wallet => wallet.agencyId === agencyId
+    );
+  }
+  
+  async createWallet(wallet: InsertWallet): Promise<Wallet> {
+    const id = this.walletIdCounter++;
+    const newWallet: Wallet = { 
+      ...wallet, 
+      id, 
+      createdAt: new Date(),
+      lastUpdated: wallet.lastUpdated || new Date().toISOString()
+    };
+    this.wallets.set(id, newWallet);
+    return newWallet;
+  }
+  
+  async updateWallet(id: number, wallet: Partial<InsertWallet>): Promise<Wallet | undefined> {
+    const existingWallet = this.wallets.get(id);
+    if (!existingWallet) return undefined;
+    
+    const updatedWallet = { 
+      ...existingWallet, 
+      ...wallet,
+      lastUpdated: wallet.lastUpdated || new Date().toISOString()
+    };
+    this.wallets.set(id, updatedWallet);
+    return updatedWallet;
+  }
 }
 
 // تحديد نوع التخزين بناءً على البيئة أو متغيرات البيئة
-import { DatabaseStorage } from "./database-storage";
-
-// استخدام التخزين في قاعدة البيانات بدلاً من التخزين في الذاكرة
-export const storage = new DatabaseStorage();
+// Using in-memory storage for easier development and testing
+export const storage = new MemStorage();
