@@ -422,7 +422,7 @@ const DailyStandupReport: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-medium mb-3">المهام المخطط لها غدًا</h3>
                   <div className="border rounded-lg divide-y">
-                    {myTasks && myTasks.length > 0 ? (
+                    {myTasks && Array.isArray(myTasks) && myTasks.length > 0 ? (
                       myTasks.filter((task: Task) => 
                         task.status !== 'completed' && 
                         !selectedTasks.includes(task.id)
@@ -580,7 +580,7 @@ const DailyStandupReport: React.FC = () => {
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">التقارير السابقة</h2>
           <Accordion type="single" collapsible className="w-full">
-            {previousStandups && previousStandups.length > 0 ? (
+            {previousStandups && Array.isArray(previousStandups) && previousStandups.length > 0 ? (
               previousStandups.map((standup: any, index: number) => (
                 <AccordionItem key={standup.id} value={standup.id.toString()}>
                   <AccordionTrigger>
@@ -609,7 +609,7 @@ const DailyStandupReport: React.FC = () => {
                         <div>
                           <h4 className="font-medium mb-2">المهام المنجزة</h4>
                           <ul className="space-y-2">
-                            {standup.tasksDone && standup.tasksDone.length > 0 ? (
+                            {standup.tasksDone && Array.isArray(standup.tasksDone) && standup.tasksDone.length > 0 ? (
                               standup.tasksDone.map((taskId: number) => {
                                 const task = getTaskById(taskId);
                                 return task ? (
@@ -629,7 +629,7 @@ const DailyStandupReport: React.FC = () => {
                             )}
                           </ul>
                         </div>
-                        {standup.tasksPlanned && standup.tasksPlanned.length > 0 && (
+                        {standup.tasksPlanned && Array.isArray(standup.tasksPlanned) && standup.tasksPlanned.length > 0 && (
                           <div>
                             <h4 className="font-medium mb-2">المهام المخطط لها</h4>
                             <ul className="space-y-2">
