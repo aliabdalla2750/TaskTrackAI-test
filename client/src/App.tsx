@@ -34,6 +34,7 @@ import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminAiScenarios from "@/pages/admin/AdminAiScenarios";
 import AdminAiProviders from "@/pages/admin/AdminAiProviders";
+import AdminAiChatTest from "@/pages/admin/AdminAiChatTest";
 
 function Router() {
   return (
@@ -68,6 +69,7 @@ function Router() {
       <Route path="/dashboard/admin/users" component={AdminUsers} />
       <Route path="/dashboard/admin/ai-scenarios" component={AdminAiScenarios} />
       <Route path="/dashboard/admin/ai-providers" component={AdminAiProviders} />
+      <Route path="/dashboard/admin/ai-chat-test" component={AdminAiChatTest} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

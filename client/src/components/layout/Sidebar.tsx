@@ -36,6 +36,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     { path: '/dashboard/admin/overview', icon: 'fa-tachometer-alt', label: 'نظرة عامة' },
     { path: '/dashboard/admin/users', icon: 'fa-users', label: 'المستخدمين' },
     { path: '/dashboard/admin/ai-scenarios', icon: 'fa-robot', label: 'سيناريوهات الذكاء الاصطناعي' },
+    { path: '/dashboard/admin/ai-providers', icon: 'fa-server', label: 'مزودي الذكاء الاصطناعي' },
+    { path: '/dashboard/admin/ai-chat-test', icon: 'fa-comment-dots', label: 'اختبار الذكاء الاصطناعي' },
   ];
   
   const employeeLinks = [
