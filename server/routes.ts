@@ -363,10 +363,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Name, agencyId, and aiResult are required" });
       }
       
+      console.log("Creating project with data:", { 
+        aiResult,
+        name, 
+        clientId,
+        agencyId 
+      });
+      
       // Create project
       const project = await storage.createProject({
         name,
-        description: aiResult.description,
+        description: aiResult.description || "",
         clientId: clientId || null,
         agencyId,
         createdBy: 1, // In a real app, would be from user session
@@ -380,12 +387,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (aiResult.subgoals && Array.isArray(aiResult.subgoals)) {
         for (let i = 0; i < aiResult.subgoals.length; i++) {
           const subgoalData = aiResult.subgoals[i];
+          
+          if (!subgoalData || !subgoalData.title) {
+            console.warn(`Invalid subgoal data at index ${i}:`, subgoalData);
+            continue; // Skip invalid subgoals
+          }
+          
           const subgoal = await storage.createSubgoal({
             title: subgoalData.title,
-            description: subgoalData.description,
+            description: subgoalData.description || "",
             projectId: project.id,
             kpi: subgoalData.kpi || null,
-            dueDate: null // Calculate later based on tasks
+            dueDate: subgoalData.dueDate ? new Date(subgoalData.dueDate) : null
           });
           subgoalMap.set(i, subgoal.id);
         }
@@ -394,14 +407,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create tasks
       if (aiResult.tasks && Array.isArray(aiResult.tasks)) {
         for (const taskData of aiResult.tasks) {
+          if (!taskData || !taskData.title) {
+            console.warn(`Invalid task data:`, taskData);
+            continue; // Skip invalid tasks
+          }
+          
           // Determine subgoal ID (simple mapping for demo)
           // In a real app, would have more sophisticated subgoal assignment
-          const subgoalIndex = Math.floor(Math.random() * subgoalMap.size);
-          const subgoalId = subgoalMap.get(subgoalIndex) || null;
+          const subgoalIndex = subgoalMap.size > 0 ? Math.floor(Math.random() * subgoalMap.size) : null;
+          const subgoalId = subgoalIndex !== null ? subgoalMap.get(subgoalIndex) || null : null;
           
           await storage.createTask({
             title: taskData.title,
-            description: taskData.description,
+            description: taskData.description || "",
             projectId: project.id,
             subgoalId,
             assignedTo: null,
@@ -413,6 +431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json({ project });
     } catch (error) {
+      console.error("Error creating project from AI:", error);
       res.status(500).json({ message: "Failed to create project from AI result" });
     }
   });
