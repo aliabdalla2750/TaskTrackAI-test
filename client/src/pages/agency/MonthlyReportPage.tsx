@@ -47,6 +47,7 @@ import { Client, Project } from "@shared/schema";
 import { Calendar, CheckCircle2, Clock, Download, Mail, MailIcon, Send, Users, Phone, Printer, RefreshCw, BarChart3, AlertTriangle } from "lucide-react";
 import { format, parseISO, getMonth, getYear, startOfMonth, endOfMonth } from "date-fns";
 import { ar } from "date-fns/locale";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 const MonthlyReportPage: React.FC = () => {
   const { toast } = useToast();
@@ -154,24 +155,28 @@ const MonthlyReportPage: React.FC = () => {
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-      </div>
+      <DashboardLayout title="التقرير الشهري">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      </DashboardLayout>
     );
   }
   
   if (hasError) {
     return (
-      <div className="p-6">
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">حدث خطأ</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>فشل تحميل البيانات. يرجى تحديث الصفحة أو المحاولة لاحقًا.</p>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardLayout title="التقرير الشهري">
+        <div className="p-6">
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">حدث خطأ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>فشل تحميل البيانات. يرجى تحديث الصفحة أو المحاولة لاحقًا.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
     );
   }
   
@@ -179,7 +184,7 @@ const MonthlyReportPage: React.FC = () => {
   const clientProjects = getClientProjects();
   
   return (
-    <div className="container mx-auto p-6 rtl">
+    <DashboardLayout title="التقرير الشهري">
       <div className="flex flex-col space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">التقرير الشهري</h1>
@@ -712,7 +717,7 @@ const MonthlyReportPage: React.FC = () => {
           </>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
