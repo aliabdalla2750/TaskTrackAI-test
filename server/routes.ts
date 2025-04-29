@@ -823,6 +823,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // اختبار محادثة الذكاء الاصطناعي بمزود محدد
+  app.post("/api/admin/ai-chat/test", async (req: Request, res: Response) => {
+    try {
+      const { providerId, modelId, messages } = req.body;
+      
+      // التحقق من المزود ونموذج الذكاء الاصطناعي
+      const provider = await storage.getAiProvider(providerId);
+      if (!provider) {
+        return res.status(404).json({ message: "AI provider not found" });
+      }
+      
+      const model = await storage.getAiModel(modelId);
+      if (!model) {
+        return res.status(404).json({ message: "AI model not found" });
+      }
+      
+      // استدعاء API مزود الذكاء الاصطناعي المناسب
+      let aiResponse = "";
+      
+      switch (provider.name) {
+        case 'openai': {
+          const openai = new OpenAI({
+            apiKey: provider.apiKey,
+            baseURL: provider.baseUrl || undefined
+          });
+          
+          const completion = await openai.chat.completions.create({
+            model: model.name,
+            messages: messages as any[],
+            temperature: 0.7,
+            max_tokens: model.maxTokens || 1000
+          });
+          
+          aiResponse = completion.choices[0].message.content || "";
+          break;
+        }
+        
+        case 'deepseek': {
+          // استدعاء DeepSeek API
+          const response = await axios.post(
+            provider.baseUrl || 'https://api.deepseek.com/v1/chat/completions',
+            {
+              model: model.name,
+              messages,
+              temperature: 0.7,
+              max_tokens: model.maxTokens || 1000
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${provider.apiKey}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          aiResponse = response.data.choices[0].message.content;
+          break;
+        }
+        
+        case 'openrouter': {
+          // استدعاء OpenRouter API
+          const response = await axios.post(
+            provider.baseUrl || 'https://openrouter.ai/api/v1/chat/completions',
+            {
+              model: model.name,
+              messages,
+              temperature: 0.7,
+              max_tokens: model.maxTokens || 1000
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${provider.apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://taskaaya.com'
+              }
+            }
+          );
+          
+          aiResponse = response.data.choices[0].message.content;
+          break;
+        }
+        
+        default:
+          return res.status(400).json({ message: "Unsupported AI provider" });
+      }
+      
+      // تسجيل استخدام الذكاء الاصطناعي
+      await storage.createAiChatLog({
+        scenarioKey: "admin-test",
+        messages: messages,
+        userId: 1 // ضع معرف المستخدم المشرف الفعلي هنا
+      });
+      
+      res.json({ response: aiResponse });
+      
+    } catch (error: any) {
+      console.error("Error in admin AI chat test:", error);
+      res.status(500).json({ 
+        message: "Error processing AI chat test",
+        error: error.message || 'Unknown error'
+      });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
   
