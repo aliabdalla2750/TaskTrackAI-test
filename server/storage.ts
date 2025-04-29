@@ -145,6 +145,19 @@ export interface IStorage {
   closeDailyStandup(id: number, tasksDone: number[], comments?: string, rating?: number): Promise<DailyStandup | undefined>;
   reviewDailyStandup(id: number, reviewerId: number, comments: string): Promise<DailyStandup | undefined>;
   deleteDailyStandup(id: number): Promise<boolean>;
+
+  // وظائف التقارير الأسبوعية
+  getWeeklyReport(id: number): Promise<WeeklyReport | undefined>;
+  getWeeklyReportsByClient(clientId: number): Promise<WeeklyReport[]>;
+  getWeeklyReportsByAgency(agencyId: number): Promise<WeeklyReport[]>;
+  createWeeklyReport(report: InsertWeeklyReport): Promise<WeeklyReport>;
+  updateWeeklyReportStatus(id: number, status: string): Promise<WeeklyReport | undefined>;
+  
+  // وظائف التقارير الشهرية
+  getMonthlyReport(id: number): Promise<MonthlyReport | undefined>;
+  getMonthlyReportsByAgency(agencyId: number): Promise<MonthlyReport[]>;
+  getMonthlyReportByMonth(agencyId: number, month: string): Promise<MonthlyReport | undefined>;
+  createMonthlyReport(report: InsertMonthlyReport): Promise<MonthlyReport>;
 }
 
 // In-memory storage implementation
@@ -164,6 +177,8 @@ export class MemStorage implements IStorage {
   private payments: Map<number, Payment>;
   private aiChatLogs: Map<number, AiChatLog>;
   private dailyStandups: Map<number, DailyStandup>;
+  private weeklyReports: Map<number, WeeklyReport>;
+  private monthlyReports: Map<number, MonthlyReport>;
 
   // ID counters
   private userIdCounter = 1;
