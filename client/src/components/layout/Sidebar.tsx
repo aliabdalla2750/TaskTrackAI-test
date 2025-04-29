@@ -7,7 +7,7 @@ import {
   RiSettings3Line, RiBrainLine, RiBuildingLine, RiUserStarLine,
   RiShieldUserLine, RiUserLine, RiCloseLine, RiMenuLine,
   RiCodeSSlashLine, RiServerLine, RiChat1Line, RiClipboardLine, RiLineChartLine,
-  RiFileList2Line
+  RiFileList2Line, RiFilePaper2Line, RiBarChartBoxLine, RiCalendarCheckLine, RiFileChartLine
 } from 'react-icons/ri';
 
 interface SidebarProps {
@@ -90,6 +90,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     { path: '/dashboard/agency/tasks', icon: <RiTaskLine />, label: 'المهام' },
     { path: '/dashboard/agency/daily-standup', icon: <RiClipboardLine />, label: 'خطة العمل اليومية' },
     { path: '/dashboard/agency/daily-review', icon: <RiLineChartLine />, label: 'مراجعة التقارير اليومية 🆕' },
+    
+    // Reports section
+    { path: '/dashboard/agency/weekly-reports', icon: <RiFilePaper2Line />, label: 'التقارير الأسبوعية 🆕' },
+    { path: '/dashboard/agency/monthly-report', icon: <RiBarChartBoxLine />, label: 'التقرير الشهري 🆕' },
+    
     { path: '/dashboard/agency/team', icon: <RiTeamLine />, label: 'فريق العمل' },
     { path: '/dashboard/agency/clients', icon: <RiUser3Line />, label: 'العملاء' },
     { path: '/dashboard/agency/files', icon: <RiFileTextLine />, label: 'الملفات' },

@@ -32,7 +32,7 @@ import { SearchIcon, Filter, RefreshCw, Send, Eye, Calendar, DownloadCloud } fro
 import { format, parseISO, isAfter, startOfWeek, endOfWeek } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Client, WeeklyReport } from "@shared/schema";
-import { apiRequest, getQueryFn } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 const WeeklyReportsPage: React.FC = () => {

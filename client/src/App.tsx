@@ -67,6 +67,9 @@ function Router() {
       <Route path="/dashboard/agency/files" component={AgencyFiles} />
       <Route path="/dashboard/agency/ai-assistant" component={AgencyAiAssistant} />
       <Route path="/dashboard/agency/ai-settings" component={AiSettings} />
+      <Route path="/dashboard/agency/weekly-reports" component={WeeklyReportsPage} />
+      <Route path="/dashboard/agency/weekly-reports/:id" component={WeeklyReportView} />
+      <Route path="/dashboard/agency/monthly-report" component={MonthlyReportPage} />
       
       {/* Client Dashboard Routes */}
       <Route path="/dashboard/client/overview" component={ClientOverview} />
