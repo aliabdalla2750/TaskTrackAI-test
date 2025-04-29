@@ -541,4 +541,92 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(aiModels).where(eq(aiModels.id, id));
     return result.rowCount > 0;
   }
+  
+  // Daily Standups
+  async getDailyStandup(id: number): Promise<DailyStandup | undefined> {
+    const [standup] = await db.select().from(dailyStandups).where(eq(dailyStandups.id, id));
+    return standup;
+  }
+  
+  async getDailyStandupByEmployeeAndDate(employeeId: number, date: Date): Promise<DailyStandup | undefined> {
+    const [standup] = await db
+      .select()
+      .from(dailyStandups)
+      .where(and(
+        eq(dailyStandups.employeeId, employeeId),
+        eq(dailyStandups.date, date)
+      ));
+    return standup;
+  }
+  
+  async getEmployeeDailyStandups(employeeId: number): Promise<DailyStandup[]> {
+    return db
+      .select()
+      .from(dailyStandups)
+      .where(eq(dailyStandups.employeeId, employeeId))
+      .orderBy(desc(dailyStandups.date));
+  }
+  
+  async getAgencyDailyStandups(agencyId: number, date?: Date): Promise<DailyStandup[]> {
+    let query = db
+      .select()
+      .from(dailyStandups)
+      .where(eq(dailyStandups.agencyId, agencyId));
+      
+    if (date) {
+      query = query.where(eq(dailyStandups.date, date));
+    }
+    
+    return query.orderBy(desc(dailyStandups.date));
+  }
+  
+  async createDailyStandup(standup: InsertDailyStandup): Promise<DailyStandup> {
+    const [newStandup] = await db.insert(dailyStandups).values(standup).returning();
+    return newStandup;
+  }
+  
+  async updateDailyStandup(id: number, standup: Partial<InsertDailyStandup>): Promise<DailyStandup | undefined> {
+    const [updatedStandup] = await db
+      .update(dailyStandups)
+      .set({
+        ...standup,
+        updatedAt: new Date()
+      })
+      .where(eq(dailyStandups.id, id))
+      .returning();
+    return updatedStandup;
+  }
+  
+  async closeDailyStandup(id: number, tasksDone: number[], comments?: string, rating?: number): Promise<DailyStandup | undefined> {
+    const [closedStandup] = await db
+      .update(dailyStandups)
+      .set({
+        tasksDone,
+        comments,
+        dayRating: rating,
+        status: 'closed',
+        updatedAt: new Date()
+      })
+      .where(eq(dailyStandups.id, id))
+      .returning();
+    return closedStandup;
+  }
+  
+  async reviewDailyStandup(id: number, reviewerId: number, comments: string): Promise<DailyStandup | undefined> {
+    const [reviewedStandup] = await db
+      .update(dailyStandups)
+      .set({
+        reviewedBy: reviewerId,
+        reviewComments: comments,
+        updatedAt: new Date()
+      })
+      .where(eq(dailyStandups.id, id))
+      .returning();
+    return reviewedStandup;
+  }
+  
+  async deleteDailyStandup(id: number): Promise<boolean> {
+    const result = await db.delete(dailyStandups).where(eq(dailyStandups.id, id));
+    return result.rowCount > 0;
+  }
 }

@@ -14,7 +14,8 @@ import {
   payments, Payment, InsertPayment,
   aiChatLogs, AiChatLog, InsertAiChatLog,
   aiProviders, AiProvider, InsertAiProvider,
-  aiModels, AiModel, InsertAiModel
+  aiModels, AiModel, InsertAiModel,
+  dailyStandups, DailyStandup, InsertDailyStandup
 } from "@shared/schema";
 
 // Define the storage interface
@@ -133,6 +134,17 @@ export interface IStorage {
   createAiModel(model: InsertAiModel): Promise<AiModel>;
   updateAiModel(id: number, model: Partial<InsertAiModel>): Promise<AiModel | undefined>;
   deleteAiModel(id: number): Promise<boolean>;
+  
+  // Daily Standups
+  getDailyStandup(id: number): Promise<DailyStandup | undefined>;
+  getDailyStandupByEmployeeAndDate(employeeId: number, date: Date): Promise<DailyStandup | undefined>;
+  getEmployeeDailyStandups(employeeId: number): Promise<DailyStandup[]>;
+  getAgencyDailyStandups(agencyId: number, date?: Date): Promise<DailyStandup[]>;
+  createDailyStandup(standup: InsertDailyStandup): Promise<DailyStandup>;
+  updateDailyStandup(id: number, standup: Partial<InsertDailyStandup>): Promise<DailyStandup | undefined>;
+  closeDailyStandup(id: number, tasksDone: number[], comments?: string, rating?: number): Promise<DailyStandup | undefined>;
+  reviewDailyStandup(id: number, reviewerId: number, comments: string): Promise<DailyStandup | undefined>;
+  deleteDailyStandup(id: number): Promise<boolean>;
 }
 
 // In-memory storage implementation
@@ -151,6 +163,7 @@ export class MemStorage implements IStorage {
   private aiUsageLogs: Map<number, AiUsageLog>;
   private payments: Map<number, Payment>;
   private aiChatLogs: Map<number, AiChatLog>;
+  private dailyStandups: Map<number, DailyStandup>;
 
   // ID counters
   private userIdCounter = 1;
@@ -167,6 +180,7 @@ export class MemStorage implements IStorage {
   private aiUsageLogIdCounter = 1;
   private paymentIdCounter = 1;
   private aiChatLogIdCounter = 1;
+  private dailyStandupIdCounter = 1;
 
   constructor() {
     this.users = new Map();
