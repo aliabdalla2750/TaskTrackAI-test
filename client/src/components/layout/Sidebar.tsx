@@ -1,10 +1,70 @@
 import { Link, useLocation } from 'wouter';
 import { useDashboardContext } from '@/context/DashboardContext';
+import { motion } from 'framer-motion';
+import {
+  RiDashboardLine, RiFolderOpenLine, RiMagicLine, RiTaskLine,
+  RiTeamLine, RiUser3Line, RiFileTextLine, RiRobot2Line,
+  RiSettings3Line, RiBrainLine, RiBuildingLine, RiUserStarLine,
+  RiShieldUserLine, RiUserLine, RiCloseLine, RiMenuLine,
+  RiCodeSSlashLine, RiServerLine, RiChat1Line, RiClipboardLine, RiLineChartLine
+} from 'react-icons/ri';
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
 }
+
+const sideVariants = {
+  closed: {
+    x: '100%',
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 40
+    }
+  },
+  open: {
+    x: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 40,
+      when: "beforeChildren",
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  closed: { opacity: 0, x: 20 },
+  open: { opacity: 1, x: 0 }
+};
+
+interface SidebarLinkProps {
+  path: string;
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+}
+
+const SidebarLink = ({ path, icon, label, active }: SidebarLinkProps) => {
+  return (
+    <motion.li variants={itemVariants} className="mb-2">
+      <Link 
+        href={path}
+        className={`flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-300 ${
+          active
+            ? 'text-white bg-primary shadow-md'
+            : 'text-gray-700 hover:bg-accent hover:text-primary'
+        }`}
+      >
+        <span className="text-lg">{icon}</span>
+        <span>{label}</span>
+        {active && <div className="absolute -right-1 w-1.5 h-7 bg-secondary rounded-l-md"></div>}
+      </Link>
+    </motion.li>
+  );
+};
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const [location] = useLocation();
@@ -15,37 +75,37 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   };
   
   const agencyLinks = [
-    { path: '/dashboard/agency/overview', icon: 'fa-tachometer-alt', label: 'نظرة عامة' },
-    { path: '/dashboard/agency/projects', icon: 'fa-folder-open', label: 'المشاريع' },
-    { path: '/dashboard/agency/create-smart-project', icon: 'fa-magic', label: 'إنشاء مشروع ذكي' },
-    { path: '/dashboard/agency/tasks', icon: 'fa-tasks', label: 'المهام' },
-    { path: '/dashboard/agency/team', icon: 'fa-users', label: 'فريق العمل' },
-    { path: '/dashboard/agency/clients', icon: 'fa-user-tie', label: 'العملاء' },
-    { path: '/dashboard/agency/files', icon: 'fa-file-alt', label: 'الملفات' },
-    { path: '/dashboard/agency/ai-assistant', icon: 'fa-robot', label: 'المساعد الذكي' },
+    { path: '/dashboard/agency/overview', icon: <RiDashboardLine />, label: 'نظرة عامة' },
+    { path: '/dashboard/agency/projects', icon: <RiFolderOpenLine />, label: 'المشاريع' },
+    { path: '/dashboard/agency/create-smart-project', icon: <RiMagicLine />, label: 'إنشاء مشروع ذكي' },
+    { path: '/dashboard/agency/tasks', icon: <RiTaskLine />, label: 'المهام' },
+    { path: '/dashboard/agency/team', icon: <RiTeamLine />, label: 'فريق العمل' },
+    { path: '/dashboard/agency/clients', icon: <RiUser3Line />, label: 'العملاء' },
+    { path: '/dashboard/agency/files', icon: <RiFileTextLine />, label: 'الملفات' },
+    { path: '/dashboard/agency/ai-assistant', icon: <RiRobot2Line />, label: 'المساعد الذكي' },
   ];
   
   const clientLinks = [
-    { path: '/dashboard/client/overview', icon: 'fa-tachometer-alt', label: 'نظرة عامة' },
-    { path: '/dashboard/client/projects', icon: 'fa-folder-open', label: 'المشاريع' },
-    { path: '/dashboard/client/tasks', icon: 'fa-tasks', label: 'المهام' },
-    { path: '/dashboard/client/files', icon: 'fa-file-alt', label: 'الملفات' },
+    { path: '/dashboard/client/overview', icon: <RiDashboardLine />, label: 'نظرة عامة' },
+    { path: '/dashboard/client/projects', icon: <RiFolderOpenLine />, label: 'المشاريع' },
+    { path: '/dashboard/client/tasks', icon: <RiTaskLine />, label: 'المهام' },
+    { path: '/dashboard/client/files', icon: <RiFileTextLine />, label: 'الملفات' },
   ];
   
   const adminLinks = [
-    { path: '/dashboard/admin/overview', icon: 'fa-tachometer-alt', label: 'نظرة عامة' },
-    { path: '/dashboard/admin/users', icon: 'fa-users', label: 'المستخدمين' },
-    { path: '/dashboard/admin/ai-scenarios', icon: 'fa-robot', label: 'سيناريوهات الذكاء الاصطناعي' },
-    { path: '/dashboard/admin/ai-providers', icon: 'fa-server', label: 'مزودي الذكاء الاصطناعي' },
-    { path: '/dashboard/admin/ai-chat-test', icon: 'fa-comment-dots', label: 'اختبار الذكاء الاصطناعي' },
+    { path: '/dashboard/admin/overview', icon: <RiDashboardLine />, label: 'نظرة عامة' },
+    { path: '/dashboard/admin/users', icon: <RiTeamLine />, label: 'المستخدمين' },
+    { path: '/dashboard/admin/ai-scenarios', icon: <RiRobot2Line />, label: 'سيناريوهات الذكاء الاصطناعي' },
+    { path: '/dashboard/admin/ai-providers', icon: <RiServerLine />, label: 'مزودي الذكاء الاصطناعي' },
+    { path: '/dashboard/admin/ai-chat-test', icon: <RiChat1Line />, label: 'اختبار الذكاء الاصطناعي' },
   ];
   
   const employeeLinks = [
-    { path: '/dashboard/employee/overview', icon: 'fa-tachometer-alt', label: 'نظرة عامة' },
-    { path: '/dashboard/employee/tasks', icon: 'fa-tasks', label: 'المهام' },
-    { path: '/dashboard/employee/submissions', icon: 'fa-clipboard-check', label: 'التسليمات' },
-    { path: '/dashboard/employee/performance', icon: 'fa-chart-line', label: 'الأداء' },
-    { path: '/dashboard/employee/files', icon: 'fa-file-alt', label: 'الملفات' },
+    { path: '/dashboard/employee/overview', icon: <RiDashboardLine />, label: 'نظرة عامة' },
+    { path: '/dashboard/employee/tasks', icon: <RiTaskLine />, label: 'المهام' },
+    { path: '/dashboard/employee/submissions', icon: <RiClipboardLine />, label: 'التسليمات' },
+    { path: '/dashboard/employee/performance', icon: <RiLineChartLine />, label: 'الأداء' },
+    { path: '/dashboard/employee/files', icon: <RiFileTextLine />, label: 'الملفات' },
   ];
   
   let links;
@@ -73,120 +133,109 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     <>
       {/* Mobile backdrop */}
       {open && (
-        <div 
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
           onClick={onClose}
         />
       )}
       
       {/* Sidebar */}
-      <aside 
-        className={`w-64 bg-white shadow-md fixed h-full z-30 transition-transform duration-300 lg:translate-x-0 ${
-          open ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
-        }`}
+      <motion.aside 
+        variants={sideVariants}
+        initial="closed"
+        animate={open ? "open" : "closed"}
+        className="w-72 bg-white shadow-xl fixed h-full z-30 overflow-hidden lg:translate-x-0 overflow-y-auto"
       >
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary rounded-md w-8 h-8 flex items-center justify-center">
-              <span className="text-white text-lg font-bold">ت</span>
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b bg-gradient-to-l from-primary/5 to-primary/10">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary rounded-lg w-10 h-10 flex items-center justify-center shadow-md">
+              <span className="text-white text-xl font-bold">ت</span>
             </div>
-            <h1 className="text-xl font-bold text-darkText">تاسكايا</h1>
+            <h1 className="text-2xl font-bold text-primary">تاسكايا</h1>
           </div>
-          <button onClick={onClose} className="lg:hidden text-gray-500 hover:text-gray-800">
-            <i className="fas fa-times"></i>
+          <button 
+            onClick={onClose} 
+            className="lg:hidden text-gray-500 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100"
+          >
+            <RiCloseLine size={24} />
           </button>
         </div>
         
+        {/* Navigation */}
         <nav className="p-4">
-          <h2 className="text-sm font-semibold text-gray-500 mb-2">{dashboardTitle}</h2>
-          <ul>
+          <motion.div variants={itemVariants}>
+            <h2 className="text-sm font-bold text-gray-500 mb-3 px-3">{dashboardTitle}</h2>
+          </motion.div>
+          
+          <motion.ul className="space-y-1">
             {links.map((link) => (
-              <li key={link.path} className="mb-1">
-                <Link 
-                  href={link.path}
-                  className={`flex items-center gap-2 p-2 rounded-md font-medium ${
-                    isActive(link.path)
-                      ? 'text-primary bg-blue-50'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <i className={`fas ${link.icon}`}></i>
-                  <span>{link.label}</span>
-                </Link>
-              </li>
+              <SidebarLink 
+                key={link.path}
+                path={link.path}
+                icon={link.icon}
+                label={link.label}
+                active={isActive(link.path)}
+              />
             ))}
-          </ul>
+          </motion.ul>
           
-          <h2 className="text-sm font-semibold text-gray-500 mt-6 mb-2">الإعدادات</h2>
-          <ul>
-            <li className="mb-1">
-              <a
-                href="#"
-                className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-              >
-                <i className="fas fa-cog"></i>
-                <span>الإعدادات العامة</span>
-              </a>
-            </li>
-            <li className="mb-1">
-              <Link
-                href="/dashboard/agency/ai-settings"
-                className={`flex items-center gap-2 p-2 rounded-md font-medium ${
-                  isActive('/dashboard/agency/ai-settings')
-                    ? 'text-primary bg-blue-50'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <i className="fas fa-brain"></i>
-                <span>إعدادات الذكاء الاصطناعي</span>
-              </Link>
-            </li>
-          </ul>
+          <motion.div variants={itemVariants} className="mt-8">
+            <h2 className="text-sm font-bold text-gray-500 mb-3 px-3">الإعدادات</h2>
+          </motion.div>
           
-          {/* Dashboard Type Switcher (for development purposes) */}
-          <div className="mt-6 pt-6 border-t">
-            <h2 className="text-sm font-semibold text-gray-500 mb-2">تبديل لوحة التحكم</h2>
-            <ul>
-              <li className="mb-1">
-                <Link 
-                  href="/dashboard/agency/overview"
-                  className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                >
-                  <i className="fas fa-building"></i>
-                  <span>لوحة الوكالة</span>
-                </Link>
-              </li>
-              <li className="mb-1">
-                <Link 
-                  href="/dashboard/client/overview"
-                  className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                >
-                  <i className="fas fa-user-tie"></i>
-                  <span>لوحة العميل</span>
-                </Link>
-              </li>
-              <li className="mb-1">
-                <Link 
-                  href="/dashboard/admin/overview"
-                  className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                >
-                  <i className="fas fa-user-shield"></i>
-                  <span>لوحة المدير</span>
-                </Link>
-              </li>
-              <li className="mb-1">
-                <Link 
-                  href="/dashboard/employee/overview"
-                  className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                >
-                  <i className="fas fa-user"></i>
-                  <span>لوحة الموظف</span>
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <motion.ul className="space-y-1">
+            <SidebarLink 
+              path="#"
+              icon={<RiSettings3Line />}
+              label="الإعدادات العامة"
+              active={false}
+            />
+            <SidebarLink 
+              path="/dashboard/agency/ai-settings"
+              icon={<RiBrainLine />}
+              label="إعدادات الذكاء الاصطناعي"
+              active={isActive('/dashboard/agency/ai-settings')}
+            />
+          </motion.ul>
+          
+          {/* Dashboard Type Switcher */}
+          <motion.div variants={itemVariants} className="mt-8 pt-6 border-t border-gray-100">
+            <h2 className="text-sm font-bold text-gray-500 mb-3 px-3">تبديل لوحة التحكم</h2>
+            <div className="bg-accent rounded-lg p-3">
+              <motion.ul className="space-y-1">
+                <SidebarLink 
+                  path="/dashboard/agency/overview"
+                  icon={<RiBuildingLine />}
+                  label="لوحة الوكالة"
+                  active={dashboardType === 'agency'}
+                />
+                <SidebarLink 
+                  path="/dashboard/client/overview"
+                  icon={<RiUserStarLine />}
+                  label="لوحة العميل"
+                  active={dashboardType === 'client'}
+                />
+                <SidebarLink 
+                  path="/dashboard/admin/overview"
+                  icon={<RiShieldUserLine />}
+                  label="لوحة المدير"
+                  active={dashboardType === 'admin'}
+                />
+                <SidebarLink 
+                  path="/dashboard/employee/overview"
+                  icon={<RiUserLine />}
+                  label="لوحة الموظف"
+                  active={dashboardType === 'employee'}
+                />
+              </motion.ul>
+            </div>
+          </motion.div>
         </nav>
-      </aside>
+      </motion.aside>
     </>
   );
 }

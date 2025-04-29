@@ -4,6 +4,7 @@ import { Header } from './Header';
 import { ToastNotification } from '@/components/ui/toast-notification';
 import { useToastContext } from '@/context/ToastContext';
 import useDashboardType from '@/hooks/useDashboardType';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -18,12 +19,12 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
   useDashboardType();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-lightBg">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       {/* Main Content */}
-      <main className="flex-1 overflow-auto lg:mr-64">
+      <main className="flex-1 overflow-auto lg:mr-72 transition-all duration-300">
         {/* Header */}
         <Header 
           title={title} 
@@ -31,22 +32,36 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
         />
         
         {/* Page Content */}
-        <div className="p-4 sm:p-6">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+          className="p-5 sm:p-7"
+        >
           {children}
-        </div>
+        </motion.div>
         
         {/* Toast Notifications */}
-        <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-2">
-          {toasts.map((toast) => (
-            <ToastNotification
-              key={toast.id}
-              type={toast.type}
-              title={toast.title}
-              message={toast.message}
-              onClose={() => removeToast(toast.id)}
-            />
-          ))}
-        </div>
+        <AnimatePresence>
+          <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-2">
+            {toasts.map((toast) => (
+              <motion.div
+                key={toast.id}
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ToastNotification
+                  type={toast.type}
+                  title={toast.title}
+                  message={toast.message}
+                  onClose={() => removeToast(toast.id)}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </AnimatePresence>
       </main>
     </div>
   );
