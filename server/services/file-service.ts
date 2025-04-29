@@ -3,11 +3,19 @@ import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import util from 'util';
-import pdfParse from 'pdf-parse';
-import mammoth from 'mammoth';
-import { fileTypeFromBuffer } from 'file-type-js';
+// 使用动态导入而不是静态导入来避免初始化问题
+// import pdfParse from 'pdf-parse';
+// import mammoth from 'mammoth';
+import { fileTypeFromBuffer } from 'file-type';
 
-// تهيئة مجلد التخزين المؤقت للملفات
+// تهيئة مجلد التخزين المؤقت للملفات 
+// 在 ES 模块中使用 import.meta.url 替代 __dirname
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const uploadDir = path.join(__dirname, '../temp-uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -59,6 +67,8 @@ export const handleUploadErrors = (err: any, req: Request, res: Response, next: 
 // استخراج النص من ملف PDF
 export const extractTextFromPdf = async (filePath: string): Promise<string> => {
   try {
+    // 动态导入pdf-parse库
+    const pdfParse = await import('pdf-parse').then(module => module.default);
     const dataBuffer = fs.readFileSync(filePath);
     const pdfData = await pdfParse(dataBuffer);
     return pdfData.text || '';
@@ -71,6 +81,8 @@ export const extractTextFromPdf = async (filePath: string): Promise<string> => {
 // استخراج النص من ملف DOCX
 export const extractTextFromDocx = async (filePath: string): Promise<string> => {
   try {
+    // 动态导入mammoth库
+    const mammoth = await import('mammoth');
     const result = await mammoth.extractRawText({ path: filePath });
     return result.value || '';
   } catch (error) {
@@ -94,21 +106,30 @@ export const extractTextFromTxt = async (filePath: string): Promise<string> => {
 // تحديد نوع الملف واستخراج النص من أي ملف مدعوم
 export const extractTextFromFile = async (filePath: string): Promise<string> => {
   try {
-    const fileBuffer = fs.readFileSync(filePath);
-    const fileInfo = await fileTypeFromBuffer(fileBuffer);
-    
     const fileExtension = path.extname(filePath).toLowerCase();
     
-    if (fileInfo?.mime === 'application/pdf' || fileExtension === '.pdf') {
+    // استخدام امتداد الملف مباشرة بدلاً من تحديد النوع من المحتوى
+    if (fileExtension === '.pdf') {
       return await extractTextFromPdf(filePath);
-    } else if (
-      fileInfo?.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
-      fileExtension === '.docx'
-    ) {
+    } else if (fileExtension === '.docx') {
       return await extractTextFromDocx(filePath);
     } else if (fileExtension === '.txt') {
       return await extractTextFromTxt(filePath);
     } else {
+      // محاولة تحديد نوع الملف من المحتوى في حالة عدم وجود امتداد صالح
+      try {
+        const fileBuffer = fs.readFileSync(filePath);
+        const fileType = await fileTypeFromBuffer(fileBuffer);
+        
+        if (fileType?.mime === 'application/pdf') {
+          return await extractTextFromPdf(filePath);
+        } else if (fileType?.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+          return await extractTextFromDocx(filePath);
+        }
+      } catch (typeError) {
+        console.error('Error determining file type:', typeError);
+      }
+      
       throw new Error('نوع الملف غير مدعوم. يرجى استخدام ملف PDF أو DOCX أو TXT فقط.');
     }
   } finally {

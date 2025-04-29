@@ -1367,6 +1367,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // نقطة نهاية لتحليل الملفات المرفوعة
+  app.post("/api/upload/analyze-document", upload.single('file'), handleUploadErrors, async (req: Request, res: Response) => {
+    try {
+      // تم تعديل هذا الكود لاستخدام req.file من multer بشكل صحيح
+      const file = req.file as Express.Multer.File;
+      
+      if (!file) {
+        return res.status(400).json({ message: "يرجى رفع ملف صالح" });
+      }
+      
+      // استخراج النص من الملف المرفوع
+      console.log("Extracting text from file:", file.originalname, file.mimetype, file.path);
+      const extractedText = await extractTextFromFile(file.path);
+      const cleanedText = cleanExtractedText(extractedText);
+      
+      // تحقق من صحة الاستخراج
+      if (!cleanedText || cleanedText.trim() === '') {
+        return res.status(400).json({ message: "لم يتم العثور على محتوى نصي في الملف المرفوع" });
+      }
+      
+      // إرجاع النص المستخرج للاستخدام في التحليل
+      res.json({
+        success: true,
+        fileName: file.originalname,
+        fileContent: cleanedText,
+        contentPreview: cleanedText.slice(0, 300) + '...'
+      });
+    } catch (err) {
+      const error = err as Error;
+      console.error("Error analyzing document:", error);
+      res.status(500).json({ message: "خطأ في تحليل الملف: " + (error.message || "حدث خطأ أثناء تحليل المحتوى. يرجى المحاولة مرة أخرى.") });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
   

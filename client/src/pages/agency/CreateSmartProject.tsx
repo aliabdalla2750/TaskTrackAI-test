@@ -276,25 +276,76 @@ export default function CreateSmartProject() {
   // وظيفة للتعامل مع رفع الملفات
   const [fileContent, setFileContent] = useState<string>("");
   const [fileName, setFileName] = useState<string>("");
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    // حفظ الملف المختار للرفع لاحقًا
+    setUploadedFile(file);
     setFileName(file.name);
     
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      setFileContent(content);
-    };
+    // تحقق من نوع الملف
+    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "نوع ملف غير مدعوم",
+        description: "يرجى رفع ملف PDF أو DOCX أو TXT فقط.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    reader.readAsText(file);
+    // تحقق من حجم الملف (الحد الأقصى 25 ميغابايت)
+    if (file.size > 25 * 1024 * 1024) {
+      toast({
+        title: "الملف كبير جدًا",
+        description: "حجم الملف يتجاوز 25 ميجابايت. يرجى رفع ملف أصغر.",
+        variant: "destructive",
+      });
+      return;
+    }
+  };
+  
+  // وظيفة رفع الملف واستخراج النص بواسطة نقطة النهاية الجديدة
+  const uploadAndExtractText = async (file: File): Promise<string> => {
+    setIsUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/upload/analyze-document', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'فشل في تحليل الملف');
+      }
+      
+      const data = await response.json();
+      console.log("File analysis result from server:", data);
+      
+      if (!data.success || !data.fileContent) {
+        throw new Error('لم يتم استخراج محتوى من الملف');
+      }
+      
+      return data.fileContent;
+    } catch (error) {
+      console.error('Error extracting file content:', error);
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
   };
   
   // تحليل الملف المرفوع باستخدام المساعد الذكي
   const analyzeUploadedFile = async () => {
-    if (!fileContent || !projectName) {
+    if (!uploadedFile || !projectName) {
       toast({
         title: "المعلومات غير مكتملة",
         description: "يرجى إدخال اسم المشروع ورفع ملف العقد أو البروبوزال",
@@ -303,33 +354,31 @@ export default function CreateSmartProject() {
       return;
     }
     
-    // التحقق من حجم الملف وتقصيره إذا كان كبيرًا جدًا
-    let processedContent = fileContent;
-    const MAX_CONTENT_LENGTH = 15000; // الحد الأقصى للمحتوى (حوالي 15000 حرف)
-    
-    if (fileContent.length > MAX_CONTENT_LENGTH) {
-      // تقصير المحتوى مع إضافة إشعار
-      processedContent = fileContent.substring(0, MAX_CONTENT_LENGTH) + 
-        "\n\n[تم اقتصاص المحتوى لأن الملف كبير جدًا. يرجى تحميل ملف أصغر للتحليل الكامل.]";
-      
-      console.log(`File content truncated from ${fileContent.length} to ${processedContent.length} characters`);
-      
-      toast({
-        title: "تنبيه",
-        description: "الملف كبير جدًا وسيتم تحليل الجزء الأول منه فقط. للحصول على تحليل كامل، قم بتقسيم الملف إلى أجزاء أصغر.",
-        variant: "default",
-      });
-    }
-    
     setIsSubmitting(true);
     
     try {
-      // استخدام المزود الذي تم تحميله بالفعل بدلاً من الاستعلام مرة أخرى
+      // رفع الملف واستخراج النص منه
+      let extractedContent = "";
+      try {
+        extractedContent = await uploadAndExtractText(uploadedFile);
+        setFileContent(extractedContent); // حفظ المحتوى المستخرج
+      } catch (err) {
+        const extractError = err as Error;
+        toast({
+          title: "خطأ في استخراج محتوى الملف",
+          description: extractError.message || "لم نتمكن من استخراج النص من الملف المرفوع. يرجى التأكد من تنسيق الملف.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // استخدام المزود الذي تم تحميله بالفعل
       console.log("Using AI provider:", providerId);
       
       const response = await apiRequest('POST', '/api/ai/project-creation', {
         projectName: projectName,
-        projectDetails: `تحليل ملف: ${fileName}\n\n${processedContent}`,
+        projectDetails: `تحليل ملف: ${fileName}\n\n${extractedContent}`,
         aiSettings: {
           persona: aiSetup.aiPersona === 'custom' ? aiSetup.customPersona : DEFAULT_PERSONAS[aiSetup.aiPersona as keyof typeof DEFAULT_PERSONAS],
           thinkingStyle: THINKING_STYLES[aiSetup.thinkingStyle as keyof typeof THINKING_STYLES],
@@ -418,7 +467,7 @@ export default function CreateSmartProject() {
                     id="fileUpload"
                     type="file"
                     accept=".pdf,.docx,.txt"
-                    onChange={handleFileUpload}
+                    onChange={handleFileSelection}
                     className="cursor-pointer"
                   />
                   {fileName && (
