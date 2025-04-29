@@ -92,7 +92,7 @@ const WeeklyReportsPage: React.FC = () => {
   };
 
   const filteredClients = React.useMemo(() => {
-    if (!clients) return [];
+    if (!clients || !Array.isArray(clients)) return [];
     
     return clients.filter((client: Client) => {
       const matchesSearch = client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

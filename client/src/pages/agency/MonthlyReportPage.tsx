@@ -1,167 +1,157 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription, 
+  CardFooter 
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { format, parseISO, addMonths, subMonths } from "date-fns";
-import { ar } from "date-fns/locale";
-import { DownloadCloud, Users, FileText, Calendar, TrendingUp, DollarSign, Briefcase, Award } from "lucide-react";
-import { apiRequest, getQueryFn } from "@/lib/queryClient";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-
-// Import rechart components for visualizations
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-
-interface EmployeePerformance {
-  id: number;
-  name: string;
-  position: string;
-  completedTasks: number;
-  taskCompletion: number;
-  pendingTasks: number;
-}
-
-interface MonthlyKPIs {
-  openProjects: number;
-  completedProjects: number;
-  taskCompletionRate: number;
-  delayRate: number;
-  topPerformer: {
-    id: number;
-    name: string;
-    tasks: number;
-  };
-  mostActiveClient: {
-    id: number;
-    name: string;
-    projects: number;
-  };
-  totalRevenue: number;
-  mostTimeConsumingProject: {
-    id: number;
-    name: string;
-    hours: number;
-  };
-}
-
-interface MonthlyReport {
-  id: number;
-  agencyId: number;
-  month: string;
-  generatedAt: string;
-  metrics: MonthlyKPIs;
-  performanceHistory: {
-    month: string;
-    taskCompletionRate: number;
-    delayRate: number;
-    revenue: number;
-  }[];
-  employeePerformance: EmployeePerformance[];
-}
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { 
+  Table, 
+  TableBody, 
+  TableCaption, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Client, Project } from "@shared/schema";
+import { Calendar, CheckCircle2, Clock, Download, Mail, MailIcon, Send, Users, Phone, Printer, RefreshCw, BarChart3, AlertTriangle } from "lucide-react";
+import { format, parseISO, getMonth, getYear, startOfMonth, endOfMonth } from "date-fns";
+import { ar } from "date-fns/locale";
 
 const MonthlyReportPage: React.FC = () => {
   const { toast } = useToast();
-  const [selectedMonth, setSelectedMonth] = useState<string>(
-    format(new Date(), "yyyy-MM")
-  );
-
-  const { data: report, isLoading, error, refetch } = useQuery({
-    queryKey: ["/api/reports/monthly", selectedMonth],
-    queryFn: getQueryFn(),
+  const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
+  const [selectedClient, setSelectedClient] = useState<number | null>(null);
+  
+  const {
+    data: clients,
+    isLoading: isLoadingClients,
+    error: clientsError
+  } = useQuery({
+    queryKey: ["/api/clients"]
   });
-
-  const handleGenerateReport = async () => {
-    try {
-      await apiRequest("POST", "/api/reports/monthly/generate", { month: selectedMonth });
+  
+  const {
+    data: projects,
+    isLoading: isLoadingProjects,
+    error: projectsError
+  } = useQuery({
+    queryKey: ["/api/projects"]
+  });
+  
+  const {
+    data: monthlyReport,
+    isLoading: isLoadingReport,
+    error: reportError,
+    refetch: refetchReport
+  } = useQuery({
+    queryKey: ["/api/reports/monthly", selectedMonth, selectedClient],
+    enabled: !!selectedClient
+  });
+  
+  const generateReportMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedClient) {
+        throw new Error("يرجى اختيار عميل");
+      }
+      
+      const monthDate = new Date(selectedMonth);
+      const payload = {
+        clientId: selectedClient,
+        month: format(monthDate, 'yyyy-MM')
+      };
+      
+      return apiRequest("POST", "/api/reports/monthly/generate", payload)
+        .then(res => res.json());
+    },
+    onSuccess: () => {
       toast({
-        title: "تم إنشاء التقرير",
+        title: "تم إنشاء التقرير الشهري",
         description: "تم إنشاء التقرير الشهري بنجاح",
       });
-      refetch();
-    } catch (error) {
+      refetchReport();
+    },
+    onError: (error: Error) => {
       toast({
         title: "فشل إنشاء التقرير",
-        description: "حدث خطأ أثناء إنشاء التقرير. يرجى المحاولة مرة أخرى.",
+        description: error.message || "حدث خطأ أثناء إنشاء التقرير الشهري. يرجى المحاولة مرة أخرى.",
         variant: "destructive",
       });
     }
-  };
-
-  const handleDownloadPDF = async () => {
-    try {
-      // In a real implementation, this would call an API to generate and download a PDF
-      toast({
-        title: "جاري التحميل",
-        description: "جاري تحميل التقرير بصيغة PDF...",
-      });
+  });
+  
+  const sendReportMutation = useMutation({
+    mutationFn: async (method: 'email' | 'whatsapp') => {
+      if (!selectedClient || !monthlyReport) {
+        throw new Error("يرجى اختيار عميل وإنشاء تقرير أولاً");
+      }
       
-      // Simulating API call delay
-      setTimeout(() => {
-        toast({
-          title: "تم التحميل",
-          description: "تم تحميل التقرير بنجاح",
-        });
-      }, 2000);
-    } catch (error) {
+      return apiRequest("POST", `/api/reports/monthly/${monthlyReport.id}/send`, { 
+        clientId: selectedClient,
+        method
+      })
+        .then(res => res.json());
+    },
+    onSuccess: (_, variables) => {
+      const method = variables === 'email' ? 'البريد الإلكتروني' : 'واتساب';
       toast({
-        title: "فشل التحميل",
-        description: "حدث خطأ أثناء تحميل التقرير. يرجى المحاولة مرة أخرى.",
+        title: "تم إرسال التقرير",
+        description: `تم إرسال التقرير الشهري عبر ${method} بنجاح`,
+      });
+      refetchReport();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "فشل إرسال التقرير",
+        description: error.message || "حدث خطأ أثناء إرسال التقرير الشهري. يرجى المحاولة مرة أخرى.",
         variant: "destructive",
       });
     }
+  });
+  
+  const getSelectedClient = () => {
+    if (!clients || !selectedClient) return null;
+    return clients.find((client: Client) => client.id === selectedClient);
   };
-
-  const generateMonthOptions = () => {
-    const options = [];
-    const today = new Date();
-    
-    // Generate options for the last 12 months
-    for (let i = 0; i < 12; i++) {
-      const date = subMonths(today, i);
-      const value = format(date, "yyyy-MM");
-      const label = format(date, "MMMM yyyy", { locale: ar });
-      
-      options.push({ value, label });
-    }
-    
-    return options;
+  
+  const getClientProjects = () => {
+    if (!projects || !selectedClient) return [];
+    return projects.filter((project: Project) => project.clientId === selectedClient);
   };
-
+  
+  const isLoading = isLoadingClients || isLoadingProjects || isLoadingReport;
+  const hasError = !!clientsError || !!projectsError || !!reportError;
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -169,8 +159,8 @@ const MonthlyReportPage: React.FC = () => {
       </div>
     );
   }
-
-  if (error) {
+  
+  if (hasError) {
     return (
       <div className="p-6">
         <Card className="border-destructive">
@@ -178,359 +168,549 @@ const MonthlyReportPage: React.FC = () => {
             <CardTitle className="text-destructive">حدث خطأ</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>فشل تحميل بيانات التقرير. يرجى تحديث الصفحة أو المحاولة لاحقًا.</p>
+            <p>فشل تحميل البيانات. يرجى تحديث الصفحة أو المحاولة لاحقًا.</p>
           </CardContent>
-          <CardFooter>
-            <Button onClick={() => refetch()} variant="outline">
-              إعادة المحاولة
-            </Button>
-          </CardFooter>
         </Card>
       </div>
     );
   }
-
-  // If no report data exists for the selected month
-  if (!report) {
-    return (
-      <div className="container mx-auto p-6 rtl">
-        <div className="flex flex-col space-y-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">التقرير الشهري</h1>
-            <div className="flex gap-2">
-              <Select
-                value={selectedMonth}
-                onValueChange={setSelectedMonth}
-              >
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="اختر الشهر" />
-                </SelectTrigger>
-                <SelectContent>
-                  {generateMonthOptions().map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>لا يوجد تقرير</CardTitle>
-              <CardDescription>
-                لم يتم إنشاء تقرير لشهر {format(parseISO(`${selectedMonth}-01`), "MMMM yyyy", { locale: ar })}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center py-10">
-              <Calendar className="w-16 h-16 text-muted-foreground mb-4" />
-              <p className="text-center mb-6">
-                لا توجد بيانات متاحة لهذا الشهر. قم بإنشاء تقرير جديد.
-              </p>
-              <Button onClick={handleGenerateReport}>
-                إنشاء التقرير الشهري
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // For demonstration purposes, we'll create sample data
-  // In a real implementation, this would come from the API
-  const monthlyKPIs: MonthlyKPIs = report.metrics || {
-    openProjects: 12,
-    completedProjects: 4,
-    taskCompletionRate: 78,
-    delayRate: 12,
-    topPerformer: {
-      id: 1,
-      name: "أحمد محمد",
-      tasks: 23,
-    },
-    mostActiveClient: {
-      id: 2,
-      name: "شركة الأهرام للتكنولوجيا",
-      projects: 3,
-    },
-    totalRevenue: 45000,
-    mostTimeConsumingProject: {
-      id: 3,
-      name: "تطوير منصة التعليم الإلكتروني",
-      hours: 120,
-    },
-  };
-
-  const performanceHistory = report.performanceHistory || [
-    { month: "يناير", taskCompletionRate: 65, delayRate: 15, revenue: 30000 },
-    { month: "فبراير", taskCompletionRate: 70, delayRate: 12, revenue: 35000 },
-    { month: "مارس", taskCompletionRate: 78, delayRate: 10, revenue: 42000 },
-  ];
-
-  const employeePerformance = report.employeePerformance || [
-    { id: 1, name: "أحمد محمد", position: "مطور ويب", completedTasks: 23, taskCompletion: 92, pendingTasks: 2 },
-    { id: 2, name: "سارة أحمد", position: "مصممة واجهات", completedTasks: 18, taskCompletion: 90, pendingTasks: 2 },
-    { id: 3, name: "محمد أحمد", position: "مدير مشروع", completedTasks: 15, taskCompletion: 85, pendingTasks: 3 },
-    { id: 4, name: "ليلى خالد", position: "مسوقة إلكترونية", completedTasks: 12, taskCompletion: 80, pendingTasks: 3 },
-  ];
-
+  
+  const selectedClientData = getSelectedClient();
+  const clientProjects = getClientProjects();
+  
   return (
     <div className="container mx-auto p-6 rtl">
       <div className="flex flex-col space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">التقرير الشهري</h1>
-          <div className="flex gap-2">
-            <Select
-              value={selectedMonth}
-              onValueChange={setSelectedMonth}
-            >
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="اختر الشهر" />
-              </SelectTrigger>
-              <SelectContent>
-                {generateMonthOptions().map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={handleGenerateReport}>
-              تحديث التقرير
-            </Button>
-            <Button onClick={handleDownloadPDF} className="gap-2">
-              <DownloadCloud className="h-4 w-4" />
-              تنزيل PDF
-            </Button>
-          </div>
+          <Button
+            onClick={() => refetchReport()}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            تحديث
+          </Button>
         </div>
-
+        
         <Card>
           <CardHeader>
-            <CardTitle>
-              تقرير شهر {format(parseISO(`${selectedMonth}-01`), "MMMM yyyy", { locale: ar })}
-            </CardTitle>
-            <CardDescription>
-              نظرة عامة على أداء الوكالة والمؤشرات الرئيسية
-            </CardDescription>
+            <CardTitle>إعدادات التقرير</CardTitle>
+            <CardDescription>اختر العميل والشهر لإنشاء التقرير الشهري</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-primary/10 rounded-full">
-                      <Briefcase className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">المشاريع الجارية</p>
-                      <h3 className="text-2xl font-bold">{monthlyKPIs.openProjects}</h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-green-100 rounded-full">
-                      <FileText className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">معدل إنجاز المهام</p>
-                      <h3 className="text-2xl font-bold">{monthlyKPIs.taskCompletionRate}%</h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-red-100 rounded-full">
-                      <TrendingUp className="h-5 w-5 text-red-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">معدل التأخير</p>
-                      <h3 className="text-2xl font-bold">{monthlyKPIs.delayRate}%</h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <DollarSign className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">إجمالي التحصيلات</p>
-                      <h3 className="text-2xl font-bold">{monthlyKPIs.totalRevenue.toLocaleString()} ج.م</h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="client" className="block mb-2">العميل</Label>
+                <Select
+                  value={selectedClient?.toString() || ""}
+                  onValueChange={(value) => setSelectedClient(parseInt(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر العميل" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients && Array.isArray(clients) ? clients.map((client: Client) => (
+                      <SelectItem key={client.id} value={client.id.toString()}>
+                        {client.name} - {client.company || "بدون شركة"}
+                      </SelectItem>
+                    )) : null}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="month" className="block mb-2">الشهر</Label>
+                <Input
+                  id="month"
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="w-full"
+                />
+              </div>
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>تطور الأداء (آخر 3 شهور)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={performanceHistory}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis yAxisId="left" />
-                        <YAxis yAxisId="right" orientation="right" />
-                        <Tooltip />
-                        <Legend />
-                        <Line 
-                          yAxisId="left" 
-                          type="monotone" 
-                          dataKey="taskCompletionRate" 
-                          name="معدل إنجاز المهام (%)" 
-                          stroke="#8884d8" 
-                          activeDot={{ r: 8 }} 
-                        />
-                        <Line 
-                          yAxisId="left" 
-                          type="monotone" 
-                          dataKey="delayRate" 
-                          name="معدل التأخير (%)" 
-                          stroke="#ff7d7d" 
-                        />
-                        <Line 
-                          yAxisId="right" 
-                          type="monotone" 
-                          dataKey="revenue" 
-                          name="الإيرادات (ج.م)" 
-                          stroke="#82ca9d" 
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>المتميزون هذا الشهر</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div>
-                      <div className="flex justify-between mb-2">
-                        <p className="text-sm font-medium">أفضل موظف</p>
-                        <Badge variant="outline" className="bg-primary/10">
-                          {monthlyKPIs.topPerformer.tasks} مهمة
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground">
-                          <Award className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{monthlyKPIs.topPerformer.name}</p>
-                          <p className="text-sm text-muted-foreground">أكثر موظف نشاطًا</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between mb-2">
-                        <p className="text-sm font-medium">أنشط عميل</p>
-                        <Badge variant="outline" className="bg-primary/10">
-                          {monthlyKPIs.mostActiveClient.projects} مشاريع
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground">
-                          <Users className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{monthlyKPIs.mostActiveClient.name}</p>
-                          <p className="text-sm text-muted-foreground">العميل الأكثر نشاطًا</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between mb-2">
-                        <p className="text-sm font-medium">أكثر مشروع استهلك وقت</p>
-                        <Badge variant="outline" className="bg-primary/10">
-                          {monthlyKPIs.mostTimeConsumingProject.hours} ساعة
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground">
-                          <Briefcase className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{monthlyKPIs.mostTimeConsumingProject.name}</p>
-                          <p className="text-sm text-muted-foreground">المشروع الأكثر استهلاكًا للوقت</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>أداء الموظفين</CardTitle>
-                <CardDescription>ترتيب الموظفين حسب عدد المهام المنجزة</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>الموظف</TableHead>
-                      <TableHead>المنصب</TableHead>
-                      <TableHead>المهام المنجزة</TableHead>
-                      <TableHead>المهام المعلقة</TableHead>
-                      <TableHead>نسبة الإنجاز</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {employeePerformance.map((employee) => (
-                      <TableRow key={employee.id}>
-                        <TableCell className="font-medium">{employee.name}</TableCell>
-                        <TableCell>{employee.position}</TableCell>
-                        <TableCell>{employee.completedTasks}</TableCell>
-                        <TableCell>{employee.pendingTasks}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Progress value={employee.taskCompletion} className="h-2 w-24" />
-                            <span className="text-sm">{employee.taskCompletion}%</span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
           </CardContent>
-          <CardFooter className="flex justify-end">
-            <p className="text-sm text-muted-foreground ml-auto">
-              تم إنشاء التقرير في: {format(parseISO(report.generatedAt), "dd MMMM yyyy", { locale: ar })}
-            </p>
-            <Button variant="outline" onClick={handleDownloadPDF} className="gap-2">
-              <DownloadCloud className="h-4 w-4" />
-              تنزيل PDF
+          <CardFooter className="justify-end">
+            <Button
+              onClick={() => generateReportMutation.mutate()}
+              disabled={!selectedClient || generateReportMutation.isPending}
+              className="gap-2"
+            >
+              {generateReportMutation.isPending ? (
+                <><RefreshCw className="h-4 w-4 animate-spin" /> جاري الإنشاء...</>
+              ) : (
+                <><BarChart3 className="h-4 w-4" /> إنشاء التقرير الشهري</>
+              )}
             </Button>
           </CardFooter>
         </Card>
+        
+        {selectedClientData && monthlyReport && (
+          <>
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-2xl">
+                      التقرير الشهري: {selectedClientData.name}
+                    </CardTitle>
+                    <CardDescription>
+                      شهر {format(parseISO(monthlyReport.monthStart), "MMMM yyyy", { locale: ar })}
+                    </CardDescription>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        تاريخ الإنشاء: {monthlyReport.createdAt ? format(parseISO(monthlyReport.createdAt), "dd MMMM yyyy", { locale: ar }) : "غير متوفر"}
+                      </span>
+                    </div>
+                    {monthlyReport.sentAt && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MailIcon className="h-4 w-4" />
+                        <span>
+                          تاريخ الإرسال: {format(parseISO(monthlyReport.sentAt), "dd MMMM yyyy", { locale: ar })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="summary" className="w-full">
+                  <TabsList className="w-full justify-start mb-6">
+                    <TabsTrigger value="summary">ملخص</TabsTrigger>
+                    <TabsTrigger value="projects">المشاريع</TabsTrigger>
+                    <TabsTrigger value="tasks">المهام</TabsTrigger>
+                    <TabsTrigger value="client">العميل</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="summary">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">المشاريع النشطة</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-3xl font-bold">{clientProjects.filter(p => p.status === 'in-progress').length}</div>
+                          <p className="text-sm text-muted-foreground">من أصل {clientProjects.length} مشروع</p>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">المهام المكتملة</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-3xl font-bold">{monthlyReport.reportData?.taskMetrics?.completed || 0}</div>
+                          <p className="text-sm text-muted-foreground">خلال هذا الشهر</p>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">معدل الإنجاز</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-3xl font-bold">
+                            {monthlyReport.reportData?.completionRate ? `${Math.round(monthlyReport.reportData.completionRate * 100)}%` : "N/A"}
+                          </div>
+                          <p className="text-sm text-muted-foreground">مقارنة بالشهر السابق</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    
+                    <div className="mt-8">
+                      <h3 className="text-lg font-medium mb-4">حالة المشاريع</h3>
+                      <div className="space-y-4">
+                        {monthlyReport.reportData?.projectsSummary && 
+                         monthlyReport.reportData.projectsSummary.map((project: any, index: number) => (
+                          <div key={index} className="border rounded-lg p-4">
+                            <div className="flex justify-between mb-2">
+                              <h4 className="font-medium">{project.name}</h4>
+                              <Badge className={
+                                project.status === 'completed' ? 'bg-green-100 text-green-800 border-green-300' :
+                                project.status === 'in-progress' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                                project.status === 'delayed' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                                'bg-gray-100 text-gray-800 border-gray-300'
+                              }>
+                                {
+                                  project.status === 'completed' ? 'مكتمل' :
+                                  project.status === 'in-progress' ? 'قيد التنفيذ' :
+                                  project.status === 'delayed' ? 'متأخر' : 
+                                  project.status
+                                }
+                              </Badge>
+                            </div>
+                            <div className="mb-2">
+                              <Progress value={project.progress} className="h-2" /> 
+                              <div className="flex justify-between mt-1">
+                                <span className="text-xs text-muted-foreground">التقدم</span>
+                                <span className="text-xs font-medium">{project.progress}%</span>
+                              </div>
+                            </div>
+                            {project.achievements && (
+                              <p className="text-sm mt-2">
+                                <span className="font-medium">الإنجازات الرئيسية:</span> {project.achievements}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                        
+                        {(!monthlyReport.reportData?.projectsSummary || 
+                          monthlyReport.reportData.projectsSummary.length === 0) && (
+                          <div className="text-center py-8 text-muted-foreground">
+                            لا توجد بيانات مشاريع متاحة لهذا الشهر.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {monthlyReport.reportData?.notes && (
+                      <div className="mt-8">
+                        <h3 className="text-lg font-medium mb-4">ملاحظات وتوصيات</h3>
+                        <Card>
+                          <CardContent className="pt-6">
+                            <p className="whitespace-pre-line">{monthlyReport.reportData.notes}</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="projects">
+                    <div className="space-y-6">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>اسم المشروع</TableHead>
+                            <TableHead>الحالة</TableHead>
+                            <TableHead>نسبة الإنجاز</TableHead>
+                            <TableHead>تاريخ البدء</TableHead>
+                            <TableHead>تاريخ الانتهاء المتوقع</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {clientProjects.length > 0 ? (
+                            clientProjects.map((project: Project) => (
+                              <TableRow key={project.id}>
+                                <TableCell className="font-medium">{project.name}</TableCell>
+                                <TableCell>
+                                  <Badge className={
+                                    project.status === 'completed' ? 'bg-green-100 text-green-800 border-green-300' :
+                                    project.status === 'in-progress' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                                    project.status === 'delayed' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                                    'bg-gray-100 text-gray-800 border-gray-300'
+                                  }>
+                                    {
+                                      project.status === 'completed' ? 'مكتمل' :
+                                      project.status === 'in-progress' ? 'قيد التنفيذ' :
+                                      project.status === 'delayed' ? 'متأخر' : 
+                                      project.status
+                                    }
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {monthlyReport.reportData?.projectsSummary?.find((p: any) => p.name === project.name)?.progress || 0}%
+                                </TableCell>
+                                <TableCell>
+                                  {project.startDate ? format(parseISO(project.startDate), "dd/MM/yyyy") : "غير محدد"}
+                                </TableCell>
+                                <TableCell>
+                                  {project.endDate ? format(parseISO(project.endDate), "dd/MM/yyyy") : "غير محدد"}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center p-6 text-muted-foreground">
+                                لا توجد مشاريع لهذا العميل
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                      
+                      {monthlyReport.reportData?.taskMetrics && (
+                        <Card className="mt-8">
+                          <CardHeader>
+                            <CardTitle>إحصائيات المهام</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                              <div className="flex flex-col items-center p-4 bg-green-50 rounded-lg">
+                                <div className="text-green-600 mb-2">
+                                  <CheckCircle2 className="h-8 w-8" />
+                                </div>
+                                <div className="text-2xl font-bold">{monthlyReport.reportData.taskMetrics.completed || 0}</div>
+                                <div className="text-sm text-muted-foreground">مكتملة</div>
+                              </div>
+                              
+                              <div className="flex flex-col items-center p-4 bg-blue-50 rounded-lg">
+                                <div className="text-blue-600 mb-2">
+                                  <Clock className="h-8 w-8" />
+                                </div>
+                                <div className="text-2xl font-bold">{monthlyReport.reportData.taskMetrics.inProgress || 0}</div>
+                                <div className="text-sm text-muted-foreground">قيد التنفيذ</div>
+                              </div>
+                              
+                              <div className="flex flex-col items-center p-4 bg-purple-50 rounded-lg">
+                                <div className="text-purple-600 mb-2">
+                                  <Clock className="h-8 w-8" />
+                                </div>
+                                <div className="text-2xl font-bold">{monthlyReport.reportData.taskMetrics.pending || 0}</div>
+                                <div className="text-sm text-muted-foreground">قيد الانتظار</div>
+                              </div>
+                              
+                              <div className="flex flex-col items-center p-4 bg-amber-50 rounded-lg">
+                                <div className="text-amber-600 mb-2">
+                                  <AlertTriangle className="h-8 w-8" />
+                                </div>
+                                <div className="text-2xl font-bold">{monthlyReport.reportData.taskMetrics.delayed || 0}</div>
+                                <div className="text-sm text-muted-foreground">متأخرة</div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="tasks">
+                    <Accordion type="single" collapsible className="w-full">
+                      <AccordionItem value="completed">
+                        <AccordionTrigger>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            <span>المهام المكتملة</span>
+                            <Badge variant="secondary" className="mr-2">
+                              {monthlyReport.reportData?.completedTasks?.length || 0}
+                            </Badge>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          {monthlyReport.reportData?.completedTasks && 
+                           monthlyReport.reportData.completedTasks.length > 0 ? (
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>المهمة</TableHead>
+                                  <TableHead>المشروع</TableHead>
+                                  <TableHead>تاريخ الإكمال</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {monthlyReport.reportData.completedTasks.map((task: any, index: number) => (
+                                  <TableRow key={index}>
+                                    <TableCell className="font-medium">{task.title}</TableCell>
+                                    <TableCell>{task.projectName}</TableCell>
+                                    <TableCell>{task.completedAt ? format(new Date(task.completedAt), "dd/MM/yyyy") : "-"}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          ) : (
+                            <div className="text-center py-4 text-muted-foreground">
+                              لا توجد مهام مكتملة لهذا الشهر
+                            </div>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                      
+                      <AccordionItem value="inProgress">
+                        <AccordionTrigger>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-blue-600" />
+                            <span>المهام قيد التنفيذ</span>
+                            <Badge variant="secondary" className="mr-2">
+                              {monthlyReport.reportData?.inProgressTasks?.length || 0}
+                            </Badge>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          {monthlyReport.reportData?.inProgressTasks && 
+                           monthlyReport.reportData.inProgressTasks.length > 0 ? (
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>المهمة</TableHead>
+                                  <TableHead>المشروع</TableHead>
+                                  <TableHead>تاريخ الاستحقاق</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {monthlyReport.reportData.inProgressTasks.map((task: any, index: number) => (
+                                  <TableRow key={index}>
+                                    <TableCell className="font-medium">{task.title}</TableCell>
+                                    <TableCell>{task.projectName}</TableCell>
+                                    <TableCell>{task.dueDate ? format(new Date(task.dueDate), "dd/MM/yyyy") : "-"}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          ) : (
+                            <div className="text-center py-4 text-muted-foreground">
+                              لا توجد مهام قيد التنفيذ لهذا الشهر
+                            </div>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                      
+                      <AccordionItem value="delayed">
+                        <AccordionTrigger>
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-amber-600" />
+                            <span>المهام المتأخرة</span>
+                            <Badge variant="secondary" className="mr-2">
+                              {monthlyReport.reportData?.delayedTasks?.length || 0}
+                            </Badge>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          {monthlyReport.reportData?.delayedTasks && 
+                           monthlyReport.reportData.delayedTasks.length > 0 ? (
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>المهمة</TableHead>
+                                  <TableHead>المشروع</TableHead>
+                                  <TableHead>تاريخ الاستحقاق</TableHead>
+                                  <TableHead>التأخير (أيام)</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {monthlyReport.reportData.delayedTasks.map((task: any, index: number) => (
+                                  <TableRow key={index}>
+                                    <TableCell className="font-medium">{task.title}</TableCell>
+                                    <TableCell>{task.projectName}</TableCell>
+                                    <TableCell className="text-amber-600">
+                                      {task.dueDate ? format(new Date(task.dueDate), "dd/MM/yyyy") : "-"}
+                                    </TableCell>
+                                    <TableCell>{task.delayDays}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          ) : (
+                            <div className="text-center py-4 text-muted-foreground">
+                              لا توجد مهام متأخرة لهذا الشهر
+                            </div>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </TabsContent>
+                  
+                  <TabsContent value="client">
+                    <div className="flex flex-col md:flex-row gap-8">
+                      <Card className="flex-1">
+                        <CardHeader>
+                          <CardTitle>معلومات العميل</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-1">الاسم</h4>
+                            <p className="text-lg">{selectedClientData.name}</p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-1">الشركة</h4>
+                            <p className="text-lg">{selectedClientData.company || "غير محدد"}</p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-1">البريد الإلكتروني</h4>
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              <p className="text-lg">{selectedClientData.email}</p>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-1">رقم الهاتف</h4>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              <p className="text-lg">{selectedClientData.phone || "غير متوفر"}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card className="flex-1">
+                        <CardHeader>
+                          <CardTitle>ملخص تفاعل العميل</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-6">
+                            <div>
+                              <h4 className="text-sm font-medium text-muted-foreground mb-1">المشاريع النشطة</h4>
+                              <p className="text-2xl font-bold">
+                                {clientProjects.filter(p => p.status === 'in-progress').length}
+                              </p>
+                            </div>
+                            
+                            <div>
+                              <h4 className="text-sm font-medium text-muted-foreground mb-1">إجمالي عدد المشاريع</h4>
+                              <p className="text-2xl font-bold">{clientProjects.length}</p>
+                            </div>
+                            
+                            <div>
+                              <h4 className="text-sm font-medium text-muted-foreground mb-1">التقارير المرسلة</h4>
+                              <p className="text-2xl font-bold">
+                                {monthlyReport.sentAt ? "نعم" : "لا"}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+              <CardFooter className="justify-between flex-wrap gap-4">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => window.open(`/api/reports/monthly/${monthlyReport.id}/download`, '_blank')}
+                  >
+                    <Download className="h-4 w-4" />
+                    تنزيل كـ PDF
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => window.print()}
+                  >
+                    <Printer className="h-4 w-4" />
+                    طباعة
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    className="gap-2"
+                    onClick={() => sendReportMutation.mutate('email')}
+                    disabled={sendReportMutation.isPending}
+                  >
+                    <Mail className="h-4 w-4" />
+                    إرسال عبر البريد الإلكتروني
+                  </Button>
+                  <Button
+                    variant="default"
+                    className="gap-2"
+                    onClick={() => sendReportMutation.mutate('whatsapp')}
+                    disabled={sendReportMutation.isPending}
+                  >
+                    <Send className="h-4 w-4" />
+                    إرسال عبر واتساب
+                  </Button>
+                </div>
+              </CardFooter>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,110 +1,123 @@
-/**
- * خدمة WhatsApp لإرسال التقارير
- * 
- * ملاحظة: هذه تنفيذ تجريبي يمكن توسيعه لاستخدام Cloud API الرسمي من Meta
- * للاستخدام الإنتاجي، يجب توفير مفتاح API صالح
- */
-
-import { storage } from "../storage";
-import type { Client } from "@shared/schema";
-import axios from "axios";
+import { Client } from '@shared/schema';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
+import { pdfService } from './pdf.service';
 
 /**
- * خدمة WhatsApp
+ * Service for sending WhatsApp messages
+ * Note: This is a stub implementation that would need an actual WhatsApp API integration
+ * like the WhatsApp Business API or Twilio's WhatsApp API
  */
 export class WhatsAppService {
   /**
-   * إرسال رسالة نصية عبر WhatsApp
-   * 
-   * في بيئة الإنتاج الحقيقية، سيتم استبدال هذا بإجراء اتصال API حقيقي
-   * باستخدام Cloud API الخاص بـ WhatsApp Business
+   * Sends a weekly report to a client via WhatsApp
+   * @param clientId The ID of the client
+   * @param reportId The ID of the weekly report
+   * @param client The client object
+   * @returns Success status
    */
-  async sendTextMessage(to: string, text: string): Promise<boolean> {
+  public async sendWeeklyReport(clientId: number, reportId: number, client: Client): Promise<boolean> {
     try {
-      // هذا تمثيل محاكي للاستدعاء الحقيقي للـ API
-      console.log(`[WhatsApp] Sending message to ${to}: ${text.substring(0, 100)}...`);
+      // Generate the PDF first
+      const pdfUrl = await pdfService.generateWeeklyReportPdf(reportId);
       
-      // في بيئة الإنتاج، سيكون الرمز على النحو التالي:
-      /*
-      const response = await axios.post(
-        'https://graph.facebook.com/v13.0/YOUR_PHONE_NUMBER_ID/messages',
-        {
-          messaging_product: 'whatsapp',
-          to: to,
-          type: 'text',
-          text: { 
-            body: text 
-          }
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      // In a real implementation, we would use WhatsApp Business API 
+      // or a service like Twilio to send the message with the PDF attached
+      // This is just a stub for demonstration
+      console.log(`[WhatsApp Service] Sending weekly report to client ${client.name}`);
+      console.log(`[WhatsApp Service] Phone: ${client.phone || 'No phone number available'}`);
+      console.log(`[WhatsApp Service] PDF URL: ${pdfUrl}`);
       
-      return response.status === 200;
-      */
+      // Compose a message (in Arabic)
+      const message = `مرحبًا ${client.name}،\n\n`
+        + `تم إعداد التقرير الأسبوعي الخاص بك للفترة المنتهية في ${format(new Date(), 'dd MMMM yyyy', { locale: ar })}.\n\n`
+        + `يمكنك العثور على النسخة الكاملة من التقرير في المرفقات.\n\n`
+        + `إذا كانت لديك أي أسئلة، يرجى الرد على هذه الرسالة أو التواصل مع مدير حسابك مباشرة.\n\n`
+        + `شكرًا لك،\nفريق تاسكايا`;
       
-      // للأغراض التجريبية، نعتبر أن الإرسال نجح دائمًا
+      console.log(`[WhatsApp Service] Message: ${message}`);
+      
+      // In a real implementation, we would make an actual API call here
+      // and return success based on the API response
+      
+      // For now, just simulate success
+      console.log('[WhatsApp Service] Weekly report sent successfully');
       return true;
     } catch (error) {
-      console.error('[WhatsApp] Error sending message:', error);
+      console.error('Error sending WhatsApp weekly report:', error);
       return false;
     }
   }
   
   /**
-   * إرسال تقرير إلى عميل
-   * 
-   * @param {number} clientId - معرف العميل
-   * @param {string} reportText - نص التقرير
-   * @returns {Promise<boolean>} - نجاح أو فشل الإرسال
+   * Sends a monthly report to a client via WhatsApp
+   * @param clientId The ID of the client
+   * @param reportId The ID of the monthly report
+   * @param client The client object
+   * @returns Success status
    */
-  async sendReportToClient(clientId: number, reportText: string): Promise<boolean> {
+  public async sendMonthlyReport(clientId: number, reportId: number, client: Client): Promise<boolean> {
     try {
-      // الحصول على معلومات العميل
-      const client = await storage.getClient(clientId);
-      if (!client) {
-        throw new Error(`Client with ID ${clientId} not found`);
-      }
+      // Generate the PDF first
+      const pdfUrl = await pdfService.generateMonthlyReportPdf(reportId);
       
-      // تحقق من وجود رقم هاتف
-      const phoneNumber = client.phone;
-      if (!phoneNumber) {
-        throw new Error(`Client ${client.name} has no phone number`);
-      }
+      // In a real implementation, we would use WhatsApp Business API 
+      // or a service like Twilio to send the message with the PDF attached
+      console.log(`[WhatsApp Service] Sending monthly report to client ${client.name}`);
+      console.log(`[WhatsApp Service] Phone: ${client.phone || 'No phone number available'}`);
+      console.log(`[WhatsApp Service] PDF URL: ${pdfUrl}`);
       
-      // تنسيق رقم الهاتف وفقًا لمتطلبات WhatsApp
-      // يجب أن يبدأ برمز الدولة، بدون علامات ترقيم أو مسافات
-      const formattedPhone = this.formatPhoneNumber(phoneNumber);
+      // Compose a message (in Arabic)
+      const message = `مرحبًا ${client.name}،\n\n`
+        + `تم إعداد التقرير الشهري الخاص بك لشهر ${format(new Date(), 'MMMM yyyy', { locale: ar })}.\n\n`
+        + `يمكنك العثور على النسخة الكاملة من التقرير في المرفقات. يتضمن هذا التقرير ملخصًا شاملاً لجميع أنشطة المشروع والإنجازات خلال الشهر الماضي.\n\n`
+        + `إذا كانت لديك أي أسئلة أو استفسارات، يرجى الاتصال بمدير حسابك مباشرة لمناقشة التقرير.\n\n`
+        + `شكرًا لك،\nفريق تاسكايا`;
       
-      // إرسال الرسالة
-      return await this.sendTextMessage(formattedPhone, reportText);
+      console.log(`[WhatsApp Service] Message: ${message}`);
+      
+      // In a real implementation, we would make an actual API call here
+      // and return success based on the API response
+      
+      // For now, just simulate success
+      console.log('[WhatsApp Service] Monthly report sent successfully');
+      return true;
     } catch (error) {
-      console.error('[WhatsApp] Error sending report to client:', error);
+      console.error('Error sending WhatsApp monthly report:', error);
       return false;
     }
   }
   
   /**
-   * تنسيق رقم الهاتف وفقًا لمتطلبات WhatsApp
-   * 
-   * @param {string} phone - رقم الهاتف
-   * @returns {string} - رقم الهاتف المنسق
+   * Sends a notification about a daily standup to a manager
+   * @param employeeId The ID of the employee who submitted the standup
+   * @param employeeName The name of the employee
+   * @param managerPhone The phone number of the manager
+   * @returns Success status
    */
-  private formatPhoneNumber(phone: string): string {
-    // إزالة جميع الأحرف غير الرقمية
-    let cleaned = phone.replace(/\D/g, '');
-    
-    // إضافة رمز الدولة إذا لم يكن موجودًا
-    // افتراضيًا نستخدم 2+ لمصر إذا لم يبدأ الرقم برمز دولة
-    if (!cleaned.startsWith('2')) {
-      cleaned = '2' + cleaned;
+  public async sendDailyStandupNotification(employeeId: number, employeeName: string, managerPhone: string): Promise<boolean> {
+    try {
+      // In a real implementation, we would use WhatsApp Business API 
+      // or a service like Twilio to send the message
+      console.log(`[WhatsApp Service] Sending daily standup notification for employee ${employeeName}`);
+      console.log(`[WhatsApp Service] Manager Phone: ${managerPhone}`);
+      
+      // Compose a message (in Arabic)
+      const message = `مرحبًا،\n\n`
+        + `قام ${employeeName} بتقديم تقرير التحديث اليومي الخاص به.\n\n`
+        + `يمكنك عرض التفاصيل من خلال لوحة التحكم في نظام تاسكايا.\n\n`
+        + `تقرير اليوم: ${format(new Date(), 'dd MMMM yyyy', { locale: ar })}\n\n`
+        + `شكرًا لك،\nنظام تاسكايا`;
+      
+      console.log(`[WhatsApp Service] Message: ${message}`);
+      
+      // For now, just simulate success
+      console.log('[WhatsApp Service] Daily standup notification sent successfully');
+      return true;
+    } catch (error) {
+      console.error('Error sending WhatsApp daily standup notification:', error);
+      return false;
     }
-    
-    return cleaned;
   }
 }
 
