@@ -80,11 +80,14 @@ export default function BillingPage() {
   } = useQuery({
     queryKey: ['/api/client/billings', clientId],
     queryFn: async () => {
+      console.log(`Fetching billings for client ${clientId}`);
       const response = await fetch(`/api/client/${clientId}/billings`);
       if (!response.ok) {
         throw new Error('فشل في تحميل الفواتير');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Billings data:', data);
+      return data;
     },
   });
 
@@ -96,11 +99,14 @@ export default function BillingPage() {
   } = useQuery({
     queryKey: ['/api/client/payments', clientId],
     queryFn: async () => {
+      console.log(`Fetching payments for client ${clientId}`);
       const response = await fetch(`/api/client/${clientId}/payments`);
       if (!response.ok) {
         throw new Error('فشل في تحميل المدفوعات');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Payments data:', data);
+      return data;
     },
   });
 

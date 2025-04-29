@@ -32,6 +32,142 @@ const getDemoData = (filename: string): any => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // نقاط نهاية API لبيانات الفواتير للعميل
+  app.get('/api/client/:clientId/billings', async (req: Request, res: Response) => {
+    try {
+      // بيانات توضيحية للفواتير
+      const demoInvoices = [
+        {
+          id: 1,
+          clientId: 1,
+          projectId: 101,
+          projectName: "إعادة تصميم موقع الويب",
+          amount: 2500,
+          status: "paid",
+          invoiceNumber: "INV-2023-001",
+          dueDate: "2023-12-15",
+          createdAt: "2023-11-25",
+          invoiceLink: "https://example.com/invoices/inv-001.pdf"
+        },
+        {
+          id: 2,
+          clientId: 1,
+          projectId: 101,
+          projectName: "إعادة تصميم موقع الويب",
+          amount: 1800,
+          status: "unpaid",
+          invoiceNumber: "INV-2024-002",
+          dueDate: "2024-04-20",
+          createdAt: "2024-03-21",
+          invoiceLink: "https://example.com/invoices/inv-002.pdf"
+        },
+        {
+          id: 3,
+          clientId: 1,
+          projectId: 102,
+          projectName: "حملة تسويق رقمي",
+          amount: 3200,
+          status: "overdue",
+          invoiceNumber: "INV-2024-003",
+          dueDate: "2024-03-10",
+          createdAt: "2024-02-10",
+          invoiceLink: "https://example.com/invoices/inv-003.pdf"
+        },
+        {
+          id: 4,
+          clientId: 1,
+          projectId: 103,
+          projectName: "تطوير تطبيق جوال",
+          amount: 5000,
+          status: "unpaid",
+          invoiceNumber: "INV-2024-004",
+          dueDate: "2024-05-15",
+          createdAt: "2024-04-01",
+          invoiceLink: "https://example.com/invoices/inv-004.pdf"
+        }
+      ];
+      
+      res.json({ billings: demoInvoices });
+    } catch (error) {
+      console.error("Error loading client billing data:", error);
+      res.status(500).json({ error: 'Failed to load billing data' });
+    }
+  });
+
+  // نقاط نهاية API لبيانات المدفوعات للعميل
+  app.get('/api/client/:clientId/payments', async (req: Request, res: Response) => {
+    try {
+      // بيانات توضيحية للمدفوعات
+      const demoPayments = [
+        {
+          id: 1,
+          billingId: 1,
+          clientId: 1,
+          invoiceNumber: "INV-2023-001",
+          amount: 2500,
+          paymentDate: "2023-12-10",
+          paymentMethod: "تحويل بنكي",
+          reference: "TRX123456",
+          status: "completed"
+        },
+        {
+          id: 2,
+          billingId: 3,
+          clientId: 1,
+          invoiceNumber: "INV-2024-003",
+          amount: 1500,
+          paymentDate: "2024-03-05",
+          paymentMethod: "كارت ائتمان",
+          reference: "PAY789012",
+          status: "completed"
+        },
+        {
+          id: 3,
+          billingId: 3,
+          clientId: 1,
+          invoiceNumber: "INV-2024-003",
+          amount: 500,
+          paymentDate: "2024-03-15",
+          paymentMethod: "باي موب",
+          reference: "PMB345678",
+          status: "pending"
+        }
+      ];
+      
+      res.json({ payments: demoPayments });
+    } catch (error) {
+      console.error("Error loading client payment data:", error);
+      res.status(500).json({ error: 'Failed to load payment data' });
+    }
+  });
+
+  // نقاط نهاية API لتصدير البيانات إلى Excel
+  app.post('/api/client/:clientId/export-invoices', async (req: Request, res: Response) => {
+    try {
+      // في الواقع، هنا سيتم إنشاء ملف Excel وإرساله
+      // لكن للاختبار سنرسل ملف نصي فارغ
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=invoices_export.xlsx');
+      res.send(Buffer.from('Demo Excel export data'));
+    } catch (error) {
+      console.error("Error exporting invoices:", error);
+      res.status(500).json({ error: 'Failed to export invoices' });
+    }
+  });
+
+  app.post('/api/client/:clientId/export-payments', async (req: Request, res: Response) => {
+    try {
+      // في الواقع، هنا سيتم إنشاء ملف Excel وإرساله
+      // لكن للاختبار سنرسل ملف نصي فارغ
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=payments_export.xlsx');
+      res.send(Buffer.from('Demo Excel export data'));
+    } catch (error) {
+      console.error("Error exporting payments:", error);
+      res.status(500).json({ error: 'Failed to export payments' });
+    }
+  });
+
   // Demo API endpoints for client data
   app.get('/api/clients', async (req: Request, res: Response) => {
     try {
