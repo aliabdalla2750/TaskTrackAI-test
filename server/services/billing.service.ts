@@ -1,261 +1,284 @@
-import { db } from "../db";
-import { billing, payments, wallet, projects, clients, type Billing, type Payment, type Wallet, type InsertBilling, type InsertPayment } from "@shared/schema";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { storage } from '../storage';
+import { InsertBilling, InsertPayment, InsertWallet } from '@shared/schema';
 
-class BillingService {
-  // Create a new billing entry
-  async createBilling(billingData: InsertBilling): Promise<Billing> {
-    const [newBilling] = await db
-      .insert(billing)
-      .values(billingData)
-      .returning();
+/**
+ * Create a new invoice/billing
+ * @param billingData The billing data
+ * @returns The created billing
+ */
+export async function createInvoice(billingData: InsertBilling) {
+  try {
+    // Generate invoice number
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
     
-    return newBilling;
-  }
-
-  // Get a specific billing by id
-  async getBillingById(id: number): Promise<Billing | null> {
-    const [result] = await db
-      .select()
-      .from(billing)
-      .where(eq(billing.id, id));
+    // Get count of invoices to generate sequential number
+    const existingBillings = await storage.getBillingsByAgency(billingData.agencyId);
+    const invoiceNumber = `INV-${year}${month}-${(existingBillings.length + 1).toString().padStart(3, '0')}`;
     
-    return result || null;
-  }
-
-  // Get all billings for a specific client
-  async getClientBillings(clientId: number): Promise<Billing[]> {
-    return await db
-      .select()
-      .from(billing)
-      .where(eq(billing.clientId, clientId))
-      .orderBy(billing.createdAt);
-  }
-
-  // Get all billings for a specific project
-  async getProjectBillings(projectId: number): Promise<Billing[]> {
-    return await db
-      .select()
-      .from(billing)
-      .where(eq(billing.projectId, projectId))
-      .orderBy(billing.createdAt);
-  }
-
-  // Get all billings for an agency
-  async getAgencyBillings(agencyId: number): Promise<Billing[]> {
-    return await db
-      .select()
-      .from(billing)
-      .where(eq(billing.agencyId, agencyId))
-      .orderBy(billing.createdAt);
-  }
-
-  // Get billings by date range
-  async getBillingsByDateRange(
-    agencyId: number,
-    startDate: Date,
-    endDate: Date
-  ): Promise<Billing[]> {
-    return await db
-      .select()
-      .from(billing)
-      .where(
-        and(
-          eq(billing.agencyId, agencyId),
-          gte(billing.createdAt, startDate),
-          lte(billing.createdAt, endDate)
-        )
-      )
-      .orderBy(billing.createdAt);
-  }
-
-  // Update billing status
-  async updateBillingStatus(id: number, status: string): Promise<Billing> {
-    const [updated] = await db
-      .update(billing)
-      .set({ status })
-      .where(eq(billing.id, id))
-      .returning();
+    const billing = await storage.createBilling({
+      ...billingData,
+      invoiceNumber,
+      createdAt: new Date().toISOString(),
+    });
     
-    return updated;
-  }
-
-  // Create a new payment
-  async createPayment(paymentData: InsertPayment): Promise<Payment> {
-    const [newPayment] = await db
-      .insert(payments)
-      .values(paymentData)
-      .returning();
-    
-    // Update the associated billing status to paid
-    await this.updateBillingStatus(paymentData.billingId, "paid");
-    
-    // Update the agency wallet
-    await this.updateWalletBalance(paymentData.agencyId, paymentData.amount);
-    
-    return newPayment;
-  }
-
-  // Get a specific payment by id
-  async getPaymentById(id: number): Promise<Payment | null> {
-    const [result] = await db
-      .select()
-      .from(payments)
-      .where(eq(payments.id, id));
-    
-    return result || null;
-  }
-
-  // Get all payments for a specific client
-  async getClientPayments(clientId: number): Promise<Payment[]> {
-    return await db
-      .select()
-      .from(payments)
-      .where(eq(payments.clientId, clientId))
-      .orderBy(payments.paymentDate);
-  }
-
-  // Get all payments for a specific project
-  async getProjectPayments(projectId: number): Promise<Payment[]> {
-    return await db
-      .select()
-      .from(payments)
-      .where(eq(payments.projectId, projectId))
-      .orderBy(payments.paymentDate);
-  }
-
-  // Get all payments for an agency
-  async getAgencyPayments(agencyId: number): Promise<Payment[]> {
-    return await db
-      .select()
-      .from(payments)
-      .where(eq(payments.agencyId, agencyId))
-      .orderBy(payments.paymentDate);
-  }
-
-  // Get or create agency wallet
-  async getOrCreateWallet(agencyId: number): Promise<Wallet> {
-    // Try to get existing wallet
-    const [existingWallet] = await db
-      .select()
-      .from(wallet)
-      .where(eq(wallet.agencyId, agencyId));
-    
-    if (existingWallet) {
-      return existingWallet;
-    }
-    
-    // Create new wallet if it doesn't exist
-    const [newWallet] = await db
-      .insert(wallet)
-      .values({
-        agencyId,
-        currentBalance: 0,
-        totalRevenue: 0,
-        updatedAt: new Date(),
-      })
-      .returning();
-    
-    return newWallet;
-  }
-
-  // Update agency wallet balance
-  async updateWalletBalance(agencyId: number, amount: number): Promise<Wallet> {
-    const currentWallet = await this.getOrCreateWallet(agencyId);
-    
-    const [updatedWallet] = await db
-      .update(wallet)
-      .set({
-        currentBalance: currentWallet.currentBalance + amount,
-        totalRevenue: currentWallet.totalRevenue + amount,
-        updatedAt: new Date(),
-      })
-      .where(eq(wallet.agencyId, agencyId))
-      .returning();
-    
-    return updatedWallet;
-  }
-
-  // Get agency wallet
-  async getAgencyWallet(agencyId: number): Promise<Wallet | null> {
-    const [result] = await db
-      .select()
-      .from(wallet)
-      .where(eq(wallet.agencyId, agencyId));
-    
-    return result || null;
-  }
-
-  // Generate invoice for a billing (placeholder for actual invoice generation)
-  async generateInvoice(billingId: number): Promise<string> {
-    const billingData = await this.getBillingById(billingId);
-    if (!billingData) {
-      throw new Error("Billing not found");
-    }
-
-    // Here we would generate a PDF invoice and return a link to it
-    // For now, just return a placeholder
-    const invoiceLink = `/invoices/${billingData.id}_${Date.now()}.pdf`;
-    
-    // Update the billing record with the invoice link
-    await db
-      .update(billing)
-      .set({ invoiceLink })
-      .where(eq(billing.id, billingId));
-    
-    return invoiceLink;
-  }
-
-  // Generate financial report
-  async generateFinancialReport(
-    agencyId: number,
-    startDate: Date,
-    endDate: Date
-  ): Promise<any> {
-    const billings = await this.getBillingsByDateRange(agencyId, startDate, endDate);
-    const paymentsData = await this.getAgencyPayments(agencyId);
-    const walletData = await this.getAgencyWallet(agencyId);
-
-    // Filter payments by date range
-    const periodPayments = paymentsData.filter(
-      payment => {
-        // Only process payments with a valid payment date
-        if (!payment.paymentDate) return false;
-        const paymentDate = new Date(payment.paymentDate);
-        return paymentDate >= startDate && paymentDate <= endDate;
-      }
-    );
-
-    // Calculate total revenue for the period
-    const totalRevenue = periodPayments.reduce(
-      (sum, payment) => sum + payment.amount,
-      0
-    );
-
-    // Calculate pending payments
-    const pendingBillings = billings.filter(
-      bill => bill.status === "pending"
-    );
-    
-    const pendingAmount = pendingBillings.reduce(
-      (sum, bill) => sum + bill.amount,
-      0
-    );
-
-    return {
-      period: {
-        start: startDate,
-        end: endDate,
-      },
-      totalBilled: billings.reduce((sum, bill) => sum + bill.amount, 0),
-      totalReceived: totalRevenue,
-      pendingPayments: pendingAmount,
-      currentBalance: walletData?.currentBalance || 0,
-      totalRevenue: walletData?.totalRevenue || 0,
-      billings,
-      payments: periodPayments,
-    };
+    return billing;
+  } catch (error) {
+    console.error('Error creating invoice:', error);
+    throw new Error('Failed to create invoice');
   }
 }
 
-export const billingService = new BillingService();
+/**
+ * Process payment for an invoice
+ * @param billingId The billing ID
+ * @param paymentData The payment data
+ * @returns The payment record and updated billing
+ */
+export async function processPayment(billingId: number, paymentData: Omit<InsertPayment, 'billingId' | 'agencyId' | 'clientId' | 'amount' | 'createdAt'>) {
+  try {
+    const billing = await storage.getBilling(billingId);
+    
+    if (!billing) {
+      throw new Error('Billing not found');
+    }
+    
+    // Check if the billing is already paid
+    if (billing.status === 'paid') {
+      throw new Error('This billing is already paid');
+    }
+    
+    // Update billing status to paid
+    const updatedBilling = await storage.updateBilling(billing.id, { 
+      status: 'paid',
+      paymentDate: paymentData.paymentDate
+    });
+    
+    // Create payment record
+    const payment = await storage.createPayment({
+      billingId: billing.id,
+      agencyId: billing.agencyId,
+      clientId: billing.clientId,
+      amount: billing.amount,
+      paymentDate: paymentData.paymentDate,
+      paymentMethod: paymentData.paymentMethod,
+      reference: paymentData.reference || null,
+      notes: paymentData.notes || null,
+      createdAt: new Date().toISOString(),
+    });
+    
+    // Update wallet balance
+    await updateWalletBalance(billing.agencyId, billing.amount);
+    
+    return { payment, billing: updatedBilling };
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    throw new Error(`Failed to process payment: ${error.message}`);
+  }
+}
+
+/**
+ * Update the wallet balance for an agency
+ * @param agencyId The agency ID
+ * @param amount The amount to add to the balance
+ * @returns The updated wallet
+ */
+export async function updateWalletBalance(agencyId: number, amount: number) {
+  try {
+    const wallet = await storage.getWalletByAgency(agencyId);
+    
+    if (wallet) {
+      return await storage.updateWallet(wallet.id, {
+        currentBalance: wallet.currentBalance + amount,
+        totalRevenue: wallet.totalRevenue + amount,
+        lastUpdated: new Date().toISOString(),
+      });
+    } else {
+      return await storage.createWallet({
+        agencyId,
+        currentBalance: amount,
+        totalRevenue: amount,
+        lastUpdated: new Date().toISOString(),
+      });
+    }
+  } catch (error) {
+    console.error('Error updating wallet balance:', error);
+    throw new Error('Failed to update wallet balance');
+  }
+}
+
+/**
+ * Generate a financial report for an agency
+ * @param agencyId The agency ID
+ * @param period The report period (weekly, monthly, yearly, custom)
+ * @param startDate The start date (for custom period)
+ * @param endDate The end date (for custom period)
+ * @returns The financial report
+ */
+export async function generateFinancialReport(
+  agencyId: number,
+  period: 'weekly' | 'monthly' | 'yearly' | 'custom' = 'monthly',
+  startDate?: string,
+  endDate?: string
+) {
+  try {
+    let start: Date;
+    let end: Date = new Date();
+    
+    // Set date range based on period
+    switch (period) {
+      case 'weekly':
+        start = new Date();
+        start.setDate(start.getDate() - 7);
+        break;
+      case 'monthly':
+        start = new Date();
+        start.setMonth(start.getMonth() - 1);
+        break;
+      case 'yearly':
+        start = new Date();
+        start.setFullYear(start.getFullYear() - 1);
+        break;
+      case 'custom':
+        if (!startDate || !endDate) {
+          throw new Error('Start date and end date are required for custom period');
+        }
+        start = new Date(startDate);
+        end = new Date(endDate);
+        break;
+      default:
+        start = new Date();
+        start.setMonth(start.getMonth() - 1);
+    }
+    
+    // Get billings and payments for the period
+    const billings = await storage.getBillingsByAgency(agencyId);
+    const payments = await storage.getPaymentsByAgency(agencyId);
+    
+    // Filter by date range
+    const filteredBillings = billings.filter(billing => {
+      const billingDate = new Date(billing.createdAt);
+      return billingDate >= start && billingDate <= end;
+    });
+    
+    const filteredPayments = payments.filter(payment => {
+      const paymentDate = new Date(payment.paymentDate);
+      return paymentDate >= start && paymentDate <= end;
+    });
+    
+    // Calculate totals
+    const totalBilled = filteredBillings.reduce((sum, billing) => sum + billing.amount, 0);
+    const totalPaid = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
+    const unpaidAmount = filteredBillings
+      .filter(billing => billing.status === 'pending' || billing.status === 'overdue')
+      .reduce((sum, billing) => sum + billing.amount, 0);
+    
+    // Group by status
+    const billingsByStatus = {
+      paid: filteredBillings.filter(billing => billing.status === 'paid').length,
+      pending: filteredBillings.filter(billing => billing.status === 'pending').length,
+      overdue: filteredBillings.filter(billing => billing.status === 'overdue').length,
+      cancelled: filteredBillings.filter(billing => billing.status === 'cancelled').length,
+    };
+    
+    // Group by client
+    const billingsByClient: Record<number, { clientId: number, clientName: string, total: number }> = {};
+    
+    for (const billing of filteredBillings) {
+      if (!billingsByClient[billing.clientId]) {
+        billingsByClient[billing.clientId] = {
+          clientId: billing.clientId,
+          clientName: billing.clientName || `Client #${billing.clientId}`,
+          total: 0,
+        };
+      }
+      
+      billingsByClient[billing.clientId].total += billing.amount;
+    }
+    
+    // Format response
+    return {
+      period,
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      summary: {
+        totalBilled,
+        totalPaid,
+        unpaidAmount,
+        invoiceCount: filteredBillings.length,
+        paymentCount: filteredPayments.length,
+      },
+      billingsByStatus,
+      billingsByClient: Object.values(billingsByClient),
+      recentBillings: filteredBillings.slice(0, 5),
+      recentPayments: filteredPayments.slice(0, 5),
+    };
+  } catch (error) {
+    console.error('Error generating financial report:', error);
+    throw new Error(`Failed to generate financial report: ${error.message}`);
+  }
+}
+
+/**
+ * Check for overdue invoices and update their status
+ * @returns The number of updated invoices
+ */
+export async function checkOverdueInvoices() {
+  try {
+    const currentDate = new Date().toISOString();
+    const billings = await storage.getAllBillings();
+    
+    // Filter pending billings that are past their due date
+    const overdueBillings = billings.filter(billing => 
+      billing.status === 'pending' && 
+      billing.dueDate < currentDate
+    );
+    
+    // Update each overdue billing
+    for (const billing of overdueBillings) {
+      await storage.updateBilling(billing.id, { status: 'overdue' });
+    }
+    
+    return overdueBillings.length;
+  } catch (error) {
+    console.error('Error checking overdue invoices:', error);
+    throw new Error('Failed to check overdue invoices');
+  }
+}
+
+/**
+ * Generate recurring invoices based on subscription settings
+ * This is a placeholder function for future implementation
+ */
+export async function generateRecurringInvoices() {
+  // This function would check for subscription settings and generate new invoices
+  // as needed. For now, it's just a placeholder.
+  console.log('Recurring invoice generation is not yet implemented');
+  return 0;
+}
+
+/**
+ * Create a PDF for an invoice
+ * @param billingId The billing ID
+ * @returns A success message (placeholder)
+ */
+export async function generateInvoicePdf(billingId: number) {
+  try {
+    const billing = await storage.getBilling(billingId);
+    
+    if (!billing) {
+      throw new Error('Billing not found');
+    }
+    
+    // For now, return a success message
+    // In a real implementation, we would generate a PDF here
+    return { 
+      message: 'PDF generation successful', 
+      note: 'Actual PDF generation to be implemented'
+    };
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    throw new Error(`Failed to generate PDF invoice: ${error.message}`);
+  }
+}

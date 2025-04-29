@@ -15,7 +15,9 @@ import {
   aiChatLogs, AiChatLog, InsertAiChatLog,
   aiProviders, AiProvider, InsertAiProvider,
   aiModels, AiModel, InsertAiModel,
-  dailyStandups, DailyStandup, InsertDailyStandup
+  dailyStandups, DailyStandup, InsertDailyStandup,
+  billing, Billing, InsertBilling,
+  wallet, Wallet, InsertWallet
 } from "@shared/schema";
 
 // Define the storage interface
@@ -158,6 +160,18 @@ export interface IStorage {
   getMonthlyReportsByAgency(agencyId: number): Promise<MonthlyReport[]>;
   getMonthlyReportByMonth(agencyId: number, month: string): Promise<MonthlyReport | undefined>;
   createMonthlyReport(report: InsertMonthlyReport): Promise<MonthlyReport>;
+  
+  // Billing operations
+  getBilling(id: number): Promise<Billing | undefined>;
+  getBillingsByAgency(agencyId: number): Promise<Billing[]>;
+  getAllBillings(): Promise<Billing[]>;
+  createBilling(billing: InsertBilling): Promise<Billing>;
+  updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined>;
+  
+  // Wallet operations
+  getWalletByAgency(agencyId: number): Promise<Wallet | undefined>;
+  createWallet(wallet: InsertWallet): Promise<Wallet>;
+  updateWallet(id: number, wallet: Partial<InsertWallet>): Promise<Wallet | undefined>;
 }
 
 // In-memory storage implementation
@@ -179,6 +193,8 @@ export class MemStorage implements IStorage {
   private dailyStandups: Map<number, DailyStandup>;
   private weeklyReports: Map<number, WeeklyReport>;
   private monthlyReports: Map<number, MonthlyReport>;
+  private billings: Map<number, Billing>;
+  private wallets: Map<number, Wallet>;
 
   // ID counters
   private userIdCounter = 1;
