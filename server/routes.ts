@@ -820,11 +820,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               max_tokens: 5,
               temperature: 0.7
             };
-            // إضافة مرجع HTTP لمنع 403 Forbidden
-            headers = {
-              ...headers,
-              'HTTP-Referer': 'https://taskaaya.com'
+            
+            // تحديد الرؤوس مع معالجة خاصة للرؤوس المخصصة
+            const openRouterHeaders: Record<string, string> = {
+              'Authorization': `Bearer ${provider.apiKey}`,
+              'Content-Type': 'application/json'
             };
+            
+            // إضافة رأس HTTP-Referer باستخدام كائن سجل لتجنب أخطاء TypeScript
+            openRouterHeaders['HTTP-Referer'] = 'https://taskaaya.com';
+            
+            // استبدال كائن الرؤوس الأصلي بالكائن الجديد
+            headers = openRouterHeaders;
             break;
             
           default:
@@ -1019,6 +1026,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { providerId, modelId, messages } = req.body;
       
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ message: "Invalid messages provided" });
+      }
+      
       // التحقق من المزود ونموذج الذكاء الاصطناعي
       const provider = await storage.getAiProvider(providerId);
       if (!provider) {
@@ -1033,51 +1044,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // استدعاء API مزود الذكاء الاصطناعي المناسب
       let aiResponse = "";
       
+      // طباعة معلومات للتشخيص
+      console.log("Provider:", provider.name);
+      console.log("Model:", model.name);
+      console.log("Messages:", JSON.stringify(messages).substring(0, 100) + "...");
+      
       switch (provider.name) {
         case 'openai': {
-          const openai = new OpenAI({
-            apiKey: provider.apiKey,
-            baseURL: provider.baseUrl || undefined
-          });
-          
-          const completion = await openai.chat.completions.create({
-            model: model.name,
-            messages: messages as any[],
-            temperature: 0.7,
-            max_tokens: model.maxTokens || 1000
-          });
-          
-          aiResponse = completion.choices[0].message.content || "";
+          try {
+            const openai = new OpenAI({
+              apiKey: provider.apiKey,
+              baseURL: provider.baseUrl || undefined
+            });
+            
+            const completion = await openai.chat.completions.create({
+              model: model.name,
+              messages: messages as any[],
+              temperature: 0.7,
+              max_tokens: model.maxTokens || 1000
+            });
+            
+            if (completion.choices && completion.choices.length > 0 && completion.choices[0].message) {
+              aiResponse = completion.choices[0].message.content || "";
+            } else {
+              aiResponse = "استجابة فارغة من OpenAI";
+            }
+          } catch (error: any) {
+            console.error("OpenAI API error:", error);
+            throw new Error(`OpenAI API error: ${error.message || JSON.stringify(error)}`);
+          }
           break;
         }
         
         case 'deepseek': {
-          // استدعاء DeepSeek API
-          const response = await axios.post(
-            provider.baseUrl || 'https://api.deepseek.com/v1/chat/completions',
-            {
-              model: model.name,
-              messages,
-              temperature: 0.7,
-              max_tokens: model.maxTokens || 1000
-            },
-            {
-              headers: {
-                'Authorization': `Bearer ${provider.apiKey}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          
-          aiResponse = response.data.choices[0].message.content;
-          break;
-        }
-        
-        case 'openrouter': {
-          // استدعاء OpenRouter API
           try {
+            // استدعاء DeepSeek API
             const response = await axios.post(
-              provider.baseUrl || 'https://openrouter.ai/api/v1/chat/completions',
+              provider.baseUrl || 'https://api.deepseek.com/v1/chat/completions',
               {
                 model: model.name,
                 messages,
@@ -1087,28 +1090,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
               {
                 headers: {
                   'Authorization': `Bearer ${provider.apiKey}`,
-                  'Content-Type': 'application/json',
-                  'HTTP-Referer': 'https://taskaaya.com'
+                  'Content-Type': 'application/json'
                 }
               }
             );
             
+            if (response.data && response.data.choices && response.data.choices.length > 0 && 
+                response.data.choices[0].message && response.data.choices[0].message.content) {
+              aiResponse = response.data.choices[0].message.content;
+            } else {
+              console.log("Unexpected DeepSeek API response:", response.data);
+              aiResponse = "تم استلام استجابة من DeepSeek بتنسيق غير متوقع.";
+            }
+          } catch (error: any) {
+            console.error("DeepSeek API error:", error);
+            throw new Error(`DeepSeek API error: ${error.message || JSON.stringify(error)}`);
+          }
+          break;
+        }
+        
+        case 'openrouter': {
+          try {
+            console.log("Calling OpenRouter API...");
+            // استدعاء OpenRouter API
+            // تحديد الرؤوس مع معالجة خاصة للرؤوس المخصصة
+            const headers: Record<string, string> = {
+              'Authorization': `Bearer ${provider.apiKey}`,
+              'Content-Type': 'application/json'
+            };
+            
+            // إضافة رأس HTTP-Referer باستخدام كائن سجل لتجنب أخطاء TypeScript
+            headers['HTTP-Referer'] = 'https://taskaaya.com';
+            
+            const response = await axios.post(
+              provider.baseUrl || 'https://openrouter.ai/api/v1/chat/completions',
+              {
+                model: model.name,
+                messages,
+                temperature: 0.7,
+                max_tokens: model.maxTokens || 1000
+              },
+              { headers }
+            );
+            
+            console.log("OpenRouter API response received. Structure:", JSON.stringify(Object.keys(response.data)));
+            
             // التحقق من شكل البيانات والتعامل مع الاختلافات المحتملة
-            if (response.data && response.data.choices && response.data.choices.length > 0) {
-              const choice = response.data.choices[0];
-              if (choice.message && choice.message.content) {
-                aiResponse = choice.message.content;
-              } else if (choice.content) {
-                aiResponse = choice.content;
+            if (response.data) {
+              if (response.data.choices && response.data.choices.length > 0) {
+                const choice = response.data.choices[0];
+                console.log("OpenRouter choice structure:", JSON.stringify(Object.keys(choice)));
+                
+                if (choice.message && choice.message.content) {
+                  aiResponse = choice.message.content;
+                } else if (choice.content) {
+                  aiResponse = choice.content;
+                } else if (typeof choice === 'string') {
+                  aiResponse = choice;
+                } else {
+                  console.log("Unexpected OpenRouter choice structure:", choice);
+                  aiResponse = "تم استلام استجابة من المزود ولكن لم يتم العثور على محتوى الرسالة.";
+                }
+              } else if (response.data.content) {
+                aiResponse = response.data.content;
+              } else if (response.data.output) {
+                aiResponse = response.data.output;
+              } else if (response.data.completion) {
+                aiResponse = response.data.completion;
+              } else if (response.data.text) {
+                aiResponse = response.data.text;
+              } else if (response.data.message) {
+                aiResponse = response.data.message;
               } else {
-                aiResponse = "تم استلام استجابة من المزود ولكن لم يتم العثور على محتوى الرسالة.";
+                console.log("Unexpected OpenRouter API response structure:", response.data);
+                aiResponse = "تم استلام استجابة من OpenRouter بتنسيق غير متوقع.";
               }
             } else {
-              console.log("Unexpected OpenRouter API response:", response.data);
-              aiResponse = "تم استلام استجابة من المزود بتنسيق غير متوقع.";
+              aiResponse = "لم يتم استلام أي بيانات من OpenRouter.";
             }
           } catch (error: any) {
             console.error("OpenRouter API error:", error);
+            if (error.response) {
+              console.error("OpenRouter error response:", error.response.data);
+            }
             throw new Error(`OpenRouter API error: ${error.message || JSON.stringify(error)}`);
           }
           break;
@@ -1119,11 +1183,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // تسجيل استخدام الذكاء الاصطناعي
-      await storage.createAiChatLog({
-        scenarioKey: "admin-test",
-        messages: messages,
-        userId: 1 // ضع معرف المستخدم المشرف الفعلي هنا
-      });
+      try {
+        await storage.createAiChatLog({
+          scenarioKey: "admin-test",
+          messages: messages,
+          userId: 1 // ضع معرف المستخدم المشرف الفعلي هنا
+        });
+      } catch (logError) {
+        console.error("Error logging AI chat:", logError);
+        // استمر في العملية رغم خطأ التسجيل
+      }
       
       res.json({ response: aiResponse });
       
