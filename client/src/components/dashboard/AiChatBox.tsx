@@ -26,6 +26,7 @@ interface AiChatBoxProps {
   initialMessages?: Message[];
   height?: string;
   model?: string;
+  providerId?: number; // إضافة معرف مزود الذكاء الاصطناعي
 }
 
 export function AiChatBox({
@@ -36,6 +37,7 @@ export function AiChatBox({
   initialMessages = [],
   height = 'max-h-80',
   model = 'gpt-4o',
+  providerId,
 }: AiChatBoxProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState('');
@@ -139,6 +141,7 @@ export function AiChatBox({
         fullConversation: conversationHistory,
         scenarioKey,
         model,
+        providerId, // إضافة معرف المزود إلى الطلب
       });
       
       const data = await response.json();

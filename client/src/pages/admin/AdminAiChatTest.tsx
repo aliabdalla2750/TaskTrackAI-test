@@ -171,11 +171,17 @@ export default function AdminAiChatTest() {
                     <SelectValue placeholder="اختر نموذج الذكاء الاصطناعي" />
                   </SelectTrigger>
                   <SelectContent>
-                    {models.map((model: AiModel) => (
-                      <SelectItem key={model.id} value={model.id.toString()}>
-                        {model.displayName}
-                      </SelectItem>
-                    ))}
+                    {models
+                      // استخدام Set للحصول على أسماء النماذج الفريدة فقط
+                      .filter((model, index, self) => 
+                        index === self.findIndex((m) => m.displayName === model.displayName)
+                      )
+                      .map((model: AiModel) => (
+                        <SelectItem key={model.id} value={model.id.toString()}>
+                          {model.displayName}
+                        </SelectItem>
+                      ))
+                    }
                   </SelectContent>
                 </Select>
               </div>
