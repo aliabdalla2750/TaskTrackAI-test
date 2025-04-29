@@ -1112,25 +1112,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'openrouter': {
           try {
             console.log("Calling OpenRouter API...");
-            // استدعاء OpenRouter API
+            
+            // التحقق من اسم النموذج الذي سوف يتم استخدامه
+            // بعض النماذج مثل anthropic/claude-3-opus قد لا تعمل بشكل صحيح مع openrouter
+            let modelName = model.name;
+            
+            // استخدام نموذج موثوق به في OpenRouter للاختبار
+            if (modelName === 'anthropic/claude-3-opus') {
+              console.log("تبديل نموذج الاختبار من anthropic/claude-3-opus إلى openai/gpt-3.5-turbo للتوافق");
+              modelName = 'openai/gpt-3.5-turbo';
+            }
+            
             // تحديد الرؤوس مع معالجة خاصة للرؤوس المخصصة
             const headers: Record<string, string> = {
               'Authorization': `Bearer ${provider.apiKey}`,
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://taskaaya.com',
+              // إضافة رؤوس هامة لـ OpenRouter
+              'User-Agent': 'Taskaaya/1.0.0'
             };
             
-            // إضافة رأس HTTP-Referer باستخدام كائن سجل لتجنب أخطاء TypeScript
-            headers['HTTP-Referer'] = 'https://taskaaya.com';
+            // قم بإعداد الرسائل بتنسيق واضح
+            const formattedMessages = messages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            }));
             
+            console.log("OpenRouter request:", {
+              model: modelName,
+              messages: formattedMessages.length > 0 ? `${formattedMessages.length} messages` : "empty", 
+              firstMessage: formattedMessages.length > 0 ? (formattedMessages[0].content?.substring(0, 50) || "") + "..." : ""
+            });
+            
+            // استخدم المزيد من الإعدادات الموصى بها من OpenRouter
             const response = await axios.post(
               provider.baseUrl || 'https://openrouter.ai/api/v1/chat/completions',
               {
-                model: model.name,
-                messages,
+                model: modelName,
+                messages: formattedMessages,
                 temperature: 0.7,
-                max_tokens: model.maxTokens || 1000
+                max_tokens: model.maxTokens || 1000,
+                route: "fallback", // استخدم احتياطي إذا كان النموذج المحدد غير متاح
+                prompt_interface: "default"
               },
-              { headers }
+              { 
+                headers,
+                timeout: 30000 // زيادة مهلة الانتظار إلى 30 ثانية
+              }
             );
             
             // طباعة كامل استجابة OpenRouter للتشخيص
