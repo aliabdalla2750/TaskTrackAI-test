@@ -10,6 +10,7 @@ import AgencyOverview from "@/pages/agency/AgencyOverview";
 import EnhancedAgencyDashboard from "@/pages/agency/EnhancedAgencyDashboard";
 import AgencyProjects from "@/pages/agency/AgencyProjects";
 import CreateSmartProject from "@/pages/agency/CreateSmartProject";
+import CreateManualProject from "@/pages/agency/CreateManualProject";
 import ProjectDetail from "@/pages/agency/ProjectDetail";
 import DailyStandUp from "@/pages/agency/DailyStandUp";
 import AgencyDailyReview from "@/pages/agency/AgencyDailyReview";
@@ -52,6 +53,7 @@ function Router() {
       <Route path="/dashboard/agency/projects" component={AgencyProjects} />
       <Route path="/dashboard/agency/projects/:id" component={ProjectDetail} />
       <Route path="/dashboard/agency/create-smart-project" component={CreateSmartProject} />
+      <Route path="/dashboard/agency/create-manual-project" component={CreateManualProject} />
       <Route path="/dashboard/agency/tasks" component={AgencyTasks} />
       <Route path="/dashboard/agency/team" component={AgencyTeam} />
       <Route path="/dashboard/agency/daily-standup" component={DailyStandUp} />
