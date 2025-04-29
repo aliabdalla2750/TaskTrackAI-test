@@ -48,18 +48,24 @@ interface SidebarLinkProps {
 }
 
 const SidebarLink = ({ path, icon, label, active }: SidebarLinkProps) => {
+  // Check if this is a new link that should be highlighted
+  const isNewFeature = label.includes('🆕');
+  
   return (
-    <motion.li variants={itemVariants} className="mb-2">
+    <motion.li variants={itemVariants} className="mb-2 relative">
       <Link 
         href={path}
         className={`flex items-center gap-3 p-3 rounded-lg font-medium transition-all duration-300 ${
           active
             ? 'text-white bg-primary shadow-md'
             : 'text-gray-700 hover:bg-accent hover:text-primary'
-        }`}
+        } ${isNewFeature && !active ? 'border-2 border-secondary' : ''}`}
       >
         <span className="text-lg">{icon}</span>
         <span>{label}</span>
+        {isNewFeature && !active && (
+          <div className="absolute right-1 top-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+        )}
         {active && <div className="absolute -right-1 w-1.5 h-7 bg-secondary rounded-l-md"></div>}
       </Link>
     </motion.li>
@@ -80,7 +86,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     { path: '/dashboard/agency/projects', icon: <RiFolderOpenLine />, label: 'المشاريع' },
     { path: '/dashboard/agency/create-smart-project', icon: <RiMagicLine />, label: 'إنشاء مشروع ذكي' },
     { path: '/dashboard/agency/tasks', icon: <RiTaskLine />, label: 'المهام' },
-    { path: '/dashboard/agency/daily-standup', icon: <RiClipboardLine />, label: 'التقرير اليومي' },
+    { path: '/dashboard/agency/daily-standup', icon: <RiClipboardLine />, label: 'التقرير اليومي 🆕' },
     { path: '/dashboard/agency/team', icon: <RiTeamLine />, label: 'فريق العمل' },
     { path: '/dashboard/agency/clients', icon: <RiUser3Line />, label: 'العملاء' },
     { path: '/dashboard/agency/files', icon: <RiFileTextLine />, label: 'الملفات' },
@@ -105,7 +111,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const employeeLinks = [
     { path: '/dashboard/employee/overview', icon: <RiDashboardLine />, label: 'نظرة عامة' },
     { path: '/dashboard/employee/tasks', icon: <RiTaskLine />, label: 'المهام' },
-    { path: '/dashboard/employee/daily-tasks', icon: <RiClipboardLine />, label: 'المهام اليومية' },
+    { path: '/dashboard/employee/daily-tasks', icon: <RiClipboardLine />, label: 'المهام اليومية 🆕' },
     { path: '/dashboard/employee/submissions', icon: <RiClipboardLine />, label: 'التسليمات' },
     { path: '/dashboard/employee/performance', icon: <RiLineChartLine />, label: 'الأداء' },
     { path: '/dashboard/employee/files', icon: <RiFileTextLine />, label: 'الملفات' },
