@@ -303,20 +303,33 @@ export default function CreateSmartProject() {
       return;
     }
     
+    // التحقق من حجم الملف وتقصيره إذا كان كبيرًا جدًا
+    let processedContent = fileContent;
+    const MAX_CONTENT_LENGTH = 15000; // الحد الأقصى للمحتوى (حوالي 15000 حرف)
+    
+    if (fileContent.length > MAX_CONTENT_LENGTH) {
+      // تقصير المحتوى مع إضافة إشعار
+      processedContent = fileContent.substring(0, MAX_CONTENT_LENGTH) + 
+        "\n\n[تم اقتصاص المحتوى لأن الملف كبير جدًا. يرجى تحميل ملف أصغر للتحليل الكامل.]";
+      
+      console.log(`File content truncated from ${fileContent.length} to ${processedContent.length} characters`);
+      
+      toast({
+        title: "تنبيه",
+        description: "الملف كبير جدًا وسيتم تحليل الجزء الأول منه فقط. للحصول على تحليل كامل، قم بتقسيم الملف إلى أجزاء أصغر.",
+        variant: "default",
+      });
+    }
+    
     setIsSubmitting(true);
     
     try {
-      // استعلام عن المزود الافتراضي ومعرفه بدلاً من استخدام قيمة ثابتة
-      const aiProvidersResponse = await apiRequest('GET', '/api/admin/ai-providers');
-      const providers = await aiProvidersResponse.json();
-      
-      // البحث عن المزود الافتراضي أو استخدام أول مزود متاح
-      let defaultProvider = providers.find((p: any) => p.is_default) || providers[0];
-      console.log("Using AI provider:", defaultProvider);
+      // استخدام المزود الذي تم تحميله بالفعل بدلاً من الاستعلام مرة أخرى
+      console.log("Using AI provider:", providerId);
       
       const response = await apiRequest('POST', '/api/ai/project-creation', {
         projectName: projectName,
-        projectDetails: `تحليل ملف: ${fileName}\n\n${fileContent}`,
+        projectDetails: `تحليل ملف: ${fileName}\n\n${processedContent}`,
         aiSettings: {
           persona: aiSetup.aiPersona === 'custom' ? aiSetup.customPersona : DEFAULT_PERSONAS[aiSetup.aiPersona as keyof typeof DEFAULT_PERSONAS],
           thinkingStyle: THINKING_STYLES[aiSetup.thinkingStyle as keyof typeof THINKING_STYLES],
@@ -325,7 +338,7 @@ export default function CreateSmartProject() {
           keyObjectives: aiSetup.keyObjectives || ''
         },
         isFileAnalysis: true,
-        providerId: defaultProvider?.id || null // استخدام معرف المزود الافتراضي أو null
+        providerId: providerId // استخدام المزود الحالي
       });
       
       const data = await response.json();
