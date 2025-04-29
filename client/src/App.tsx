@@ -24,6 +24,7 @@ import AiSettings from "@/pages/agency/AiSettings";
 import WeeklyReportsPage from "@/pages/agency/WeeklyReportsPage";
 import WeeklyReportView from "@/pages/agency/WeeklyReportView";
 import MonthlyReportPage from "@/pages/agency/MonthlyReportPage";
+import BillingPage from "@/pages/agency/BillingPage";
 
 // Client Dashboard Pages
 import ClientOverview from "@/pages/client/ClientOverview";
@@ -70,6 +71,7 @@ function Router() {
       <Route path="/dashboard/agency/weekly-reports" component={WeeklyReportsPage} />
       <Route path="/dashboard/agency/weekly-reports/:id" component={WeeklyReportView} />
       <Route path="/dashboard/agency/monthly-report" component={MonthlyReportPage} />
+      <Route path="/dashboard/agency/billing" component={BillingPage} />
       
       {/* Client Dashboard Routes */}
       <Route path="/dashboard/client/overview" component={ClientOverview} />

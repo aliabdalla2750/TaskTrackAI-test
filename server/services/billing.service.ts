@@ -219,6 +219,8 @@ class BillingService {
     // Filter payments by date range
     const periodPayments = paymentsData.filter(
       payment => {
+        // Only process payments with a valid payment date
+        if (!payment.paymentDate) return false;
         const paymentDate = new Date(payment.paymentDate);
         return paymentDate >= startDate && paymentDate <= endDate;
       }
