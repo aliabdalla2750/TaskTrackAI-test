@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
-import { Header } from './Header';
+import { Header } from './HeaderNew';
 import { ToastNotification } from '@/components/ui/toast-notification';
 import { useToastContext } from '@/context/ToastContext';
 import useDashboardType from '@/hooks/useDashboardType';
