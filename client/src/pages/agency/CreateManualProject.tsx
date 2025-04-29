@@ -214,13 +214,18 @@ export default function CreateManualProject() {
     
     try {
       setIsLoading(true);
+      
+      // استخدم السيناريو العام بدلاً من سيناريو مخصص
       const response = await apiRequest('POST', '/api/ai/chat', {
-        message: `أحتاج مساعدة في ملء حقل "${getFieldLabel(field)}" لمشروع جديد. 
+        message: `أنا مدير وكالة أحتاج مساعدة في ملء حقل "${getFieldLabel(field)}" لمشروع جديد. 
         المعلومات المتوفرة حاليًا: 
         ${formData.name ? `اسم المشروع: ${formData.name}` : ''}
         ${formData.projectType ? `نوع المشروع: ${getProjectTypeName(formData.projectType)}` : ''}
-        ${formData.description ? `وصف المشروع: ${formData.description}` : ''}`,
-        scenarioKey: 'project-assistance'
+        ${formData.description ? `وصف المشروع: ${formData.description}` : ''}
+        
+        من فضلك اقترح محتوى مناسب لحقل "${getFieldLabel(field)}" بناءً على هذه المعلومات. اجعل اقتراحك محددًا وعمليًا.`,
+        // استخدام سيناريو مساعد عام متوفر افتراضيًا
+        scenarioKey: 'assistant'
       });
       
       const data = await response.json();
@@ -232,12 +237,14 @@ export default function CreateManualProject() {
           description: data.response,
           duration: 10000, // إظهار لمدة أطول
         });
+      } else {
+        throw new Error('لم يتم استلام استجابة صحيحة من الخادم');
       }
     } catch (error) {
       console.error('AI assistance error:', error);
       toast({
         title: "خطأ في المساعدة",
-        description: "حدث خطأ أثناء طلب المساعدة من الذكاء الاصطناعي",
+        description: "حدث خطأ أثناء طلب المساعدة من الذكاء الاصطناعي. يرجى التحقق من إعدادات الذكاء الاصطناعي.",
         variant: "destructive",
       });
     } finally {
@@ -467,22 +474,62 @@ export default function CreateManualProject() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Client Selection */}
                   <div className="space-y-2">
-                    <Label htmlFor="client">العميل</Label>
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="client">العميل</Label>
+                      {clients.length === 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "إنشاء عميل جديد",
+                              description: "سيتم توجيهك إلى صفحة إنشاء عميل جديد بعد النقر على 'موافق'",
+                              action: (
+                                <Button
+                                  onClick={() => navigate('/dashboard/agency/clients')}
+                                  className="bg-primary text-white"
+                                  size="sm"
+                                >
+                                  موافق
+                                </Button>
+                              )
+                            });
+                          }}
+                          className="text-xs h-6 px-2 text-primary"
+                        >
+                          + إنشاء عميل
+                        </Button>
+                      )}
+                    </div>
                     <Select
                       value={formData.client}
                       onValueChange={(value) => handleChange('client', value)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر العميل" />
+                        <SelectValue placeholder={clients.length === 0 ? "لا يوجد عملاء - أضف عميلاً أولاً" : "اختر العميل"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id.toString()}>
-                            {client.name}
-                          </SelectItem>
-                        ))}
+                        {clients.length > 0 ? (
+                          clients.map((client) => (
+                            <SelectItem key={client.id} value={client.id.toString()}>
+                              {client.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-4 text-center text-sm text-gray-500">
+                            لا يوجد عملاء. يرجى إنشاء عميل أولاً.
+                          </div>
+                        )}
                       </SelectContent>
                     </Select>
+
+                    {/* في حالة عدم وجود عملاء، إضافة تنبيه */}
+                    {clients.length === 0 && (
+                      <div className="flex items-center mt-2 text-xs text-amber-600 gap-1">
+                        <RiInformationLine className="flex-shrink-0" />
+                        <span>يجب إنشاء عميل واحد على الأقل قبل إنشاء المشروع</span>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Project Type */}

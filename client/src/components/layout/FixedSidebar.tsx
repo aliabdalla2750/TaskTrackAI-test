@@ -74,6 +74,7 @@ export function FixedSidebar() {
     { path: '/dashboard/agency/overview', icon: <RiDashboardLine />, label: 'نظرة عامة' },
     { path: '/dashboard/agency/projects', icon: <RiFolderOpenLine />, label: 'المشاريع' },
     { path: '/dashboard/agency/create-smart-project', icon: <RiMagicLine />, label: 'إنشاء مشروع ذكي' },
+    { path: '/dashboard/agency/create-manual-project', icon: <RiFileTextLine />, label: 'إنشاء مشروع يدوي' },
     { path: '/dashboard/agency/tasks', icon: <RiTaskLine />, label: 'المهام' },
     { path: '/dashboard/agency/daily-standup', icon: <RiClipboardLine />, label: 'خطة العمل اليومية' },
     { path: '/dashboard/agency/daily-review', icon: <RiLineChartLine />, label: 'مراجعة التقارير اليومية 🆕' },
