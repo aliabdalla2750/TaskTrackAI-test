@@ -441,6 +441,8 @@ export const monthlyReportsRelations = relations(monthlyReportsCache, ({ one }) 
   }),
 }));
 
+
+
 // Relations
 
 // User relations
@@ -474,6 +476,8 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   projects: many(projects),
   billings: many(billing),
   payments: many(payments),
+  ratings: many(clientRatings),
+  notes: many(clientNotes),
 }));
 
 // Employee relations

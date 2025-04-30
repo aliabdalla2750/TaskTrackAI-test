@@ -10,6 +10,7 @@ import axios from "axios";
 import { upload, handleUploadErrors, extractTextFromFile, cleanExtractedText } from "./services/file-service";
 import { reportsRouter } from "./routes/reports.routes";
 import billingRoutes from "./routes/billing.routes";
+import clientRoutes from "./routes/client.routes";
 import { clientService } from "./services/client.service";
 import fs from 'fs';
 import path from 'path';
@@ -291,6 +292,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // تسجيل مسارات الفواتير
   app.use('/api', billingRoutes);
+  
+  // تسجيل مسارات العملاء
+  app.use('/api/clients', clientRoutes);
   
   // API Endpoints
   
