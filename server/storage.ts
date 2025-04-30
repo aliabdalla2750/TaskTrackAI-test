@@ -19,8 +19,18 @@ import {
   billing, Billing, InsertBilling,
   wallet, Wallet, InsertWallet,
   clientRatings, ClientRating, InsertClientRating,
-  clientNotes, ClientNote, InsertClientNote
+  clientNotes, ClientNote, InsertClientNote,
+  // إضافة جداول التقارير
+  weeklyReportsSent, insertWeeklyReportSchema,
+  monthlyReportsCache, insertMonthlyReportSchema
 } from "@shared/schema";
+import { z } from "zod";
+
+// تعريف أنواع التقارير
+export type WeeklyReport = typeof weeklyReportsSent.$inferSelect;
+export type MonthlyReport = typeof monthlyReportsCache.$inferSelect;
+export type InsertWeeklyReport = z.infer<typeof insertWeeklyReportSchema>;
+export type InsertMonthlyReport = z.infer<typeof insertMonthlyReportSchema>;
 
 // Define the storage interface
 export interface IStorage {
