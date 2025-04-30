@@ -673,33 +673,7 @@ export const dailyStandupsRelations = relations(dailyStandups, ({ one }) => ({
   }),
 }));
 
-// Client Ratings relations
-export const clientRatingsRelations = relations(clientRatings, ({ one }) => ({
-  client: one(clients, {
-    fields: [clientRatings.clientId],
-    references: [clients.id],
-  }),
-  project: one(projects, {
-    fields: [clientRatings.projectId],
-    references: [projects.id],
-  }),
-  createdByUser: one(users, {
-    fields: [clientRatings.createdBy],
-    references: [users.id],
-  }),
-}));
 
-// Client Notes relations
-export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
-  client: one(clients, {
-    fields: [clientNotes.clientId],
-    references: [clients.id],
-  }),
-  author: one(users, {
-    fields: [clientNotes.authorId],
-    references: [users.id],
-  }),
-}));
 
 // Export type definitions
 export type User = typeof users.$inferSelect;
