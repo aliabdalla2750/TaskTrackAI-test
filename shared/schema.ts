@@ -42,12 +42,20 @@ export const clients = pgTable("clients", {
   phone: text("phone"),
   agencyId: integer("agency_id").notNull(),
   company: text("company"),
+  // تم إضافة حقول جديدة للتقييم والملاحظات الداخلية
+  rating: integer("rating"), // متوسط تقييم العميل (1-5)
+  internal_notes: json("internal_notes").default([]), // ملاحظات داخلية في شكل JSON Array
+  payment_status: text("payment_status").default("regular"), // regular, late, stopped
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertClientSchema = createInsertSchema(clients).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
+  internal_notes: true,
+  payment_status: true,
 });
 
 // Employees table
