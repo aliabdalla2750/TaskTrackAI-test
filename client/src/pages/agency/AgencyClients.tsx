@@ -176,21 +176,13 @@ export default function AgencyClients() {
       return await response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "تم بنجاح",
-        description: "تمت إضافة التقييم",
-        variant: "success"
-      });
+      toast.success("تم بنجاح", "تمت إضافة التقييم");
       setRatingDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/clients/ratings'] });
       resetRatingForm();
     },
     onError: (error) => {
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء إضافة التقييم",
-        variant: "destructive"
-      });
+      toast.error("خطأ", "حدث خطأ أثناء إضافة التقييم");
     }
   });
   
@@ -201,21 +193,13 @@ export default function AgencyClients() {
       return await response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "تم بنجاح",
-        description: "تمت إضافة الملاحظة",
-        variant: "success"
-      });
+      toast.success("تم بنجاح", "تمت إضافة الملاحظة");
       setNoteDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/clients/notes'] });
       resetNoteForm();
     },
     onError: (error) => {
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء إضافة الملاحظة",
-        variant: "destructive"
-      });
+      toast.error("خطأ", "حدث خطأ أثناء إضافة الملاحظة");
     }
   });
   
@@ -225,19 +209,11 @@ export default function AgencyClients() {
       return await response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "تم بنجاح",
-        description: "تم تحديث حالة الدفع",
-        variant: "success"
-      });
+      toast.success("تم بنجاح", "تم تحديث حالة الدفع");
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
     },
     onError: (error) => {
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء تحديث حالة الدفع",
-        variant: "destructive"
-      });
+      toast.error("خطأ", "حدث خطأ أثناء تحديث حالة الدفع");
     }
   });
   
@@ -248,19 +224,11 @@ export default function AgencyClients() {
       return await response.json();
     },
     onSuccess: (data) => {
-      toast({
-        title: "تم بنجاح",
-        description: `تم تحديث حالة الدفع إلى ${getPaymentStatusLabel(data.paymentStatus)}`,
-        variant: "success"
-      });
+      toast.success("تم بنجاح", `تم تحديث حالة الدفع إلى ${getPaymentStatusLabel(data.paymentStatus)}`);
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
     },
     onError: (error) => {
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء حساب حالة الدفع",
-        variant: "destructive"
-      });
+      toast.error("خطأ", "حدث خطأ أثناء حساب حالة الدفع");
     }
   });
   
@@ -701,7 +669,6 @@ export default function AgencyClients() {
                           <div className="space-y-2">
                             <Label htmlFor="ratingType">نوع التقييم</Label>
                             <Select 
-                              id="ratingType" 
                               value={ratingForm.type} 
                               onValueChange={(value) => handleSelectTypeChange('ratingType', value)}
                             >
@@ -823,7 +790,6 @@ export default function AgencyClients() {
                           <div className="space-y-2">
                             <Label htmlFor="noteType">نوع الملاحظة</Label>
                             <Select 
-                              id="noteType" 
                               value={noteForm.type} 
                               onValueChange={(value) => handleSelectTypeChange('noteType', value)}
                             >
