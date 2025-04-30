@@ -17,7 +17,9 @@ import {
   aiModels, AiModel, InsertAiModel,
   dailyStandups, DailyStandup, InsertDailyStandup,
   billing, Billing, InsertBilling,
-  wallet, Wallet, InsertWallet
+  wallet, Wallet, InsertWallet,
+  clientRatings, ClientRating, InsertClientRating,
+  clientNotes, ClientNote, InsertClientNote
 } from "@shared/schema";
 
 // Define the storage interface
@@ -172,6 +174,26 @@ export interface IStorage {
   getWalletByAgency(agencyId: number): Promise<Wallet | undefined>;
   createWallet(wallet: InsertWallet): Promise<Wallet>;
   updateWallet(id: number, wallet: Partial<InsertWallet>): Promise<Wallet | undefined>;
+  
+  // Client Ratings operations
+  getClientRating(id: number): Promise<ClientRating | undefined>;
+  getClientRatingsByClient(clientId: number): Promise<ClientRating[]>;
+  getClientRatingsByProject(projectId: number): Promise<ClientRating[]>;
+  createClientRating(rating: InsertClientRating): Promise<ClientRating>;
+  updateClientRating(id: number, rating: Partial<InsertClientRating>): Promise<ClientRating | undefined>;
+  deleteClientRating(id: number): Promise<boolean>;
+  calculateClientAverageRating(clientId: number): Promise<number | null>;
+  
+  // Client Notes operations
+  getClientNote(id: number): Promise<ClientNote | undefined>;
+  getClientNotesByClient(clientId: number): Promise<ClientNote[]>;
+  createClientNote(note: InsertClientNote): Promise<ClientNote>;
+  updateClientNote(id: number, note: Partial<InsertClientNote>): Promise<ClientNote | undefined>;
+  deleteClientNote(id: number): Promise<boolean>;
+  
+  // Client Payment Status operations
+  updateClientPaymentStatus(clientId: number, paymentStatus: string): Promise<Client | undefined>;
+  calculateClientPaymentStatus(clientId: number): Promise<string>;
 }
 
 // In-memory storage implementation

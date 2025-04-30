@@ -389,6 +389,38 @@ export const insertMonthlyReportSchema = createInsertSchema(monthlyReportsCache)
   createdAt: true,
 });
 
+// Client ratings table
+export const clientRatings = pgTable("client_ratings", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull(),
+  projectId: integer("project_id").notNull(),
+  rating: integer("rating").notNull(), // 1-5 rating scale
+  comment: text("comment"), // Optional rating comment
+  type: text("type").notNull().default("positive"), // 'positive', 'neutral', 'negative'
+  createdBy: integer("created_by").notNull(), // User who created the rating
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertClientRatingSchema = createInsertSchema(clientRatings).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Client notes table (for internal notes)
+export const clientNotes = pgTable("client_notes", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull(),
+  note: text("note").notNull(),
+  type: text("type").notNull().default("neutral"), // 'positive', 'neutral', 'negative'
+  authorId: integer("author_id").notNull(), // User who created the note
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertClientNoteSchema = createInsertSchema(clientNotes).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Define relations for weekly reports
 export const weeklyReportsRelations = relations(weeklyReportsSent, ({ one }) => ({
   client: one(clients, {
@@ -637,6 +669,34 @@ export const dailyStandupsRelations = relations(dailyStandups, ({ one }) => ({
   }),
 }));
 
+// Client Ratings relations
+export const clientRatingsRelations = relations(clientRatings, ({ one }) => ({
+  client: one(clients, {
+    fields: [clientRatings.clientId],
+    references: [clients.id],
+  }),
+  project: one(projects, {
+    fields: [clientRatings.projectId],
+    references: [projects.id],
+  }),
+  createdByUser: one(users, {
+    fields: [clientRatings.createdBy],
+    references: [users.id],
+  }),
+}));
+
+// Client Notes relations
+export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
+  client: one(clients, {
+    fields: [clientNotes.clientId],
+    references: [clients.id],
+  }),
+  author: one(users, {
+    fields: [clientNotes.authorId],
+    references: [users.id],
+  }),
+}));
+
 // Export type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -700,4 +760,10 @@ export type InsertBilling = z.infer<typeof insertBillingSchema>;
 
 export type Wallet = typeof wallet.$inferSelect;
 export type InsertWallet = z.infer<typeof insertWalletSchema>;
+
+export type ClientRating = typeof clientRatings.$inferSelect;
+export type InsertClientRating = z.infer<typeof insertClientRatingSchema>;
+
+export type ClientNote = typeof clientNotes.$inferSelect;
+export type InsertClientNote = z.infer<typeof insertClientNoteSchema>;
 
