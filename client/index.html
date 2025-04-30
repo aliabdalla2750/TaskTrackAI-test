@@ -11,10 +11,12 @@
     <!-- Font Preloading for better performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap" />
     
-    <!-- Cairo + Poppins fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap" />
+    <!-- Local Hacen Maghreb BD font with Tajawal as fallback -->
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+    
+    <!-- Poppins font (for English text) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" />
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -23,6 +25,14 @@
     <style>
       /* Ensure fonts don't cause layout shifts */
       html { font-display: swap; }
+      
+      /* Fallback mechanism if the main font fails */
+      @font-face {
+        font-family: 'Hacen Maghreb Fallback';
+        src: local('Tajawal'), local('Arial');
+        font-weight: normal;
+        font-style: normal;
+      }
     </style>
   </head>
   <body>
