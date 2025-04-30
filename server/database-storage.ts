@@ -629,4 +629,313 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(dailyStandups).where(eq(dailyStandups.id, id));
     return result.rowCount > 0;
   }
+
+  // Client Ratings operations
+  async getClientRating(id: number): Promise<ClientRating | undefined> {
+    const [rating] = await db
+      .select()
+      .from(clientRatings)
+      .where(eq(clientRatings.id, id));
+    
+    return rating;
+  }
+
+  async getClientRatingsByClient(clientId: number): Promise<ClientRating[]> {
+    return db
+      .select()
+      .from(clientRatings)
+      .where(eq(clientRatings.clientId, clientId))
+      .orderBy(desc(clientRatings.createdAt));
+  }
+
+  async getClientRatingsByProject(projectId: number): Promise<ClientRating[]> {
+    return db
+      .select()
+      .from(clientRatings)
+      .where(eq(clientRatings.projectId, projectId))
+      .orderBy(desc(clientRatings.createdAt));
+  }
+
+  async createClientRating(rating: InsertClientRating): Promise<ClientRating> {
+    // First create the rating
+    const [newRating] = await db
+      .insert(clientRatings)
+      .values(rating)
+      .returning();
+
+    // Then update the client's average rating
+    await this.calculateClientAverageRating(rating.clientId);
+    
+    return newRating;
+  }
+
+  async updateClientRating(id: number, rating: Partial<InsertClientRating>): Promise<ClientRating | undefined> {
+    const [updatedRating] = await db
+      .update(clientRatings)
+      .set(rating)
+      .where(eq(clientRatings.id, id))
+      .returning();
+    
+    if (updatedRating) {
+      // Update the client's average rating
+      await this.calculateClientAverageRating(updatedRating.clientId);
+    }
+    
+    return updatedRating;
+  }
+
+  async deleteClientRating(id: number): Promise<boolean> {
+    // First get the rating to know which client to update later
+    const [rating] = await db
+      .select()
+      .from(clientRatings)
+      .where(eq(clientRatings.id, id));
+    
+    if (!rating) {
+      return false;
+    }
+    
+    const result = await db
+      .delete(clientRatings)
+      .where(eq(clientRatings.id, id));
+    
+    if (result.rowCount > 0) {
+      // Update the client's average rating
+      await this.calculateClientAverageRating(rating.clientId);
+      return true;
+    }
+    
+    return false;
+  }
+
+  async calculateClientAverageRating(clientId: number): Promise<number | null> {
+    // Get all ratings for this client
+    const ratings = await db
+      .select()
+      .from(clientRatings)
+      .where(eq(clientRatings.clientId, clientId));
+    
+    if (ratings.length === 0) {
+      // If no ratings, set client's rating to null
+      await db
+        .update(clients)
+        .set({ rating: null })
+        .where(eq(clients.id, clientId));
+      
+      return null;
+    }
+    
+    // Calculate average rating
+    const totalRating = ratings.reduce((sum, curr) => sum + curr.rating, 0);
+    const avgRating = Math.round((totalRating / ratings.length) * 10) / 10; // Round to 1 decimal place
+    
+    // Update client's rating
+    await db
+      .update(clients)
+      .set({ rating: avgRating })
+      .where(eq(clients.id, clientId));
+    
+    return avgRating;
+  }
+
+  // Client Notes operations
+  async getClientNote(id: number): Promise<ClientNote | undefined> {
+    const [note] = await db
+      .select()
+      .from(clientNotes)
+      .where(eq(clientNotes.id, id));
+    
+    return note;
+  }
+
+  async getClientNotesByClient(clientId: number): Promise<ClientNote[]> {
+    return db
+      .select()
+      .from(clientNotes)
+      .where(eq(clientNotes.clientId, clientId))
+      .orderBy(desc(clientNotes.createdAt));
+  }
+
+  async createClientNote(note: InsertClientNote): Promise<ClientNote> {
+    const [newNote] = await db
+      .insert(clientNotes)
+      .values(note)
+      .returning();
+    
+    // Update client's internal_notes field to include a reference to this note
+    // First get existing notes
+    const [client] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.id, note.clientId));
+    
+    if (client) {
+      let currentNotes = client.internal_notes || [];
+      if (!Array.isArray(currentNotes)) {
+        currentNotes = [];
+      }
+      
+      // Add a reference to this note
+      currentNotes.push({
+        id: newNote.id,
+        type: newNote.type,
+        createdAt: newNote.createdAt,
+        preview: newNote.note.substring(0, 50) + (newNote.note.length > 50 ? '...' : '')
+      });
+      
+      // Update client's internal_notes field
+      await db
+        .update(clients)
+        .set({ internal_notes: currentNotes })
+        .where(eq(clients.id, note.clientId));
+    }
+    
+    return newNote;
+  }
+
+  async updateClientNote(id: number, note: Partial<InsertClientNote>): Promise<ClientNote | undefined> {
+    const [updatedNote] = await db
+      .update(clientNotes)
+      .set(note)
+      .where(eq(clientNotes.id, id))
+      .returning();
+    
+    if (updatedNote && note.note) {
+      // Update the client's internal_notes field to reflect the change
+      const [client] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.id, updatedNote.clientId));
+      
+      if (client) {
+        let currentNotes = client.internal_notes || [];
+        if (!Array.isArray(currentNotes)) {
+          currentNotes = [];
+        }
+        
+        // Find and update the note reference
+        const updatedNotes = currentNotes.map(noteRef => {
+          if (noteRef.id === id) {
+            return {
+              ...noteRef,
+              type: updatedNote.type,
+              preview: updatedNote.note.substring(0, 50) + (updatedNote.note.length > 50 ? '...' : '')
+            };
+          }
+          return noteRef;
+        });
+        
+        // Update client's internal_notes field
+        await db
+          .update(clients)
+          .set({ internal_notes: updatedNotes })
+          .where(eq(clients.id, updatedNote.clientId));
+      }
+    }
+    
+    return updatedNote;
+  }
+
+  async deleteClientNote(id: number): Promise<boolean> {
+    // First get the note to know which client to update later
+    const [note] = await db
+      .select()
+      .from(clientNotes)
+      .where(eq(clientNotes.id, id));
+    
+    if (!note) {
+      return false;
+    }
+    
+    const result = await db
+      .delete(clientNotes)
+      .where(eq(clientNotes.id, id));
+    
+    if (result.rowCount > 0) {
+      // Update the client's internal_notes field to remove the reference
+      const [client] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.id, note.clientId));
+      
+      if (client) {
+        let currentNotes = client.internal_notes || [];
+        if (!Array.isArray(currentNotes)) {
+          currentNotes = [];
+        }
+        
+        // Remove the note reference
+        const updatedNotes = currentNotes.filter(noteRef => noteRef.id !== id);
+        
+        // Update client's internal_notes field
+        await db
+          .update(clients)
+          .set({ internal_notes: updatedNotes })
+          .where(eq(clients.id, note.clientId));
+      }
+      
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Client Payment Status operations
+  async updateClientPaymentStatus(clientId: number, paymentStatus: string): Promise<Client | undefined> {
+    const [updatedClient] = await db
+      .update(clients)
+      .set({ payment_status: paymentStatus })
+      .where(eq(clients.id, clientId))
+      .returning();
+    
+    return updatedClient;
+  }
+
+  async calculateClientPaymentStatus(clientId: number): Promise<string> {
+    // Get all invoices (billing entries) for this client
+    const clientBillings = await db
+      .select()
+      .from(billing)
+      .where(eq(billing.clientId, clientId));
+    
+    if (clientBillings.length === 0) {
+      // If no billings, consider "regular"
+      return "regular";
+    }
+    
+    // Count overdue invoices
+    const today = new Date();
+    let overdueCount = 0;
+    let totalInvoices = 0;
+    
+    for (const bill of clientBillings) {
+      // Only consider unpaid invoices
+      if (bill.status === "pending") {
+        totalInvoices++;
+        
+        // Check if due date is past
+        if (bill.dueDate && new Date(bill.dueDate) < today) {
+          overdueCount++;
+        }
+      }
+    }
+    
+    // Calculate payment status based on overdue percentage
+    let paymentStatus = "regular";
+    
+    if (totalInvoices > 0) {
+      const overduePercentage = (overdueCount / totalInvoices) * 100;
+      
+      if (overduePercentage >= 50) {
+        paymentStatus = "stopped"; // More than 50% of invoices are overdue
+      } else if (overduePercentage > 0) {
+        paymentStatus = "late"; // Some invoices are overdue
+      }
+    }
+    
+    // Update client's payment status
+    await this.updateClientPaymentStatus(clientId, paymentStatus);
+    
+    return paymentStatus;
+  }
 }
