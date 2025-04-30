@@ -33,6 +33,15 @@ const getDemoData = (filename: string): any => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // تسجيل مسارات API للتقارير
+  app.use('/api', reportsRouter);
+  
+  // تسجيل مسارات API للفواتير
+  app.use('/api', billingRoutes);
+  
+  // تسجيل مسارات API للعملاء
+  app.use('/api', clientRoutes);
+  
   // نقاط نهاية API لبيانات الفواتير للعميل
   app.get('/api/client/:clientId/billings', async (req: Request, res: Response) => {
     try {
@@ -287,14 +296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to send monthly report' });
     }
   });
-  // تسجيل مسارات التقارير
-  app.use('/api/reports', reportsRouter);
-  
-  // تسجيل مسارات الفواتير
-  app.use('/api', billingRoutes);
-  
-  // تسجيل مسارات العملاء
-  app.use('/api/clients', clientRoutes);
+  // لقد قمنا بتسجيل هذه المسارات بالفعل في بداية الدالة
   
   // API Endpoints
   

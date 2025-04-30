@@ -17,7 +17,15 @@ import {
   aiChatLogs, AiChatLog, InsertAiChatLog,
   aiProviders, AiProvider, InsertAiProvider,
   aiModels, AiModel, InsertAiModel,
-  dailyStandups, DailyStandup, InsertDailyStandup
+  dailyStandups, DailyStandup, InsertDailyStandup,
+  billing, Billing, InsertBilling,
+  clientNotes, ClientNote, InsertClientNote,
+  clientRatings, ClientRating, InsertClientRating,
+  wallet, Wallet, InsertWallet,
+  // إضافة استيرادات التقارير
+  weeklyReportsSent, monthlyReportsCache,
+  WeeklyReport, MonthlyReport,
+  InsertWeeklyReport, InsertMonthlyReport
 } from "@shared/schema";
 import { IStorage } from "./storage";
 
@@ -937,5 +945,106 @@ export class DatabaseStorage implements IStorage {
     await this.updateClientPaymentStatus(clientId, paymentStatus);
     
     return paymentStatus;
+  }
+
+  // ======== وظائف التقارير الأسبوعية ========
+  
+  async getWeeklyReport(id: number): Promise<WeeklyReport | undefined> {
+    const [report] = await db
+      .select()
+      .from(weeklyReportsSent)
+      .where(eq(weeklyReportsSent.id, id));
+    return report;
+  }
+
+  async getWeeklyReportsByClient(clientId: number): Promise<WeeklyReport[]> {
+    return await db
+      .select()
+      .from(weeklyReportsSent)
+      .where(eq(weeklyReportsSent.clientId, clientId))
+      .orderBy(desc(weeklyReportsSent.sentAt));
+  }
+
+  async getWeeklyReportsByAgency(agencyId: number): Promise<WeeklyReport[]> {
+    return await db
+      .select()
+      .from(weeklyReportsSent)
+      .where(eq(weeklyReportsSent.agencyId, agencyId))
+      .orderBy(desc(weeklyReportsSent.sentAt));
+  }
+
+  async createWeeklyReport(report: InsertWeeklyReport): Promise<WeeklyReport> {
+    const [newReport] = await db
+      .insert(weeklyReportsSent)
+      .values(report)
+      .returning();
+    return newReport;
+  }
+
+  async updateWeeklyReportStatus(id: number, status: string): Promise<WeeklyReport | undefined> {
+    const [updatedReport] = await db
+      .update(weeklyReportsSent)
+      .set({ status })
+      .where(eq(weeklyReportsSent.id, id))
+      .returning();
+    return updatedReport;
+  }
+
+  // ======== وظائف التقارير الشهرية ========
+  
+  async getMonthlyReport(id: number): Promise<MonthlyReport | undefined> {
+    const [report] = await db
+      .select()
+      .from(monthlyReportsCache)
+      .where(eq(monthlyReportsCache.id, id));
+    return report;
+  }
+
+  async getMonthlyReportsByAgency(agencyId: number): Promise<MonthlyReport[]> {
+    return await db
+      .select()
+      .from(monthlyReportsCache)
+      .where(eq(monthlyReportsCache.agencyId, agencyId))
+      .orderBy(desc(monthlyReportsCache.generatedAt));
+  }
+
+  async getMonthlyReportByMonth(agencyId: number, month: string): Promise<MonthlyReport | undefined> {
+    const [report] = await db
+      .select()
+      .from(monthlyReportsCache)
+      .where(and(
+        eq(monthlyReportsCache.agencyId, agencyId),
+        eq(monthlyReportsCache.month, month)
+      ));
+    return report;
+  }
+
+  async createMonthlyReport(report: InsertMonthlyReport): Promise<MonthlyReport> {
+    // تحقق أولاً مما إذا كان هناك تقرير موجود بالفعل لهذا الشهر
+    const existingReport = await this.getMonthlyReportByMonth(report.agencyId, report.month);
+    
+    if (existingReport) {
+      // إذا كان موجودًا، قم بتحديثه
+      const [updatedReport] = await db
+        .update(monthlyReportsCache)
+        .set({
+          metrics: report.metrics,
+          projectsStats: report.projectsStats,
+          employeesStats: report.employeesStats,
+          clientsStats: report.clientsStats,
+          financialStats: report.financialStats,
+          generatedAt: new Date()
+        })
+        .where(eq(monthlyReportsCache.id, existingReport.id))
+        .returning();
+      return updatedReport;
+    } else {
+      // إنشاء تقرير جديد
+      const [newReport] = await db
+        .insert(monthlyReportsCache)
+        .values(report)
+        .returning();
+      return newReport;
+    }
   }
 }
